@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="es">
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css"/>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<title>Ecos Colombia</title>
+
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap" rel="stylesheet">
+
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+
+<style>
+
+
+:root{
+    --blue:#243c8f;
+    --yellow:#f4d35e;
+    --red:#ee4266;
+    --bg:#f7f7f7;
+}
+
+
+*{
+    box-sizing:border-box;
+}
+
+
+body{
+    margin:0;
+    font-family:'Poppins', sans-serif;
+    background:var(--bg);
+    color:#333;
+}
+
+
+/* ================= NAVBAR ================= */
+
+
+.navbar{
+    position:sticky;
+    top:0;
+    z-index:1000;
+
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+
+    padding:15px 30px;
+
+
+    background:white;
+
+
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+
+.logo{
+    color:var(--blue);
+    font-size:24px;
+    font-weight:700;
+}
+
+
+/* ================= HERO ================= */
+
+
+.hero{
+    height:400px;
+
+
+    background:
+    linear-gradient(rgba(36,60,143,0.55), rgba(36,60,143,0.55)),
+    url("https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?q=80&w=1800");
+
+
+    background-size:cover;
+    background-position:center;
+
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+
+    text-align:center;
+    color:white;
+}
+
+
+.hero-content{
+    max-width:700px;
+    padding:20px;
+}
+
+
+.hero h1{
+    font-size:58px;
+    margin-bottom:10px;
+}
+
+
+.hero p{
+    font-size:20px;
+}
+
+
+/* ================= MAPA ================= */
+
+
+#map{
+    position:fixed;
+
+
+    bottom:20px;
+    right:20px;
+
+
+    width:380px;
+    height:260px;
+
+
+    border-radius:20px;
+
+
+    overflow:hidden;
+
+
+    border:5px solid white;
+
+
+    box-shadow:
+    0 10px 30px rgba(0,0,0,0.25);
+
+
+    z-index:500;
+}
+
+
+/* ================= GRID ================= */
+
+
+.grid{
+    display:grid;
+
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(320px,1fr));
+
+
+    gap:25px;
+
+
+    padding:40px;
+}
+
+
+/* ================= CARDS ================= */
+
+
+.card{
+    background:white;
+
+
+    border-radius:18px;
+
+
+    overflow:hidden;
+
+
+    cursor:pointer;
+
+
+    transition:0.3s;
+
+
+    box-shadow:0 5px 18px rgba(0,0,0,0.1);
+}
+
+
+.card:hover{
+    transform:translateY(-6px);
+}
+
+
+.card img{
+    width:100%;
+    height:240px;
+    object-fit:cover;
+}
+
+
+.card-content{
+    padding:18px;
+}
+
+
+.card-content h3{
+    margin-top:0;
+    color:var(--blue);
+}
+
+
+/* ================= BOTONES ================= */
+
+
+.btn{
+    background:var(--red);
+
+
+    color:white;
+
+
+    border:none;
+
+
+    padding:12px 16px;
+
+
+    border-radius:10px;
+
+
+    cursor:pointer;
+
+
+    font-weight:600;
+
+
+    transition:0.3s;
+}
+
+
+.btn:hover{
+    opacity:0.9;
+}
+
+
+/* ================= MODAL ================= */
+
+
+.modal{
+    display:none;
+
+
+    position:fixed;
+
+
+    top:0;
+    left:0;
+
+
+    width:100%;
+    height:100%;
+
+
+    background:rgba(0,0,0,0.7);
+
+
+    justify-content:center;
+    align-items:center;
+
+
+    z-index:9999;
+}
+
+
+.modal-content{
+    background:white;
+
+
+    width:92%;
+    max-width:1000px;
+
+
+    border-radius:20px;
+
+
+    padding:25px;
+
+
+    max-height:92vh;
+
+
+    overflow-y:auto;
+
+
+    position:relative;
+}
+
+
+.close{
+    position:absolute;
+
+
+    right:20px;
+    top:15px;
+
+
+    font-size:26px;
+
+
+    cursor:pointer;
+}
+
+
+.modal-banner{
+    width:100%;
+    height:380px;
+
+
+    object-fit:cover;
+
+
+    border-radius:16px;
+
+
+    margin-bottom:20px;
+}
+
+
+.section{
+    margin-bottom:25px;
+}
+
+
+.section h3{
+    color:var(--blue);
+    margin-bottom:8px;
+}
+
+
+.section p{
+    line-height:1.7;
+}
+
+
+/* ================= ITEMS ================= */
+
+
+.items-grid{
+    display:grid;
+
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(230px,1fr));
+
+
+    gap:18px;
+}
+
+
+.item-card{
+    background:#f3f3f3;
+
+
+    border-radius:14px;
+
+
+    overflow:hidden;
+
+
+    padding:10px;
+}
+
+
+.item-card img{
+    width:100%;
+    height:150px;
+
+
+    object-fit:cover;
+
+
+    border-radius:10px;
+}
+
+
+.item-card h4{
+    margin:12px 0;
+}
+
+
+/* ================= RESPONSIVE ================= */
+
+
+@media(max-width:768px){
+
+
+    .hero h1{
+        font-size:40px;
+    }
+
+
+    .hero p{
+        font-size:16px;
+    }
+
+
+    .grid{
+        padding:20px;
+    }
+
+
+    #map{
+        width:240px;
+        height:180px;
+    }
+
+
+}
+
+
+</style>
+</head>
+
+
+<body>
+
+
+<!-- NAVBAR -->
+
+
+<div class="navbar">
+
+
+    <div class="logo">
+         Ecos Colombia
+    </div>
+
+
+</div>
+
+
+<!-- HERO -->
+
+
+<div class="hero">
+
+
+    <div class="hero-content">
+
+
+        <h1>Descubre Colombia</h1>
+
+
+        <p>
+            Explora cultura, historia, gastronomía y los
+            destinos más increíbles del país.
+        </p>
+
+
+    </div>
+
+
+</div>
+
+
+<!-- MAPA -->
+
+
+<div id="map"></div>
+
+
+<!-- DESTINOS -->
+
+
+<div class="grid" id="lugares"></div>
+
+
+<!-- MODAL -->
+
+
+<div class="modal" id="modal">
+
+
+    <div class="modal-content">
+
+
+        <span class="close"
+        onclick="cerrarModal()">
+            ✖
+        </span>
+
+
+        <div id="detalle"></div>
+
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+/* ================= LUGARES ================= */
+
+
+const lugares = [
+
+
+{
+nombre:"Cartagena",
+
+
+coords:[10.391,-75.479],
+
+
+img:"https://i.postimg.cc/Gp37pQJp/Whats-App-Image-2026-05-11-at-3-15-57-PM.jpg",
+
+
+historia:
+"Cartagena fue fundada en 1533 y se convirtió en uno de los puertos más importantes de América durante la época colonial española. Sus murallas protegían la ciudad de ataques piratas.",
+
+
+cultura:
+"La ciudad mezcla raíces africanas, indígenas y españolas. Su música, gastronomía y arquitectura colonial la convierten en uno de los destinos culturales más importantes del Caribe.",
+
+
+eventos:
+"Fiestas de Independencia de Cartagena (noviembre) y Festival Internacional de Música.",
+
+
+restaurantes:[
+
+
+{
+nombre:"La Cevichería",
+
+
+img:"https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1200",
+
+
+coords:[10.424,-75.551]
+},
+
+
+{
+nombre:"Carmen Cartagena",
+
+
+img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1200",
+
+
+coords:[10.422,-75.547]
+}
+
+
+],
+
+
+turismo:[
+
+
+{
+nombre:"Castillo San Felipe",
+
+
+img:"https://cdn.colombia.com/sdi/2013/10/13/castillo-san-felipe-de-barajas-762804.jpg",
+
+
+coords:[10.422,-75.539]
+},
+
+
+{
+nombre:"Getsemaní",
+
+
+img:"https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?q=80&w=1200",
+
+
+coords:[10.420,-75.551]
+}
+
+
+]
+
+
+},
+
+
+{
+nombre:"Bogotá",
+
+
+coords:[4.711,-74.072],
+
+
+img:"https://i.ytimg.com/vi/n7xQVRCeTq4/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLBOil-ZxhTH6_cacKmZCT_pjHZe8Q",
+
+
+historia:
+"Bogotá fue fundada en 1538 sobre territorios indígenas muiscas y fue el centro político del Virreinato de la Nueva Granada.",
+
+
+cultura:
+"Bogotá es el corazón cultural del país, destacando por sus museos, universidades, gastronomía y arte urbano.",
+
+
+eventos:
+"Festival Iberoamericano de Teatro y Rock al Parque.",
+
+
+restaurantes:[
+
+
+{
+nombre:"Leo",
+
+
+img:"https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=1200",
+
+
+coords:[4.653,-74.055]
+},
+
+
+{
+nombre:"Andrés DC",
+
+
+img:"https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1200",
+
+
+coords:[4.694,-74.043]
+}
+
+
+],
+
+
+turismo:[
+
+
+{
+nombre:"Monserrate",
+
+
+img:"https://caracoltv.brightspotcdn.com/dims4/default/69561db/2147483647/strip/true/crop/1280x720+0+0/resize/1280x720!/format/webp/quality/75/?url=https%3A%2F%2Fcaracol-brightspot.s3.us-west-2.amazonaws.com%2Fab%2F7f%2F205dcfc64dfab4f6a97b07d8bdb2%2Ftarifas-y-horarios-del-teleferico-y-funicular-para-monserrate.jpg",
+
+
+coords:[4.605,-74.056]
+},
+
+
+{
+nombre:"Museo del Oro",
+
+
+img:"https://d3nmwx7scpuzgc.cloudfront.net/sites/default/files/articulos/museo_del_oro-640x400.jpg",
+
+
+coords:[4.601,-74.072]
+}
+
+
+]
+
+
+},
+
+
+{
+nombre:"Medellín",
+
+
+coords:[6.244,-75.581],
+
+
+img:"https://i.postimg.cc/jqfXtm0y/Chat-GPT-Image-11-may-2026-15-17-30.png",
+
+
+historia:
+"Medellín pasó de ser una ciudad industrial a convertirse en referente mundial de innovación y transformación urbana.",
+
+
+cultura:
+"Conocida como la ciudad de la eterna primavera por su clima agradable y la hospitalidad paisa.",
+
+
+eventos:
+"Feria de las Flores celebrada cada agosto.",
+
+
+restaurantes:[
+
+
+{
+nombre:"El Cielo",
+
+
+img:"https://images.unsplash.com/photo-1541544181051-e46607b7c11a?q=80&w=1200",
+
+
+coords:[6.208,-75.565]
+},
+
+
+{
+nombre:"Carmen Medellín",
+
+
+img:"https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1200",
+
+
+coords:[6.210,-75.567]
+}
+
+
+],
+
+
+turismo:[
+
+
+{
+nombre:"Comuna 13",
+
+
+img:"https://images.unsplash.com/photo-1544989164-31d2f84c645f?q=80&w=1200",
+
+
+coords:[6.255,-75.623]
+},
+
+
+{
+nombre:"Guatapé",
+
+
+img:"https://images.unsplash.com/photo-1622396481378-3f0e35f9f2c6?q=80&w=1200",
+
+
+coords:[6.234,-75.163]
+}
+
+
+]
+
+
+},
+
+
+{
+nombre:"Santa Marta",
+
+
+coords:[11.244203,-74.211944],
+
+
+img:"https://i.postimg.cc/wMP8Xr2C/Chat-GPT-Image-11-may-2026-15-31-00.png",
+
+
+historia:
+"Fundada el 29 de julio de 1525 por Rodrigo de Bastidas, Santa Marta es la ciudad más antigua de Colombia y una de las primeras de Sudamérica. Situada en el Caribe, al pie de la Sierra Nevada, fue un punto estratégico colonial que unió culturas indígenas y europeas. Cumplió 500 años como símbolo de resistencia, naturaleza y cultura, siendo conocida también por ser el lugar de fallecimiento de Simón Bolívar.",
+
+
+cultura:
+"Santa Marta, fundada en 1525, celebra 500 años en 2025 como un epicentro de cultura caribeña, historia colonial y legado indígena. Su identidad se basa en la unión de tradiciones Kogui, Arhuaca, Wiwa y Kankuamo de la Sierra Nevada, junto con influencias afrocolombianas y la herencia hispánica en su centro histórico.",
+
+
+eventos:
+"Santa Marta en 2026 destaca por sus celebraciones de 500 años, destacando la Fiesta del Mar (julio) con conciertos y deportes acuáticos, la Semana Cultural UNIMAGDALENA (mayo) y una nutrida Agenda Cultural 500 años.",
+
+
+restaurantes:[
+
+
+{
+nombre:"Artesanal Restobar",
+
+
+img:"https://artesanalrestobar.com/wp-content/uploads/2024/09/DSC_1623-scaled.jpg",
+
+
+coords:[11.241782,-74.211587]
+},
+
+
+{
+nombre:"Ouzo Santa Marta",
+
+
+img:"https://images.happycow.net/venues/1024/41/35/hcmp413539_2847678.jpeg",
+
+
+coords:[11.242179,-74.211393]
+}
+
+
+],
+
+
+turismo:[
+
+
+{
+nombre:"Cabo San Juan",
+
+
+img:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200",
+
+
+coords:[11.300,-73.942]
+},
+
+
+{
+nombre:"Playa Cristal",
+
+
+img:"https://images.unsplash.com/photo-1493558103817-58b2924bce98?q=80&w=1200",
+
+
+coords:[11.307,-73.949]
+}
+
+
+]
+
+
+}
+
+
+];
+
+
+/* ================= MAPA ================= */
+
+
+const map = L.map('map')
+.setView([4.5,-74],5);
+
+
+L.tileLayer(
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+{
+attribution:'© OpenStreetMap'
+}
+).addTo(map);
+
+
+/* ================= MARCADORES ================= */
+
+
+lugares.forEach(l=>{
+
+
+L.marker(l.coords)
+
+
+.addTo(map)
+
+
+.bindPopup(`
+<b>${l.nombre}</b><br><br>
+
+
+<button onclick="abrirModal('${l.nombre}')">
+
+
+Ver información
+
+
+</button>
+`);
+
+
+});
+
+
+/* ================= RENDER ================= */
+
+
+function render(){
+
+
+const cont =
+document.getElementById("lugares");
+
+
+cont.innerHTML = "";
+
+
+lugares.forEach(l=>{
+
+
+cont.innerHTML += `
+
+
+<div class="card"
+onclick="abrirModal('${l.nombre}')">
+
+
+<img src="${l.img}" alt="${l.nombre}">
+
+
+<div class="card-content">
+
+
+<h3>${l.nombre}</h3>
+
+
+<p>${l.cultura}</p>
+
+
+</div>
+
+
+</div>
+
+
+`;
+
+
+});
+
+
+}
+
+
+render();
+
+
+/* ================= MODAL ================= */
+
+
+function abrirModal(nombre){
+
+
+const l =
+lugares.find(x=>x.nombre===nombre);
+
+
+document.getElementById("detalle").innerHTML = `
+
+
+<h2>${l.nombre}</h2>
+
+
+<img
+class="modal-banner"
+src="${l.img}"
+alt="${l.nombre}"
+>
+
+
+<div class="section">
+
+
+<h3>Historia</h3>
+
+
+<p>${l.historia}</p>
+
+
+</div>
+
+
+<div class="section">
+
+
+<h3>Cultura</h3>
+
+
+<p>${l.cultura}</p>
+
+
+</div>
+
+
+<div class="section">
+
+
+<h3>Eventos importantes</h3>
+
+
+<p>${l.eventos}</p>
+
+
+</div>
+
+
+<!-- SITIOS TURÍSTICOS -->
+
+
+<div class="section">
+
+
+<h3>Sitios turísticos</h3>
+
+
+<div class="items-grid">
+
+
+${l.turismo.map(t=>`
+
+
+<div class="item-card">
+
+
+<img src="${t.img}">
+
+
+<h4>${t.nombre}</h4>
+
+
+<button
+class="btn"
+onclick="comoLlegar(
+${t.coords[0]},
+${t.coords[1]},
+'${t.nombre}'
+)">
+ Cómo llegar
+</button>
+
+
+</div>
+
+
+`).join("")}
+
+
+</div>
+
+
+</div>
+
+
+<!-- RESTAURANTES -->
+
+
+<div class="section">
+
+
+<h3>Restaurantes recomendados</h3>
+
+
+<div class="items-grid">
+
+
+${l.restaurantes.map(r=>`
+
+
+<div class="item-card">
+
+
+<img src="${r.img}">
+
+
+<h4>${r.nombre}</h4>
+
+
+<button
+class="btn"
+onclick="comoLlegar(
+${r.coords[0]},
+${r.coords[1]},
+'${r.nombre}'
+)">
+ Cómo llegar
+</button>
+
+
+</div>
+
+
+`).join("")}
+
+
+</div>
+
+
+</div>
+
+
+<button
+class="btn"
+onclick="reservar('${l.nombre}')">
+
+
+ Reservar en Airbnb
+
+
+</button>
+
+
+`;
+
+
+document.getElementById("modal")
+.style.display = "flex";
+
+
+}
+
+
+/* ================= CERRAR ================= */
+
+
+function cerrarModal(){
+
+
+document.getElementById("modal")
+.style.display = "none";
+
+
+}
+
+
+
+
+/* ================= CÓMO LLEGAR  ================= */
+
+
+let controlRuta = null;
+
+
+function comoLlegar(lat,lng,nombre){
+
+
+    /* ABRIR GOOGLE MAPS PRIMERO */
+
+
+    window.open(
+    `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+    "_blank"
+    );
+
+
+    /* ELIMINAR RUTA ANTERIOR */
+
+
+    if(controlRuta){
+        map.removeControl(controlRuta);
+    }
+
+
+    /* ANIMACIÓN */
+
+
+    map.flyTo([lat,lng],15,{
+        animate:true,
+        duration:2
+    });
+
+
+    /* MARCADOR */
+
+
+    L.marker([lat,lng])
+
+
+    .addTo(map)
+
+
+    .bindPopup(`
+        <b>${nombre}</b><br>
+        Destino seleccionado
+    `)
+
+
+    .openPopup();
+
+
+    /* RUTA */
+
+
+    controlRuta = L.Routing.control({
+
+
+        waypoints:[
+
+
+            L.latLng(userLat,userLng),
+            L.latLng(lat,lng)
+
+
+        ],
+
+
+        routeWhileDragging:false,
+
+
+        show:false,
+
+
+        addWaypoints:false,
+
+
+        draggableWaypoints:false,
+
+
+        fitSelectedRoutes:true,
+
+
+        lineOptions:{
+            styles:[
+                {
+                    color:'#243c8f',
+                    opacity:0.8,
+                    weight:6
+                }
+            ]
+        }
+
+
+    }).addTo(map);
+
+
+}
+/* GOOGLE MAPS */
+
+
+window.open(
+`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+"_blank"
+);
+
+
+/* ================= AIRBNB ================= */
+
+
+function reservar(lugar){
+
+
+window.open(
+`https://www.airbnb.com/s/${lugar}/homes`,
+"_blank"
+);
+
+
+}
+
+
+</script>
+
+
+</body>
+</html>
