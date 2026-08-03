@@ -22,6 +22,61 @@ namespace tablas_ecoscolombia
         }
     } 
 }
+public void EntityConfiguration(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Usuario>().ToTable("Usuario");
+
+    modelBuilder.Entity<Usuario>()
+        .HasKey(u => u.idUsuario);
+
+    modelBuilder.Entity<Usuario>()
+        .Property(u => u.idUsuario)
+        .HasColumnName("idUsuario")
+        .ValueGeneratedOnAdd();
+
+    modelBuilder.Entity<Usuario>()
+        .Property(u => u.Nombre)
+        .HasColumnName("Nombre")
+        .HasMaxLength(100)
+        .IsRequired();
+
+    modelBuilder.Entity<Usuario>()
+        .Property(u => u.Correo)
+        .HasColumnName("Correo")
+        .HasMaxLength(150)
+        .IsRequired();
+
+    modelBuilder.Entity<Usuario>()
+        .Property(u => u.PaisOrigen)
+        .HasColumnName("PaisOrigen")
+        .HasMaxLength(100);
+
+    modelBuilder.Entity<Usuario>()
+        .Property(u => u.IdiomaPreferido)
+        .HasColumnName("IdiomaPreferido")
+        .HasMaxLength(50);
+
+    modelBuilder.Entity<Usuario>()
+        .Property(u => u.TipoUsuario)
+        .HasColumnName("TipoUsuario")
+        .HasMaxLength(50);
+
+    modelBuilder.Entity<Usuario>()
+        .HasOne(u => u.Idioma)
+        .WithMany()
+        .HasForeignKey(u => u.idIdioma)
+        .OnDelete(DeleteBehavior.Restrict);
+
+    modelBuilder.Entity<Usuario>()
+        .HasMany(u => u.Resenas)
+        .WithOne(r => r.Usuario)
+        .HasForeignKey(r => r.idUsuario);
+
+    modelBuilder.Entity<Usuario>()
+        .HasMany(u => u.Notificaciones)
+        .WithOne(n => n.Usuario)
+        .HasForeignKey(n => n.idUsuario);
+}
 
 
  
