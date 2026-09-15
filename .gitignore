@@ -3,3 +3,9 @@
 ################################################################################
 
 /.vs
+node_modules/
+frontend-figma/node_modules/
+dist/
+frontend-figma/dist/
+.env
+frontend-figma/.env
