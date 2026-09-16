@@ -7,6 +7,7 @@ import {
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import colombiaLogo from "@/imports/image-removebg-preview.png";
 import colombiaMapImg from "@/imports/stylized-simple-outline-map-of-colombia-icon-blue-sketch-map-of-colombia-illustration-vector-removebg-preview.png";
+import { login } from "@/services/api";
 
 const C = {
   navy: "#243C8F",
@@ -866,7 +867,7 @@ const destinations = [
 
 type TabKey = "historia" | "cultura" | "eventos" | "sitios" | "restaurantes";
 type Screen = "splash" | "login" | "main";
-type UserType = { name: string; email: string };
+type UserType = { name: string; email: string; token: string };
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
@@ -945,13 +946,21 @@ function LoginScreen({ onLogin, t }: { onLogin: (u: UserType) => void; t: (k: st
   const [passF, setPassF] = useState(false); const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setError("");
     if (!email || !password) { setError("Por favor completa todos los campos."); return; }
     setLoading(true);
-    setTimeout(() => { setLoading(false); const raw = email.split("@")[0].replace(/[._]/g, " "); onLogin({ name: raw.charAt(0).toUpperCase() + raw.slice(1), email }); }, 1200);
+    try {
+      const token = await login(email, password);
+      const raw = email.split("@")[0].replace(/[._]/g, " ");
+      onLogin({ name: raw.charAt(0).toUpperCase() + raw.slice(1), email, token });
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "No fue posible iniciar sesión.");
+    } finally {
+      setLoading(false);
+    }
   };
-  const handleGoogle = () => { setLoading(true); setTimeout(() => { setLoading(false); onLogin({ name: "Viajero Colombia", email: "viajero@gmail.com" }); }, 900); };
+  const handleGoogle = () => { setError("El inicio de sesión con Google aún no está conectado al backend."); };
 
   return (
     <div className="min-h-screen flex" style={{ fontFamily: "'Poppins', sans-serif", background: C.bg }}>
