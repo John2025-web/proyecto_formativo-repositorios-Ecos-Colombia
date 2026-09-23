@@ -2,19 +2,64 @@
 using Microsoft.AspNetCore.Mvc;
 using ApiPrueba.models;
 using ApiPrueba.Repositories.@interface;
+using ApiPrueba.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApiPrueba.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Administrador")]
     public class ADMINISTRADORESController : ControllerBase
     {
         private readonly IADMINISTRADORESRepository _administradoresController;
+        private readonly AppDbContext _context;
 
-        public ADMINISTRADORESController(IADMINISTRADORESRepository administradoresRepository)
+        public ADMINISTRADORESController(IADMINISTRADORESRepository administradoresRepository, AppDbContext context)
         {
             _administradoresController = administradoresRepository;
+            _context = context;
+        }
+
+        [HttpPost("crear")]
+        public async Task<IActionResult> CrearAdministrador([FromBody] CrearAdministradorRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Nombre)
+                || string.IsNullOrWhiteSpace(request.Correo)
+                || string.IsNullOrWhiteSpace(request.Password))
+            {
+                return BadRequest(new { mensaje = "Nombre, correo y contraseña son obligatorios." });
+            }
+
+            if (request.Password.Length < 6)
+            {
+                return BadRequest(new { mensaje = "La contraseña debe tener al menos 6 caracteres." });
+            }
+
+            var correo = request.Correo.Trim();
+            var nombre = request.Nombre.Trim();
+            var exists = await _context.ADMINISTRADORES.AnyAsync(x => x.Correo == correo || x.Nombre == nombre);
+            if (exists)
+            {
+                return Conflict(new { mensaje = "Ya existe un administrador con ese nombre o correo." });
+            }
+
+            var administrador = new ADMINISTRADORES
+            {
+                Nombre = nombre,
+                Correo = correo,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+            };
+
+            _context.ADMINISTRADORES.Add(administrador);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(ObtenerId), new { id = administrador.IdAdmin }, new
+            {
+                administrador.IdAdmin,
+                administrador.Nombre,
+                administrador.Correo
+            });
         }
 
       
@@ -252,5 +297,12 @@ namespace ApiPrueba.Controllers
                 });
             }
         }
+    }
+
+    public class CrearAdministradorRequest
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Correo { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 }

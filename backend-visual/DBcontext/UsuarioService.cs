@@ -6,7 +6,7 @@ namespace ApiPrueba.DBcontext;
 
     public class UsuarioService : DbContext
     {
-        public UsuarioService(DbContextOptions options) : base(options)
+        public UsuarioService(DbContextOptions<UsuarioService> options) : base(options)
         {
         }
         public DbSet<Usuario> usuario { get; set; }
@@ -31,6 +31,8 @@ namespace ApiPrueba.DBcontext;
             modelBuilder.Entity<Usuario>().Property(u => u.TipoUsuario).HasColumnName("TipoUsuario").HasMaxLength(50);
 
             modelBuilder.Entity<Usuario>().Property(u => u.PasswordHash).HasColumnName("Contraseña").HasMaxLength(100).IsRequired();
+            modelBuilder.Entity<Usuario>().Property(u => u.Activo).HasColumnName("Activo").IsRequired();
+            modelBuilder.Entity<Usuario>().Property(u => u.MotivoDeshabilitacion).HasColumnName("MotivoDeshabilitacion").HasMaxLength(500);
 
     }
     public async Task<bool> SaveAsync()

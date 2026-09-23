@@ -2,6 +2,8 @@
 using ApiPrueba.Repositorios.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ApiPrueba.DBcontext;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApiPrueba.Controllers
 {
@@ -11,10 +13,12 @@ namespace ApiPrueba.Controllers
     public class RecenaController : ControllerBase
     {
         private readonly IRecenaRepo _recenaController;
+        private readonly RecenaService _resenas;
 
-        public RecenaController(IRecenaRepo RecenaRepository)
+        public RecenaController(IRecenaRepo RecenaRepository, RecenaService resenas)
         {
             _recenaController = RecenaRepository;
+            _resenas = resenas;
         }
 
         [HttpGet]
@@ -214,6 +218,7 @@ namespace ApiPrueba.Controllers
         }
 
         [HttpDelete]
+        [Authorize(Roles = "Administrador")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -261,5 +266,28 @@ namespace ApiPrueba.Controllers
                 }
             }
         }
+
+        [HttpPost("{id}/censurar")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Censurar(int id, [FromBody] CensurarResenaRequest request)
+        {
+            var resena = await _resenas.recena.FirstOrDefaultAsync(x => x.idRecena == id);
+            if (resena == null) return NotFound(new { mensaje = "Reseña no encontrada." });
+            if (request.Palabras == null || request.Palabras.Count == 0)
+                return BadRequest(new { mensaje = "Indica al menos una palabra para censurar." });
+
+            var comentario = resena.Comentario ?? string.Empty;
+            foreach (var palabra in request.Palabras.Where(x => !string.IsNullOrWhiteSpace(x)))
+                comentario = System.Text.RegularExpressions.Regex.Replace(comentario, $"\\b{System.Text.RegularExpressions.Regex.Escape(palabra.Trim())}\\b", "***", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            resena.Comentario = comentario;
+            await _resenas.SaveChangesAsync();
+            return Ok(resena);
+        }
+    }
+
+    public class CensurarResenaRequest
+    {
+        public List<string> Palabras { get; set; } = new();
     }
 }

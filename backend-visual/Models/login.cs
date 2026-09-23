@@ -4,5 +4,6 @@
         {
             public string Usuario { get; set; } = string.Empty;
             public string contraseña { get; set; } = string.Empty;
+            public string Rol { get; set; } = string.Empty;
         }
 }

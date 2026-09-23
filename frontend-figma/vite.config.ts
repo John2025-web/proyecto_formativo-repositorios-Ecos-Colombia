@@ -24,6 +24,17 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    host: '0.0.0.0',
+    allowedHosts: ['.app.github.dev'],
+    proxy: {
+      '/api': {
+        target: 'https://localhost:7119',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
   resolve: {
     alias: {
       // Alias @ to the src directory

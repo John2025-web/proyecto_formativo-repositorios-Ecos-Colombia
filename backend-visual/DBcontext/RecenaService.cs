@@ -5,7 +5,7 @@ namespace ApiPrueba.DBcontext
 {
     public class RecenaService : DbContext
     {
-        public RecenaService(DbContextOptions options) : base(options)
+        public RecenaService(DbContextOptions<RecenaService> options) : base(options)
         {
         }
         public DbSet<Recena> recena { get; set; }
@@ -19,17 +19,17 @@ namespace ApiPrueba.DBcontext
         {
             modelBuilder.Entity<Recena>().ToTable("Resena").HasKey(r => r.idRecena);
 
-            modelBuilder.Entity<Recena>().Property(r => r.idRecena).HasColumnName("idRecena").ValueGeneratedOnAdd();
+            modelBuilder.Entity<Recena>().Property(r => r.idRecena).HasColumnName("id_resena").ValueGeneratedOnAdd();
 
             modelBuilder.Entity<Recena>().Property(r => r.Comentario).HasColumnName("Comentario").HasMaxLength(500);
 
             modelBuilder.Entity<Recena>().Property(r => r.Calificacion).HasColumnName("Calificacion").IsRequired();
 
             modelBuilder.Entity<Recena>().Property(r => r.Fecha).HasColumnName("Fecha");
+            modelBuilder.Entity<Recena>().Property(r => r.Visible).HasColumnName("Visible").IsRequired();
 
-            modelBuilder.Entity<Recena>().HasOne(r => r.Usuario).WithMany().HasForeignKey(r => r.idUsuario).OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Recena>().Property(r => r.idLugar).HasColumnName("idLugar");
+            modelBuilder.Entity<Recena>().Property(r => r.idUsuario).HasColumnName("id_usuario");
+            modelBuilder.Entity<Recena>().Property(r => r.idLugar).HasColumnName("id_lugar");
         }
         public async Task<bool> SaveAsync()
         {

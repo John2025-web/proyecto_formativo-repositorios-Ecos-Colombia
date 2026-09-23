@@ -4,25 +4,18 @@ import { login } from "../services/api";
 function Login() {
 
     const [usuario, setUsuario] = useState("");
-    const [contraseña, setContraseña] = useState("");
+    const [password, setPassword] = useState("");
 
     const handleLogin = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        try {
-            const data = await login(usuario, contraseña);
+    try {
+        await login(usuario, password, "Usuario");
 
-            console.log("Login exitoso:", data);
-
-            // El JWT que devuelve tu backend
-            console.log("Token:", data.Token);
-
-        } catch (error) {
-            console.error(error);
-            alert(error.message);
-        }
-    };
-
+    } catch (error) {
+        alert(error.message);
+    }
+};
     return (
         <div>
             <h1>Iniciar sesión</h1>
@@ -31,7 +24,7 @@ function Login() {
 
                 <input
                     type="text"
-                    placeholder="Usuario"
+                    placeholder="Usuario o correo electrónico"
                     value={usuario}
                     onChange={(e) => setUsuario(e.target.value)}
                 />
@@ -39,8 +32,8 @@ function Login() {
                 <input
                     type="password"
                     placeholder="Contraseña"
-                    value={contraseña}
-                    onChange={(e) => setContraseña(e.target.value)}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                 />
 
                 <button type="submit">

@@ -2,19 +2,23 @@
 using ApiPrueba.Repositorios.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ApiPrueba.DBcontext;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApiPrueba.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Administrador")]
     public class UserController : ControllerBase
     {
         private readonly IUsuarioRepo _usuarioController;
+        private readonly UsuarioService _usuarios;
 
-        public UserController(IUsuarioRepo UsuarioRepository)
+        public UserController(IUsuarioRepo UsuarioRepository, UsuarioService usuarios)
         {
             _usuarioController = UsuarioRepository;
+            _usuarios = usuarios;
         }
 
         [HttpGet("obtenerUsuario")]
@@ -38,7 +42,17 @@ namespace ApiPrueba.Controllers
                         });
                     }
 
-                    return Ok(response);
+                    return Ok(response.Select(usuario => new
+                    {
+                        usuario.idUsuario,
+                        usuario.Nombre,
+                        usuario.Correo,
+                        usuario.PaisOrigen,
+                        usuario.IdiomaPreferido,
+                        usuario.TipoUsuario,
+                        usuario.Activo,
+                        usuario.MotivoDeshabilitacion
+                    }));
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -261,5 +275,25 @@ namespace ApiPrueba.Controllers
                 }
             }
         }
+
+        [HttpPatch("{id}/estado")]
+        public async Task<IActionResult> CambiarEstado(int id, [FromBody] EstadoUsuarioRequest request)
+        {
+            var usuario = await _usuarios.usuario.FirstOrDefaultAsync(x => x.idUsuario == id);
+            if (usuario == null) return NotFound(new { mensaje = "Usuario no encontrado." });
+            if (!request.Activo && string.IsNullOrWhiteSpace(request.Motivo))
+                return BadRequest(new { mensaje = "Debes indicar el motivo de deshabilitación." });
+
+            usuario.Activo = request.Activo;
+            usuario.MotivoDeshabilitacion = request.Activo ? null : request.Motivo!.Trim();
+            await _usuarios.SaveChangesAsync();
+            return Ok(new { usuario.idUsuario, usuario.Activo, usuario.MotivoDeshabilitacion });
+        }
+    }
+
+    public class EstadoUsuarioRequest
+    {
+        public bool Activo { get; set; }
+        public string? Motivo { get; set; }
     }
 }

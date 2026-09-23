@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace ApiPrueba.models
 {
@@ -13,6 +14,8 @@ namespace ApiPrueba.models
         [Required(ErrorMessage = "Campo Requerido")]
         public string Correo { get; set; }
 
+        [JsonIgnore]
+        public string? PasswordHash { get; set; }
 
     }
 }

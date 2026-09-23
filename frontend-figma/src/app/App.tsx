@@ -2,12 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import {
   Mail, Lock, Eye, EyeOff, MapPin, ChevronRight,
   X, Navigation, Calendar, Utensils, Landmark, BookOpen,
-  Star, Menu, Globe, LogOut, User, Maximize2, Minimize2, Check,
+  Star, Menu, Globe, LogOut, User, Check, ShieldCheck, UserRound, UserPlus, ArrowLeft, Users, MessageSquare, FilePenLine, Ban, Trash2, RefreshCw, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import colombiaLogo from "@/imports/image-removebg-preview.png";
-import colombiaMapImg from "@/imports/stylized-simple-outline-map-of-colombia-icon-blue-sketch-map-of-colombia-illustration-vector-removebg-preview.png";
-import { login } from "@/services/api";
+import { login, logout, registerUser, getAdminUsers, getAdminReviews, getAdministrators, createAdministrator, setUserStatus, censorReview, deleteReview, type UserRole, type AdminUser, type AdminReview, type AdminAccount } from "@/services/api";
 
 const C = {
   navy: "#243C8F",
@@ -32,7 +31,7 @@ const TR: Record<string, Record<string, string>> = {
     orContinue: "o continúa con", noAccount: "¿No tienes cuenta?", register: "Regístrate",
     signIn: "Iniciar sesión", signingIn: "Iniciando sesión...", continueGoogle: "Continuar con Google",
     welcome: "Bienvenido", signInContinue: "Inicia sesión para continuar", forgotPassword: "¿Olvidaste tu contraseña?",
-    email: "Correo electrónico", password: "Contraseña", terms: "Términos de servicio", privacy: "Política de privacidad",
+    email: "Usuario", password: "Contraseña", terms: "Términos de servicio", privacy: "Política de privacidad",
     destMarker: "Destino", cityMarker: "Ciudad",
   },
   EN: {
@@ -867,7 +866,7 @@ const destinations = [
 
 type TabKey = "historia" | "cultura" | "eventos" | "sitios" | "restaurantes";
 type Screen = "splash" | "login" | "main";
-type UserType = { name: string; email: string; token: string };
+type UserType = { name: string; email: string; token: string; role: UserRole };
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
@@ -883,10 +882,11 @@ export default function App() {
     setTimeout(() => setScreen("main"), 2800);
   };
 
-  const handleLogout = () => { setUser(null); setScreen("login"); };
+  const handleLogout = () => { void logout(); setUser(null); setScreen("login"); };
 
   if (screen === "login") return <LoginScreen onLogin={handleLogin} t={t} />;
   if (screen === "splash") return <SplashScreen user={user!} />;
+  if (user?.role === "Administrador") return <AdminScreen user={user} onLogout={handleLogout} />;
   return <MainScreen user={user!} onLogout={handleLogout} t={t} lang={lang} setLang={setLang} />;
 }
 
@@ -941,19 +941,21 @@ function SplashScreen({ user }: { user: UserType }) {
 
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
 function LoginScreen({ onLogin, t }: { onLogin: (u: UserType) => void; t: (k: string) => string }) {
-  const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
+  const [usuario, setUsuario] = useState(""); const [password, setPassword] = useState("");
+  const [role, setRole] = useState<UserRole>("Usuario"); const [registerOpen, setRegisterOpen] = useState(false);
   const [showPass, setShowPass] = useState(false); const [emailF, setEmailF] = useState(false);
   const [passF, setPassF] = useState(false); const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setError("");
-    if (!email || !password) { setError("Por favor completa todos los campos."); return; }
+    if (!usuario || !password) { setError("Por favor completa todos los campos."); return; }
     setLoading(true);
     try {
-      const token = await login(email, password);
-      const raw = email.split("@")[0].replace(/[._]/g, " ");
-      onLogin({ name: raw.charAt(0).toUpperCase() + raw.slice(1), email, token });
+      const data = await login(usuario, password, role);
+      const { token } = data;
+      const raw = usuario.split("@")[0].replace(/[._]/g, " ");
+      onLogin({ name: usuario.charAt(0).toUpperCase() + usuario.slice(1), email: usuario, token, role });
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "No fue posible iniciar sesión.");
     } finally {
@@ -998,12 +1000,23 @@ function LoginScreen({ onLogin, t }: { onLogin: (u: UserType) => void; t: (k: st
               <p className="text-sm" style={{ color: "#9b9baf" }}>{t("signInContinue")}</p>
             </div>
             {error && <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: "rgba(238,66,102,0.08)", color: C.red, border: "1px solid rgba(238,66,102,0.2)" }}>{error}</div>}
+            <div className="mb-5">
+              <label className="text-xs font-semibold" style={{ color: C.navy }}>Ingresar como</label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {(["Usuario", "Administrador"] as UserRole[]).map((option) => {
+                  const selected = role === option;
+                  return <button key={option} type="button" onClick={() => setRole(option)} className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs transition-all" style={{ color: selected ? C.white : C.navy, background: selected ? C.navy : "#f7f7fb", border: `1px solid ${selected ? C.navy : "rgba(36,60,143,0.15)"}`, fontWeight: 600 }}>
+                    {option === "Administrador" ? <ShieldCheck size={15} /> : <UserRound size={15} />}{option}
+                  </button>;
+                })}
+              </div>
+            </div>
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold" style={{ color: C.navy }}>{t("email")}</label>
+                <label className="text-xs font-semibold" style={{ color: C.navy }}>Usuario o correo</label>
                 <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200" style={{ border: `1.5px solid ${emailF ? C.navy : "rgba(36,60,143,0.18)"}`, background: emailF ? "rgba(36,60,143,0.025)" : "#fafafa", boxShadow: emailF ? "0 0 0 3px rgba(36,60,143,0.08)" : "none" }}>
                   <Mail size={16} style={{ color: emailF ? C.navy : "#b0b0c4", flexShrink: 0 }} />
-                  <input type="email" placeholder="tucorreo@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} onFocus={() => setEmailF(true)} onBlur={() => setEmailF(false)} className="flex-1 bg-transparent outline-none text-sm" style={{ color: "#2a2a3e", fontFamily: "'Poppins', sans-serif" }} />
+                  <input type="text" placeholder="Usuario o correo electrónico" value={usuario} onChange={(e) => setUsuario(e.target.value)} onFocus={() => setEmailF(true)} onBlur={() => setEmailF(false)} className="flex-1 bg-transparent outline-none text-sm" style={{ color: "#2a2a3e", fontFamily: "'Poppins', sans-serif" }} />
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
@@ -1031,7 +1044,7 @@ function LoginScreen({ onLogin, t }: { onLogin: (u: UserType) => void; t: (k: st
               </button>
             </form>
             <p className="text-center text-sm mt-8" style={{ color: "#9b9baf" }}>
-              {t("noAccount")}{" "}<a href="#" className="font-semibold hover:opacity-70 transition-opacity" style={{ color: C.navy, fontWeight: 600 }}>{t("register")}</a>
+              {t("noAccount")}{" "}<button type="button" onClick={() => setRegisterOpen(true)} className="font-semibold hover:opacity-70 transition-opacity" style={{ color: C.navy, fontWeight: 600 }}>{t("register")}</button>
             </p>
           </div>
           <p className="text-center text-xs mt-6" style={{ color: "#c0c0d0", fontWeight: 300 }}>
@@ -1039,11 +1052,206 @@ function LoginScreen({ onLogin, t }: { onLogin: (u: UserType) => void; t: (k: st
           </p>
         </div>
       </div>
+      {registerOpen && <RegisterModal onClose={() => setRegisterOpen(false)} onRegistered={(email) => { setUsuario(email); setRole("Usuario"); setRegisterOpen(false); setError("Registro exitoso. Ahora inicia sesión como Usuario."); }} />}
     </div>
   );
 }
 
+function RegisterModal({ onClose, onRegistered }: { onClose: () => void; onRegistered: (email: string) => void }) {
+  const [name, setName] = useState(""); const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState(""); const [error, setError] = useState(""); const [loading, setLoading] = useState(false);
+
+  const handleRegister = async (event: React.FormEvent) => {
+    event.preventDefault(); setError("");
+    if (password !== confirmPassword) { setError("Las contraseñas no coinciden."); return; }
+    setLoading(true);
+    try {
+      await registerUser({ nombre: name, correo: email, password });
+      onRegistered(email);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "No fue posible crear la cuenta.");
+    } finally { setLoading(false); }
+  };
+
+  return <div className="fixed inset-0 z-[70] flex items-center justify-center px-5" style={{ background: "rgba(20,28,70,0.45)" }}>
+    <div className="w-full max-w-md bg-white rounded-2xl px-8 py-8" style={{ boxShadow: "0 20px 60px rgba(36,60,143,0.25)" }}>
+      <div className="flex items-center justify-between mb-6"><div><h2 className="text-2xl font-bold" style={{ color: C.navy }}>Crear cuenta</h2><p className="text-sm mt-1" style={{ color: "#9b9baf" }}>Tu cuenta se registrará como Usuario.</p></div><button type="button" onClick={onClose} aria-label="Cerrar registro" style={{ color: "#9b9baf" }}><X size={20} /></button></div>
+      {error && <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: "rgba(238,66,102,0.08)", color: C.red }}>{error}</div>}
+      <form onSubmit={handleRegister} className="flex flex-col gap-4">
+        <input required minLength={2} value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre completo" className="px-4 py-3 rounded-xl outline-none text-sm" style={{ border: "1px solid rgba(36,60,143,0.18)" }} />
+        <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Correo electrónico" className="px-4 py-3 rounded-xl outline-none text-sm" style={{ border: "1px solid rgba(36,60,143,0.18)" }} />
+        <input required minLength={6} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña (mínimo 6 caracteres)" className="px-4 py-3 rounded-xl outline-none text-sm" style={{ border: "1px solid rgba(36,60,143,0.18)" }} />
+        <input required minLength={6} type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirmar contraseña" className="px-4 py-3 rounded-xl outline-none text-sm" style={{ border: "1px solid rgba(36,60,143,0.18)" }} />
+        <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white text-sm" style={{ background: C.red, fontWeight: 600 }}>{loading ? "Creando cuenta..." : <><UserPlus size={16} /> Crear cuenta</>}</button>
+      </form>
+      <button type="button" onClick={onClose} className="w-full flex items-center justify-center gap-2 mt-4 text-sm" style={{ color: C.navy }}><ArrowLeft size={15} /> Volver al inicio de sesión</button>
+    </div>
+  </div>;
+}
+
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────────
+function AdminScreen({ user, onLogout }: { user: UserType; onLogout: () => void }) {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [reviews, setReviews] = useState<AdminReview[]>([
+    { idRecena: 1, idUsuario: 1, idLugar: 12, comentario: "Un lugar hermoso, la atención fue excelente.", calificacion: 5, visible: true },
+    { idRecena: 2, idUsuario: 2, idLugar: 8, comentario: "La experiencia fue buena, pero el servicio puede mejorar.", calificacion: 4, visible: true },
+  ]);
+  const [section, setSection] = useState<"overview" | "users" | "reviews" | "content" | "administrators">("overview");
+  const [reasonFor, setReasonFor] = useState<number | null>(null);
+  const [reason, setReason] = useState("");
+  const [wordsFor, setWordsFor] = useState<number | null>(null);
+  const [words, setWords] = useState("");
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    getAdminUsers(user.token)
+      .then((data) => {
+        if (active) setUsers(data);
+      })
+      .catch((requestError) => {
+        if (active) setNotice(requestError instanceof Error ? requestError.message : "No fue posible cargar los usuarios.");
+      });
+    return () => { active = false; };
+  }, [user.token]);
+
+  const toggleUser = (item: AdminUser) => {
+    if (item.activo) { setReasonFor(item.idUsuario); setReason(""); return; }
+    setUserStatus(user.token, item.idUsuario, true)
+      .then(() => {
+        setUsers((current) => current.map((userItem) => userItem.idUsuario === item.idUsuario ? { ...userItem, activo: true, motivoDeshabilitacion: null } : userItem));
+        setNotice("Usuario habilitado correctamente.");
+      })
+      .catch((requestError) => setNotice(requestError instanceof Error ? requestError.message : "No fue posible habilitar el usuario."));
+  };
+
+  const disableUser = async () => {
+    if (!reason.trim() || reasonFor === null) return;
+    try {
+      await setUserStatus(user.token, reasonFor, false, reason);
+      setUsers((current) => current.map((item) => item.idUsuario === reasonFor ? { ...item, activo: false, motivoDeshabilitacion: reason.trim() } : item));
+      setReasonFor(null); setReason(""); setNotice("Usuario deshabilitado correctamente.");
+    } catch (requestError) {
+      setNotice(requestError instanceof Error ? requestError.message : "No fue posible deshabilitar el usuario.");
+    }
+  };
+
+  const censor = async (review: AdminReview) => {
+    const list = words.split(",").map((word) => word.trim()).filter(Boolean);
+    if (!list.length) return;
+    const pattern = new RegExp(`\\b(${list.map((word) => word.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")).join("|")})\\b`, "gi");
+    setReviews((current) => current.map((item) => item.idRecena === review.idRecena ? { ...item, comentario: item.comentario.replace(pattern, "***") } : item));
+    setWordsFor(null); setWords(""); setNotice("Palabras censuradas en la vista previa.");
+  };
+
+  const removeReview = async (review: AdminReview) => {
+    if (!window.confirm("¿Eliminar esta reseña definitivamente?")) return;
+    setReviews((current) => current.filter((item) => item.idRecena !== review.idRecena));
+    setNotice("Reseña eliminada de la vista previa.");
+  };
+
+  const activeUsers = users.filter((item) => item.activo).length;
+  const disabledUsers = users.length - activeUsers;
+  const navItems = [
+    ["overview", "Resumen", <RefreshCw size={16} />],
+    ["users", "Usuarios", <Users size={16} />],
+    ["reviews", "Reseñas", <MessageSquare size={16} />],
+    ["content", "Contenido", <FilePenLine size={16} />],
+    ["administrators", "Administradores", <ShieldCheck size={16} />],
+  ] as const;
+
+  return <div className="min-h-screen" style={{ background: "#f4f6fb", fontFamily: "'Poppins', sans-serif", color: "#24304f" }}>
+    <header className="flex items-center justify-between px-8 py-4 bg-white" style={{ borderBottom: "1px solid rgba(36,60,143,0.1)" }}>
+      <div className="flex items-center gap-3"><ImageWithFallback src={colombiaLogo} alt="Logo" style={{ width: 36, height: 36, objectFit: "contain" }} /><div><p className="font-bold" style={{ color: C.navy }}>Ecos <span style={{ color: C.red }}>Colombia</span></p><p className="text-xs" style={{ color: "#8b94ab" }}>Centro de administración</p></div></div>
+      <div className="flex items-center gap-3"><span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold" style={{ color: C.red, background: "rgba(238,66,102,0.08)" }}><ShieldCheck size={14} /> Administrador</span><button onClick={onLogout} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm" style={{ color: C.red }}><LogOut size={15} /> Salir</button></div>
+    </header>
+    <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 px-6 py-8">
+      <aside className="lg:w-56 shrink-0"><p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#929bb0" }}>Administración</p><div className="flex lg:flex-col gap-2 overflow-x-auto">{navItems.map(([key, label, icon]) => <button key={key} onClick={() => setSection(key)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm whitespace-nowrap" style={{ color: section === key ? C.navy : "#68738b", background: section === key ? "#fff" : "transparent", boxShadow: section === key ? "0 4px 16px rgba(36,60,143,0.08)" : "none", fontWeight: section === key ? 600 : 500 }}>{icon}{label}</button>)}</div></aside>
+      <main className="flex-1 min-w-0"><div className="flex items-start justify-between mb-6"><div><p className="text-sm font-semibold" style={{ color: C.red }}>Panel de control</p><h1 className="text-3xl font-bold mt-1" style={{ color: C.navy }}>{section === "overview" ? "Vista general" : section === "users" ? "Usuarios registrados" : section === "reviews" ? "Moderación de reseñas" : section === "administrators" ? "Administradores" : "Contenido general"}</h1></div><span className="px-3 py-2 rounded-lg text-xs" style={{ color: "#8b94ab", background: "#fff" }}>Vista previa local</span></div>
+        {notice && <div className="mb-5 px-4 py-3 rounded-xl text-sm" style={{ color: "#1b806d", background: "#e7f7f2" }}>{notice}</div>}
+        <>
+          {(section === "overview" || section === "users") && <section><div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6"><StatCard icon={<Users size={20} />} label="Usuarios registrados" value={users.length} color={C.navy} /><StatCard icon={<UserRound size={20} />} label="Usuarios activos" value={activeUsers} color="#1b9c85" /><StatCard icon={<Ban size={20} />} label="Deshabilitados" value={disabledUsers} color={C.red} /></div>{section === "users" && <UsersTable users={users} reasonFor={reasonFor} reason={reason} setReason={setReason} setReasonFor={setReasonFor} toggleUser={toggleUser} disableUser={disableUser} />}</section>}
+          {(section === "overview" || section === "reviews") && <section className={section === "overview" ? "mt-8" : ""}><div className="flex items-center justify-between mb-4"><div><h2 className="text-xl font-bold" style={{ color: C.navy }}>Reseñas</h2><p className="text-sm" style={{ color: "#8b94ab" }}>Revisa, censura o elimina contenido inapropiado.</p></div><span className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ color: C.navy, background: "rgba(36,60,143,0.08)" }}>{reviews.length} total</span></div><ReviewsTable reviews={reviews} wordsFor={wordsFor} words={words} setWords={setWords} setWordsFor={setWordsFor} censor={censor} removeReview={removeReview} /></section>}
+          {section === "content" && <ContentManager />}
+          {section === "administrators" && <AdministratorsManager token={user.token} onNotice={setNotice} />}
+        </>
+      </main>
+    </div>
+  </div>;
+}
+
+function AdministratorsManager({ token, onNotice }: { token: string; onNotice: (message: string) => void }) {
+  const [administrators, setAdministrators] = useState<AdminAccount[]>([]);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getAdministrators(token)
+      .then(setAdministrators)
+      .catch((requestError) => onNotice(requestError instanceof Error ? requestError.message : "No fue posible cargar los administradores."));
+  }, [token, onNotice]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (password !== confirmPassword) {
+      onNotice("Las contraseñas no coinciden.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const administrator = await createAdministrator(token, { nombre: name, correo: email, password });
+      setAdministrators((current) => [administrator, ...current]);
+      setName(""); setEmail(""); setPassword(""); setConfirmPassword("");
+      onNotice("Administrador creado correctamente.");
+    } catch (requestError) {
+      onNotice(requestError instanceof Error ? requestError.message : "No fue posible crear el administrador.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return <div className="grid xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-6">
+    <section className="bg-white rounded-2xl p-6" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}>
+      <div className="flex items-center gap-3 mb-5"><div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ color: C.red, background: "rgba(238,66,102,0.1)" }}><ShieldCheck size={20} /></div><div><h2 className="text-lg font-bold" style={{ color: C.navy }}>Nuevo administrador</h2><p className="text-xs" style={{ color: "#8b94ab" }}>Solo disponible para administradores autenticados.</p></div></div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input required minLength={2} value={name} onChange={(event) => setName(event.target.value)} placeholder="Nombre completo" className="w-full px-4 py-3 rounded-xl outline-none text-sm" style={{ border: "1px solid rgba(36,60,143,0.18)" }} />
+        <input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Correo electrónico" className="w-full px-4 py-3 rounded-xl outline-none text-sm" style={{ border: "1px solid rgba(36,60,143,0.18)" }} />
+        <input required minLength={6} type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Contraseña (mínimo 6 caracteres)" className="w-full px-4 py-3 rounded-xl outline-none text-sm" style={{ border: "1px solid rgba(36,60,143,0.18)" }} />
+        <input required minLength={6} type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirmar contraseña" className="w-full px-4 py-3 rounded-xl outline-none text-sm" style={{ border: "1px solid rgba(36,60,143,0.18)" }} />
+        <button disabled={loading} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm" style={{ background: C.red, fontWeight: 600 }}><UserPlus size={16} /> {loading ? "Creando..." : "Crear administrador"}</button>
+      </form>
+    </section>
+    <section className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}>
+      <div className="px-5 py-4" style={{ borderBottom: "1px solid #eef0f6" }}><h2 className="font-bold" style={{ color: C.navy }}>Administradores registrados</h2></div>
+      <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead style={{ background: "#f8f9fc", color: "#8b94ab" }}><tr><th className="px-5 py-3 font-semibold">Nombre</th><th className="px-5 py-3 font-semibold">Correo</th></tr></thead><tbody>{administrators.map((administrator) => <tr key={administrator.idAdmin} className="border-t" style={{ borderColor: "#eef0f6" }}><td className="px-5 py-4 font-semibold" style={{ color: C.navy }}>{administrator.nombre}</td><td className="px-5 py-4" style={{ color: "#68738b" }}>{administrator.correo}</td></tr>)}</tbody></table></div>
+    </section>
+  </div>;
+}
+
+function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) { return <div className="bg-white rounded-2xl p-5" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}><div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ color, background: `${color}15` }}>{icon}</div><p className="text-3xl font-bold" style={{ color: C.navy }}>{value}</p><p className="text-sm mt-1" style={{ color: "#8b94ab" }}>{label}</p></div>; }
+
+function UsersTable({ users, reasonFor, reason, setReason, setReasonFor, toggleUser, disableUser }: { users: AdminUser[]; reasonFor: number | null; reason: string; setReason: (value: string) => void; setReasonFor: (value: number | null) => void; toggleUser: (user: AdminUser) => void; disableUser: () => void }) { return <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead style={{ background: "#f8f9fc", color: "#8b94ab" }}><tr><th className="px-5 py-3 font-semibold">Usuario</th><th className="px-5 py-3 font-semibold">Correo</th><th className="px-5 py-3 font-semibold">Estado</th><th className="px-5 py-3 font-semibold">Acción</th></tr></thead><tbody>{users.map((item) => <tr key={item.idUsuario} className="border-t" style={{ borderColor: "#eef0f6" }}><td className="px-5 py-4 font-semibold" style={{ color: C.navy }}>{item.nombre}</td><td className="px-5 py-4" style={{ color: "#68738b" }}>{item.correo}</td><td className="px-5 py-4"><span className="px-2 py-1 rounded-md text-xs font-semibold" style={{ color: item.activo ? "#1b806d" : C.red, background: item.activo ? "#e7f7f2" : "#fff0f3" }}>{item.activo ? "Activo" : "Deshabilitado"}</span>{!item.activo && <p className="text-xs mt-1" style={{ color: "#9aa2b4" }}>{item.motivoDeshabilitacion}</p>}</td><td className="px-5 py-4"><button onClick={() => toggleUser(item)} className="text-xs font-semibold" style={{ color: item.activo ? C.red : "#1b806d" }}>{item.activo ? "Deshabilitar" : "Habilitar"}</button>{reasonFor === item.idUsuario && <div className="mt-2 flex gap-2 min-w-[260px]"><input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Motivo obligatorio" className="px-2 py-1.5 rounded-md text-xs outline-none" style={{ border: "1px solid #dfe3ec" }} /><button onClick={disableUser} className="px-2 py-1 rounded-md text-xs text-white" style={{ background: C.red }}>Guardar</button><button onClick={() => setReasonFor(null)} className="text-xs" style={{ color: "#8b94ab" }}>Cancelar</button></div>}</td></tr>)}</tbody></table></div></div>; }
+
+function ReviewsTable({ reviews, wordsFor, words, setWords, setWordsFor, censor, removeReview }: { reviews: AdminReview[]; wordsFor: number | null; words: string; setWords: (value: string) => void; setWordsFor: (value: number | null) => void; censor: (review: AdminReview) => void; removeReview: (review: AdminReview) => void }) { return <div className="space-y-3">{reviews.map((review) => <article key={review.idRecena} className="bg-white rounded-2xl p-5" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}><div className="flex justify-between gap-4"><div><div className="flex items-center gap-2"><span className="text-sm font-bold" style={{ color: C.yellow }}>{"★".repeat(review.calificacion)}</span><span className="text-xs" style={{ color: "#9aa2b4" }}>Lugar #{review.idLugar} · Usuario #{review.idUsuario}</span></div><p className="text-sm mt-3" style={{ color: "#4b5872" }}>{review.comentario || "Sin comentario"}</p></div><button onClick={() => removeReview(review)} title="Eliminar reseña" className="shrink-0 p-2 rounded-lg" style={{ color: C.red, background: "#fff0f3" }}><Trash2 size={15} /></button></div><div className="flex items-center gap-3 mt-4"><button onClick={() => setWordsFor(wordsFor === review.idRecena ? null : review.idRecena)} className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: C.navy }}><Ban size={14} /> Censurar palabras</button>{wordsFor === review.idRecena && <div className="flex gap-2 flex-1"><input value={words} onChange={(event) => setWords(event.target.value)} placeholder="palabra1, palabra2" className="flex-1 px-3 py-1.5 rounded-md text-xs outline-none" style={{ border: "1px solid #dfe3ec" }} /><button onClick={() => censor(review)} className="px-3 py-1.5 rounded-md text-xs text-white" style={{ background: C.navy }}>Aplicar</button></div>}</div></article>)}</div>; }
+
+function ContentManager() {
+  const modules = [
+    { key: "destinos", title: "Destinos turísticos", detail: "Lugares, ciudades, imágenes y descripciones.", icon: <Landmark size={21} /> },
+    { key: "cultura", title: "Cultura y tradiciones", detail: "Historias, categorías y experiencias.", icon: <BookOpen size={21} /> },
+    { key: "gastronomia", title: "Gastronomía", detail: "Platos y restaurantes destacados.", icon: <Utensils size={21} /> },
+  ];
+  const [selected, setSelected] = useState(modules[0].key);
+  const [title, setTitle] = useState("Cartagena de Indias");
+  const [description, setDescription] = useState("Escribe aquí la información que verán los usuarios.");
+  const [saved, setSaved] = useState(false);
+  const selectedModule = modules.find((item) => item.key === selected) ?? modules[0];
+
+  return <div><div className="bg-white rounded-2xl p-6 mb-5" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}><p className="text-xs font-semibold uppercase tracking-wider" style={{ color: C.red }}>Editor local</p><h2 className="text-xl font-bold mt-1" style={{ color: C.navy }}>Contenido visible para usuarios</h2><p className="text-sm mt-2" style={{ color: "#8b94ab" }}>Selecciona un módulo y prepara la información. Por ahora los cambios solo viven en esta vista.</p></div><div className="grid md:grid-cols-3 gap-4 mb-6">{modules.map((item) => <button key={item.key} onClick={() => { setSelected(item.key); setSaved(false); }} className="text-left bg-white rounded-2xl p-5" style={{ boxShadow: selected === item.key ? `0 0 0 2px ${C.red}` : "0 4px 18px rgba(36,60,143,0.06)" }}><div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ color: C.navy, background: "rgba(36,60,143,0.08)" }}>{item.icon}</div><h3 className="font-bold" style={{ color: C.navy }}>{item.title}</h3><p className="text-sm mt-2 leading-relaxed" style={{ color: "#8b94ab" }}>{item.detail}</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold" style={{ color: C.red }}><FilePenLine size={15} /> Editar módulo</span></button>)}</div><div className="bg-white rounded-2xl p-6" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}><div className="flex items-center justify-between mb-5"><div><h3 className="text-lg font-bold" style={{ color: C.navy }}>{selectedModule.title}</h3><p className="text-sm" style={{ color: "#8b94ab" }}>Borrador de contenido</p></div>{saved && <span className="text-xs font-semibold" style={{ color: "#1b806d" }}>Guardado localmente</span>}</div><label className="block text-xs font-semibold mb-2" style={{ color: C.navy }}>Título</label><input value={title} onChange={(event) => { setTitle(event.target.value); setSaved(false); }} className="w-full px-4 py-3 rounded-xl outline-none text-sm mb-4" style={{ border: "1px solid rgba(36,60,143,0.18)" }} /><label className="block text-xs font-semibold mb-2" style={{ color: C.navy }}>Descripción</label><textarea value={description} onChange={(event) => { setDescription(event.target.value); setSaved(false); }} rows={5} className="w-full px-4 py-3 rounded-xl outline-none text-sm resize-y" style={{ border: "1px solid rgba(36,60,143,0.18)" }} /><button onClick={() => setSaved(true)} className="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-semibold" style={{ background: C.red }}><Check size={16} /> Guardar borrador</button></div></div>;
+}
+
 function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLogout: () => void; t: (k: string) => string; lang: string; setLang: (l: string) => void }) {
   const [modalDest, setModalDest] = useState<typeof destinations[0] | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("historia");
@@ -1051,8 +1259,6 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [activeNav, setActiveNav] = useState<string | null>(null);
   const [langOpen, setLangOpen] = useState(false);
-  const [mapExpanded, setMapExpanded] = useState(false);
-  const [mapMinimized, setMapMinimized] = useState(false);
   const [selectedNavItem, setSelectedNavItem] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
@@ -1131,6 +1337,9 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
                   <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(36,60,143,0.08)" }}>
                     <p className="text-sm font-semibold" style={{ color: C.navy }}>{user.name}</p>
                     <p className="text-xs truncate" style={{ color: "#9b9baf" }}>{user.email}</p>
+                    <span className="inline-flex items-center gap-1 mt-2 px-2 py-1 rounded-md text-[10px] font-semibold" style={{ color: user.role === "Administrador" ? C.red : C.navy, background: user.role === "Administrador" ? "rgba(238,66,102,0.08)" : "rgba(36,60,143,0.08)" }}>
+                      {user.role === "Administrador" ? <ShieldCheck size={11} /> : <UserRound size={11} />} {user.role}
+                    </span>
                   </div>
                   <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: "#5a5a72" }}><User size={14} /> {t("miPerfil")}</button>
                   <button onClick={() => { setUserMenuOpen(false); onLogout(); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-red-50 transition-colors" style={{ color: C.red }}><LogOut size={14} /> {t("cerrarSesion")}</button>
@@ -1231,8 +1440,8 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
         </div>
       </section>
 
-      {/* ── FLOATING MAP ── */}
-      <FloatingMap expanded={mapExpanded} minimized={mapMinimized} onToggleExpand={() => { setMapExpanded(!mapExpanded); setMapMinimized(false); }} onToggleMinimize={() => setMapMinimized(!mapMinimized)} onOpenMaps={openMaps} t={t} />
+      {/* ── FLOATING DESTINATIONS LIST ── */}
+      <FloatingMap onOpenDestination={openModal} onOpenMaps={openMaps} t={t} />
 
       {/* ── MODAL ── */}
       {modalDest && <DestModal dest={modalDest} activeTab={activeTab} setActiveTab={setActiveTab} onClose={closeModal} onOpenMaps={openMaps} t={t} />}
@@ -1266,152 +1475,44 @@ function DestCard({ dest, onClick, cardBtn }: { dest: typeof destinations[0]; on
 }
 
 // ─── FLOATING MAP ─────────────────────────────────────────────────────────────
-function FloatingMap({ expanded, minimized, onToggleExpand, onToggleMinimize, onOpenMaps, t }: {
-  expanded: boolean; minimized: boolean;
-  onToggleExpand: () => void; onToggleMinimize: () => void;
+function FloatingMap({ onOpenDestination, onOpenMaps, t }: {
+  onOpenDestination: (dest: typeof destinations[0]) => void;
   onOpenMaps: (q: string) => void; t: (k: string) => string;
 }) {
-  const [hovered, setHovered] = useState<string | null>(null);
-  const w = expanded ? 440 : 300;
-  const mapH = expanded ? 400 : 258;
-  const dotSize = expanded ? 10 : 8;
-  const ringSize = expanded ? 18 : 14;
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-40 flex flex-col transition-all duration-300"
-      style={{ width: w, borderRadius: 20, background: C.white, border: "5px solid white", boxShadow: "0 12px 48px rgba(36,60,143,0.22), 0 2px 8px rgba(0,0,0,0.08)", overflow: "hidden" }}
+      className="fixed bottom-6 right-6 z-40 flex flex-col"
+      style={{ width: "min(340px, calc(100vw - 32px))", borderRadius: 20, background: C.white, border: "5px solid white", boxShadow: "0 12px 48px rgba(36,60,143,0.22), 0 2px 8px rgba(0,0,0,0.08)", overflow: "hidden" }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ background: C.navy }}>
         <div className="flex items-center gap-2">
           <MapPin size={14} className="text-white" />
-          <span className="text-xs font-semibold text-white tracking-wide">{t("mapTitle")}</span>
+          <span className="text-xs font-semibold text-white tracking-wide">Lugares para explorar</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs mr-1" style={{ color: C.yellow, fontWeight: 500 }}>
-            {ALL_MARKERS.filter(m => m.dest).length} destinos
-          </span>
-          <button onClick={onToggleMinimize} className="w-6 h-6 rounded flex items-center justify-center transition-all hover:bg-white/20" title={minimized ? t("mapExpand") : t("mapMinimize")}>
-            <Minimize2 size={12} className="text-white" />
-          </button>
-          <button onClick={onToggleExpand} className="w-6 h-6 rounded flex items-center justify-center transition-all hover:bg-white/20" title={expanded ? t("mapMinimize") : t("mapExpand")}>
-            <Maximize2 size={12} className="text-white" />
+        <div className="flex items-center gap-2">
+          <span className="text-xs" style={{ color: C.yellow, fontWeight: 500 }}>{ALL_MARKERS.length} lugares</span>
+          <button onClick={() => setCollapsed(!collapsed)} className="w-6 h-6 rounded flex items-center justify-center transition-all hover:bg-white/20" title={collapsed ? "Mostrar lugares" : "Minimizar lista"} aria-label={collapsed ? "Mostrar lugares" : "Minimizar lista"}>
+            {collapsed ? <ChevronUp size={14} className="text-white" /> : <ChevronDown size={14} className="text-white" />}
           </button>
         </div>
       </div>
-
-      {!minimized && (
-        <>
-          {/* Map with real Colombia image + markers */}
-          <div
-            className="relative flex-shrink-0 transition-all duration-300"
-            style={{ height: mapH, background: "#e8f4fa" }}
-          >
-            {/* Colombia map image */}
-            <ImageWithFallback
-              src={colombiaMapImg}
-              alt="Mapa de Colombia"
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", padding: "6px" }}
-            />
-
-            {/* Markers positioned as % over the image */}
-            {ALL_MARKERS.map((m) => (
-              <div
-                key={m.name}
-                className="absolute"
-                style={{ left: `${m.px}%`, top: `${m.py}%`, transform: "translate(-50%, -50%)", cursor: "pointer", zIndex: 10 }}
-                onMouseEnter={() => setHovered(m.name)}
-                onMouseLeave={() => setHovered(null)}
-                onClick={() => onOpenMaps(m.name.replace(/ /g, "+") + "+Colombia")}
-              >
-                {/* Pulse ring */}
-                <div style={{
-                  position: "absolute",
-                  width: ringSize, height: ringSize,
-                  borderRadius: "50%",
-                  background: m.dest ? C.red : C.navy,
-                  opacity: hovered === m.name ? 0.3 : 0.12,
-                  top: "50%", left: "50%",
-                  transform: "translate(-50%,-50%)",
-                  transition: "opacity 0.2s",
-                }} />
-                {/* Dot */}
-                <div style={{
-                  width: dotSize, height: dotSize,
-                  borderRadius: "50%",
-                  background: m.dest ? C.red : C.navy,
-                  border: "2px solid white",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.25)",
-                  opacity: m.dest ? 1 : 0.7,
-                  position: "relative",
-                  zIndex: 2,
-                }} />
-                {/* Inner dot for destinations */}
-                {m.dest && (
-                  <div style={{ position: "absolute", width: 3, height: 3, borderRadius: "50%", background: "white", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 3 }} />
-                )}
-                {/* Tooltip */}
-                {(hovered === m.name) && (
-                  <div style={{
-                    position: "absolute",
-                    bottom: "calc(100% + 4px)",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    background: C.navy,
-                    color: "white",
-                    fontSize: expanded ? "10px" : "9px",
-                    fontWeight: 600,
-                    padding: "3px 7px",
-                    borderRadius: 6,
-                    whiteSpace: "nowrap",
-                    pointerEvents: "none",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                    fontFamily: "'Poppins', sans-serif",
-                  }}>
-                    {m.name}
-                  </div>
-                )}
-                {/* Always-visible label when expanded */}
-                {expanded && hovered !== m.name && (
-                  <div style={{
-                    position: "absolute",
-                    bottom: "calc(100% + 2px)",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    fontSize: "8px",
-                    fontWeight: 600,
-                    color: C.navy,
-                    whiteSpace: "nowrap",
-                    pointerEvents: "none",
-                    textShadow: "0 0 4px white, 0 0 4px white",
-                    fontFamily: "'Poppins', sans-serif",
-                  }}>
-                    {m.name}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Footer */}
-          <div className="px-4 py-3 flex items-center justify-between flex-shrink-0" style={{ borderTop: "1px solid rgba(36,60,143,0.06)" }}>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: C.red }} />
-                <span className="text-xs" style={{ color: "#717182", fontWeight: 500 }}>{t("destMarker")}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ background: C.navy }} />
-                <span className="text-xs" style={{ color: "#717182", fontWeight: 500 }}>{t("cityMarker")}</span>
-              </div>
-            </div>
-            <button onClick={() => onOpenMaps("Colombia+turismo")} className="text-xs font-semibold flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all hover:opacity-80" style={{ color: C.white, background: C.navy }}>
-              <Navigation size={11} /> {t("mapGoogle")}
+      {!collapsed && <div className="overflow-y-auto p-2" style={{ maxHeight: 310 }}>
+        {ALL_MARKERS.map((marker) => {
+          const destination = destinations.find((item) => item.name === marker.name);
+          return <div key={marker.name} className="flex items-center gap-2 px-2 py-2 rounded-lg transition-colors hover:bg-gray-50">
+            <button onClick={() => destination ? onOpenDestination(destination) : onOpenMaps(`${marker.name.replace(/ /g, "+")}+Colombia`)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: marker.dest ? C.red : C.navy }} />
+              <span className="truncate text-xs font-semibold" style={{ color: C.navy }}>{marker.name}</span>
+              {destination && <span className="truncate text-[10px]" style={{ color: "#8b94ab" }}>{destination.region}</span>}
             </button>
-          </div>
-        </>
-      )}
+            <button onClick={() => onOpenMaps(`${marker.name.replace(/ /g, "+")}+Colombia`)} title={`Abrir ${marker.name} en Google Maps`} className="flex-shrink-0 p-1.5 rounded-md hover:bg-gray-100" style={{ color: C.red }}>
+              <Navigation size={13} />
+            </button>
+          </div>;
+        })}
+      </div>}
     </div>
   );
 }

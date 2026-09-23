@@ -49,17 +49,17 @@ namespace ApiPrueba.Repositorios
 
         public Task<bool> PostRecena(Recena recena)
         {
-            throw new NotImplementedException();
+            return PostResena(recena);
         }
 
         public Task<bool> PutRecena(Recena recena)
         {
-            throw new NotImplementedException();
+            return PutResena(recena);
         }
 
         public Task<bool> DeleteRecena(Recena recena)
         {
-            throw new NotImplementedException();
+            return DeleteResena(recena);
         }
     }
 }

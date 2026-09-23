@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiPrueba.Models
 {
@@ -17,11 +16,6 @@ namespace ApiPrueba.Models
         public int Calificacion { get; set; }
 
         public DateTime? Fecha { get; set; }
-
-        [ForeignKey("idUsuario")]
-        public Usuario Usuario { get; set; }
-
-        [ForeignKey("idLugar")]
-        public string LugarTuristico { get; set; }
+        public bool Visible { get; set; } = true;
     }
 }

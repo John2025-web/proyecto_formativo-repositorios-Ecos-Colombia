@@ -20,6 +20,7 @@ namespace ApiPrueba.Data
             modelBuilder.Entity<ADMINISTRADORES>().Property(x => x.IdAdmin).HasColumnName("id_admin").ValueGeneratedOnAdd();
             modelBuilder.Entity<ADMINISTRADORES>().Property(x => x.Nombre).HasColumnName("nombre");
             modelBuilder.Entity<ADMINISTRADORES>().Property(x => x.Correo).HasColumnName("correo");
+            modelBuilder.Entity<ADMINISTRADORES>().Property(x => x.PasswordHash).HasColumnName("password_hash").HasMaxLength(100);
 
             ConfigureContenido(modelBuilder);
         }

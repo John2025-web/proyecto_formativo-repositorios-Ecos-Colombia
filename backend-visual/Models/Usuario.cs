@@ -11,6 +11,8 @@ namespace ApiPrueba.Models;
         public string IdiomaPreferido { get; set; }
         public string TipoUsuario { get; set; }
         public string PasswordHash { get; set; }
+        public bool Activo { get; set; } = true;
+        public string? MotivoDeshabilitacion { get; set; }
 
 }
 
