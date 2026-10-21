@@ -17,9 +17,10 @@ namespace ApiPrueba.DBcontex
             }
             private void EntityConfiguration(ModelBuilder modelBuilder)
             {
-                modelBuilder.Entity<MULTIMEDIA>().ToTable("Idmultimedia").HasKey(u => u.IdMultimedia);
-                modelBuilder.Entity<MULTIMEDIA>().ToTable("Idcontenido").HasKey(u => u.IdContenido);
-                modelBuilder.Entity<MULTIMEDIA>().Property(u => u.tipoContenido).HasColumnName("Tipocontenido").IsRequired();
+                modelBuilder.Entity<MULTIMEDIA>().ToTable("MULTIMEDIA").HasKey(u => u.IdMultimedia);
+                modelBuilder.Entity<MULTIMEDIA>().Property(u => u.IdMultimedia).ValueGeneratedOnAdd();
+                modelBuilder.Entity<MULTIMEDIA>().Property(u => u.IdContenido).HasColumnName("id_contenido");
+                modelBuilder.Entity<MULTIMEDIA>().Property(u => u.tipoContenido).HasColumnName("tipo").IsRequired();
                 modelBuilder.Entity<MULTIMEDIA>().Property(u => u.url).HasColumnName("url").IsRequired();
             }
             public async Task<bool> SaveAsync()

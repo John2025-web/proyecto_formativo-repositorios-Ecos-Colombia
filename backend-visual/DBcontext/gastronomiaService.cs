@@ -20,8 +20,9 @@ namespace ApiPrueba .DBcontex
             }
             private void EntityConfiguration(ModelBuilder modelBuilder)
             {
-                modelBuilder.Entity<GASTRONOMIA>().ToTable("IdPlato").HasKey(e => e.IdPlato);
-                modelBuilder.Entity<GASTRONOMIA>().ToTable("Idregion").HasKey(e => e.IdRegion);
+                modelBuilder.Entity<GASTRONOMIA>().ToTable("GASTRONOMIA").HasKey(e => e.IdPlato);
+                modelBuilder.Entity<GASTRONOMIA>().Property(e => e.IdPlato).ValueGeneratedOnAdd();
+                modelBuilder.Entity<GASTRONOMIA>().Property(e => e.IdRegion).HasColumnName("id_region");
                 modelBuilder.Entity<GASTRONOMIA>().Property(u => u.Nombre).HasColumnName("Nombre").IsRequired();
                 modelBuilder.Entity<GASTRONOMIA>().Property(u => u.Ingredientes).HasColumnName("Ingredientes").IsRequired();
                 modelBuilder.Entity<GASTRONOMIA>().Property(u => u.DescripcionPlato).HasColumnName("descripcion").IsRequired();

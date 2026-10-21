@@ -9,3 +9,6 @@ dist/
 frontend-figma/dist/
 .env
 frontend-figma/.env
+/backend-visual.Tests/bin/
+/backend-visual.Tests/obj/
+/backend-visual.Tests/TestResults/

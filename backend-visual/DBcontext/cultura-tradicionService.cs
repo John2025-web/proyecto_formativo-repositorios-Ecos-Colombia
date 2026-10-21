@@ -18,8 +18,12 @@ namespace ApiPrueba.DBcontex
             }
             private void EntityConfiguration(ModelBuilder modelBuilder)
             {
-                modelBuilder.Entity<culturaTradicion>().ToTable("cultura").HasKey(u => u.idCultura);
-                modelBuilder.Entity<culturaTradicion>().ToTable("IDIOMA").HasKey(u => u.idTradicion);
+                modelBuilder.Entity<culturaTradicion>().ToTable("CULTURA_TRADICION")
+                    .HasKey(link => new { link.idCultura, link.idTradicion });
+                modelBuilder.Entity<culturaTradicion>().Property(link => link.idCultura)
+                    .HasColumnName("id_cultura");
+                modelBuilder.Entity<culturaTradicion>().Property(link => link.idTradicion)
+                    .HasColumnName("id_tradicion");
             }
             public async Task<bool> SaveAsync()
             {
