@@ -74,8 +74,7 @@ namespace ApiPrueba.Controllers
             if (validCredentials)
             {
                 var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
-                    ?? _configuration["Jwt:Key"]
-                    ?? Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+                    ?? throw new InvalidOperationException("JWT key is not configured.");
                 var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
                 var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 

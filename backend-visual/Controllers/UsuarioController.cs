@@ -281,11 +281,12 @@ namespace ApiPrueba.Controllers
         {
             var usuario = await _usuarios.usuario.FirstOrDefaultAsync(x => x.idUsuario == id);
             if (usuario == null) return NotFound(new { mensaje = "Usuario no encontrado." });
-            if (!request.Activo && string.IsNullOrWhiteSpace(request.Motivo))
+            var activo = request.Activo.GetValueOrDefault(true);
+            if (!activo && string.IsNullOrWhiteSpace(request.Motivo))
                 return BadRequest(new { mensaje = "Debes indicar el motivo de deshabilitación." });
 
-            usuario.Activo = request.Activo;
-            usuario.MotivoDeshabilitacion = request.Activo ? null : request.Motivo!.Trim();
+            usuario.Activo = activo;
+            usuario.MotivoDeshabilitacion = activo ? null : request.Motivo!.Trim();
             await _usuarios.SaveChangesAsync();
             return Ok(new { usuario.idUsuario, usuario.Activo, usuario.MotivoDeshabilitacion });
         }
@@ -293,7 +294,7 @@ namespace ApiPrueba.Controllers
 
     public class EstadoUsuarioRequest
     {
-        public bool Activo { get; set; }
+        public bool? Activo { get; set; }
         public string? Motivo { get; set; }
     }
 }
