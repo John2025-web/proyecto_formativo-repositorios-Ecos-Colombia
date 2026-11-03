@@ -1,15 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiPrueba.models
 {
     [Table("CONTENIDO_CULTURA")]
+    [PrimaryKey(nameof(IdContenido), nameof(IdCultura))]
     public class CONTENIDO_CULTURA
     {
         [Column("id_contenido")]
-        public int IdContenido { get; set; }
+        public int? IdContenido { get; set; }
 
         [Column("id_cultura")]
-        public int IdCultura { get; set; }
+        public int? IdCultura { get; set; }
     }
 }

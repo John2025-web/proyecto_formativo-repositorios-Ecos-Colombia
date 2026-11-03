@@ -1,4 +1,4 @@
-﻿using ApiPrueba.Models;
+using ApiPrueba.Models;
 using ApiPrueba.Repositorios.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -128,7 +128,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _tradicionesController.PostTradicion(Tradicion);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -177,7 +177,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _tradicionesController.PutTradicion(Tradicion);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -226,7 +226,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _tradicionesController.DeleteTradicion(Tradicion);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {

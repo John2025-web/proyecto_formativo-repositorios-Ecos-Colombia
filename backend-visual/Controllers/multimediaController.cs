@@ -1,4 +1,4 @@
-﻿using ApiPrueba.models;
+using ApiPrueba.models;
 using ApiPrueba.repositorios;
 using ApiPrueba.Repositorios.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -129,7 +129,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _multimediaController.PostMultimedia(Multimedia);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -178,7 +178,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _multimediaController.PutMultimedia(Multimedia);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -227,7 +227,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _multimediaController.DeleteMultimedia(Multimedia);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace ApiPrueba.models
@@ -6,7 +6,7 @@ namespace ApiPrueba.models
     public class ADMINISTRADORES
     {
         [Key]
-        public int IdAdmin { get; set; }
+        public int? IdAdmin { get; set; }
 
         [Required (ErrorMessage = "Campo Requerido")]
         public string Nombre { get; set; }

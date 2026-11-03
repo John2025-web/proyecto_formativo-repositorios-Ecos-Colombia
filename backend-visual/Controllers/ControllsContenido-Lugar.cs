@@ -1,4 +1,4 @@
-﻿using ApiPrueba.models;
+using ApiPrueba.models;
 using ApiPrueba.Models;
 using ApiPrueba.Repositories;
 using ApiPrueba.Repositories.@interface;
@@ -130,7 +130,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _contenidoLugarController.PostContenidoLugar(contenidoLugar);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -179,7 +179,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _contenidoLugarController.PutContenidoLugar(contenidoLugar);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return BadRequest(new
                         {
@@ -228,7 +228,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _contenidoLugarController.DeleteContenidoLugar(contenidoLugar);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return BadRequest(new
                         {

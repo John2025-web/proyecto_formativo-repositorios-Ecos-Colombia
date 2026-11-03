@@ -1,11 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ApiPrueba.models
 {
     public class LUGAR_TURISTICO
     {
         [Key]
-        public int IdLugar { get; set; }
+        public int? IdLugar { get; set; }
 
         [Required(ErrorMessage = "campo Requerido")]
         public string Nombre { get; set; }

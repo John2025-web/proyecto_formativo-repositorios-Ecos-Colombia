@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiPrueba.models
@@ -6,13 +6,13 @@ namespace ApiPrueba.models
     public class GASTRONOMIA
     {
         [Key]
-        public int IdPlato { get; set; }
+        public int? IdPlato { get; set; }
 
         [Required(ErrorMessage = "campo Requerido")]
         public string Nombre { get; set; }
 
         [ForeignKey("id_region")]
-        public int IdRegion { get; set; }
+        public int? IdRegion { get; set; }
 
         [Required(ErrorMessage = "campo Requerido")]
         public string Ingredientes { get; set; }

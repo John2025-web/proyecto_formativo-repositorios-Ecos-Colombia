@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ApiPrueba.models;
 using ApiPrueba.repositorios;
@@ -129,7 +129,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _IdiomaController.PostIDIOMA(IDIOMA);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -178,7 +178,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _IdiomaController.PutIDIOMA(IDIOMA);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -227,7 +227,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _IdiomaController.DeleteIDIOMA(IDIOMA);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {

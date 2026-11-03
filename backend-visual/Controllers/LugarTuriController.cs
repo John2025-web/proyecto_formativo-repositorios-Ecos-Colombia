@@ -1,4 +1,4 @@
-﻿using ApiPrueba.models;
+using ApiPrueba.models;
 using ApiPrueba.Models;
 using ApiPrueba.Repositorios;
 using ApiPrueba.Repositorios.Interfaces;
@@ -124,7 +124,7 @@ namespace ApiPrueba.Controllers
             {
                 var response = await _LugarTuriController.PostLugarTuristico(LugarTuristico);
 
-                if (response == null)
+                if (!response)
                 {
                     return StatusCode(StatusCodes.Status400BadRequest, new
                     {
@@ -171,7 +171,7 @@ namespace ApiPrueba.Controllers
             {
                 var response = await _LugarTuriController.PutLugarTuristico(LugarTuristico);
 
-                if (response == null)
+                if (!response)
                 {
                     return StatusCode(StatusCodes.Status400BadRequest, new
                     {
@@ -218,7 +218,7 @@ namespace ApiPrueba.Controllers
             {
                 var response = await _LugarTuriController.DeleteLugarTuristico(LugarTuristico);
 
-                if (response == null)
+                if (!response)
                 {
                     return StatusCode(StatusCodes.Status400BadRequest, new
                     {

@@ -31,7 +31,7 @@ const TR: Record<string, Record<string, string>> = {
     orContinue: "o continúa con", noAccount: "¿No tienes cuenta?", register: "Regístrate",
     signIn: "Iniciar sesión", signingIn: "Iniciando sesión...", continueGoogle: "Continuar con Google",
     welcome: "Bienvenido", signInContinue: "Inicia sesión para continuar", forgotPassword: "¿Olvidaste tu contraseña?",
-    email: "Usuario", password: "Contraseña", terms: "Términos de servicio", privacy: "Política de privacidad",
+    email: "Usuario", passwordLabel: "Contraseña", terms: "Términos de servicio", privacy: "Política de privacidad",
     destMarker: "Destino", cityMarker: "Ciudad",
   },
   EN: {
@@ -47,7 +47,7 @@ const TR: Record<string, Record<string, string>> = {
     orContinue: "or continue with", noAccount: "Don't have an account?", register: "Sign up",
     signIn: "Sign in", signingIn: "Signing in...", continueGoogle: "Continue with Google",
     welcome: "Welcome", signInContinue: "Sign in to continue", forgotPassword: "Forgot your password?",
-    email: "Email address", password: "Password", terms: "Terms of service", privacy: "Privacy policy",
+    email: "Email address", passwordLabel: "Password", terms: "Terms of service", privacy: "Privacy policy",
     destMarker: "Destination", cityMarker: "City",
   },
   PT: {
@@ -63,7 +63,7 @@ const TR: Record<string, Record<string, string>> = {
     orContinue: "ou continue com", noAccount: "Não tem uma conta?", register: "Cadastre-se",
     signIn: "Entrar", signingIn: "Entrando...", continueGoogle: "Continuar com Google",
     welcome: "Bem-vindo", signInContinue: "Entre para continuar", forgotPassword: "Esqueceu sua senha?",
-    email: "Endereço de e-mail", password: "Senha", terms: "Termos de serviço", privacy: "Política de privacidade",
+    email: "Endereço de e-mail", passwordLabel: "Senha", terms: "Termos de serviço", privacy: "Política de privacidade",
     destMarker: "Destino", cityMarker: "Cidade",
   },
   FR: {
@@ -79,7 +79,7 @@ const TR: Record<string, Record<string, string>> = {
     orContinue: "ou continuez avec", noAccount: "Pas de compte?", register: "S'inscrire",
     signIn: "Se connecter", signingIn: "Connexion...", continueGoogle: "Continuer avec Google",
     welcome: "Bienvenue", signInContinue: "Connectez-vous pour continuer", forgotPassword: "Mot de passe oublié?",
-    email: "Adresse e-mail", password: "Mot de passe", terms: "Conditions d'utilisation", privacy: "Politique de confidentialité",
+    email: "Adresse e-mail", passwordLabel: "Mot de passe", terms: "Conditions d'utilisation", privacy: "Politique de confidentialité",
     destMarker: "Destination", cityMarker: "Ville",
   },
   DE: {
@@ -95,7 +95,7 @@ const TR: Record<string, Record<string, string>> = {
     orContinue: "oder weiter mit", noAccount: "Noch kein Konto?", register: "Registrieren",
     signIn: "Anmelden", signingIn: "Anmeldung...", continueGoogle: "Mit Google fortfahren",
     welcome: "Willkommen", signInContinue: "Melde dich an, um fortzufahren", forgotPassword: "Passwort vergessen?",
-    email: "E-Mail-Adresse", password: "Passwort", terms: "Nutzungsbedingungen", privacy: "Datenschutzrichtlinie",
+    email: "E-Mail-Adresse", passwordLabel: "Passwort", terms: "Nutzungsbedingungen", privacy: "Datenschutzrichtlinie",
     destMarker: "Ziel", cityMarker: "Stadt",
   },
 };
@@ -1001,7 +1001,7 @@ function LoginScreen({ onLogin, t }: { onLogin: (u: UserType) => void; t: (k: st
             </div>
             {error && <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: "rgba(238,66,102,0.08)", color: C.red, border: "1px solid rgba(238,66,102,0.2)" }}>{error}</div>}
             <div className="mb-5">
-              <label className="text-xs font-semibold" style={{ color: C.navy }}>Ingresar como</label>
+              <span className="text-xs font-semibold" style={{ color: C.navy }}>Ingresar como</span>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {(["Usuario", "Administrador"] as UserRole[]).map((option) => {
                   const selected = role === option;
@@ -1013,20 +1013,20 @@ function LoginScreen({ onLogin, t }: { onLogin: (u: UserType) => void; t: (k: st
             </div>
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold" style={{ color: C.navy }}>Usuario o correo</label>
+                <label htmlFor="usuario-login-input" className="text-xs font-semibold" style={{ color: C.navy }}>Usuario o correo</label>
                 <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200" style={{ border: `1.5px solid ${emailF ? C.navy : "rgba(36,60,143,0.18)"}`, background: emailF ? "rgba(36,60,143,0.025)" : "#fafafa", boxShadow: emailF ? "0 0 0 3px rgba(36,60,143,0.08)" : "none" }}>
                   <Mail size={16} style={{ color: emailF ? C.navy : "#b0b0c4", flexShrink: 0 }} />
-                  <input type="text" placeholder="Usuario o correo electrónico" value={usuario} onChange={(e) => setUsuario(e.target.value)} onFocus={() => setEmailF(true)} onBlur={() => setEmailF(false)} className="flex-1 bg-transparent outline-none text-sm" style={{ color: "#2a2a3e", fontFamily: "'Poppins', sans-serif" }} />
+                  <input id="usuario-login-input" type="text" placeholder="Usuario o correo electrónico" value={usuario} onChange={(e) => setUsuario(e.target.value)} onFocus={() => setEmailF(true)} onBlur={() => setEmailF(false)} className="flex-1 bg-transparent outline-none text-sm" style={{ color: "#2a2a3e", fontFamily: "'Poppins', sans-serif" }} />
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold" style={{ color: C.navy }}>{t("password")}</label>
+                  <label htmlFor="password-login-input" className="text-xs font-semibold" style={{ color: C.navy }}>{t("passwordLabel")}</label>
                   <a href="#" className="text-xs font-semibold hover:opacity-70 transition-opacity" style={{ color: C.red }}>{t("forgotPassword")}</a>
                 </div>
                 <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200" style={{ border: `1.5px solid ${passF ? C.navy : "rgba(36,60,143,0.18)"}`, background: passF ? "rgba(36,60,143,0.025)" : "#fafafa", boxShadow: passF ? "0 0 0 3px rgba(36,60,143,0.08)" : "none" }}>
                   <Lock size={16} style={{ color: passF ? C.navy : "#b0b0c4", flexShrink: 0 }} />
-                  <input type={showPass ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} onFocus={() => setPassF(true)} onBlur={() => setPassF(false)} className="flex-1 bg-transparent outline-none text-sm" style={{ color: "#2a2a3e", fontFamily: "'Poppins', sans-serif" }} />
+                  <input id="password-login-input" type={showPass ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} onFocus={() => setPassF(true)} onBlur={() => setPassF(false)} className="flex-1 bg-transparent outline-none text-sm" style={{ color: "#2a2a3e", fontFamily: "'Poppins', sans-serif" }} />
                   <button type="button" onClick={() => setShowPass(!showPass)} className="hover:opacity-60 transition-opacity flex-shrink-0" style={{ color: "#b0b0c4" }}>{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button>
                 </div>
               </div>
@@ -1221,7 +1221,7 @@ function AdministratorsManager({ token, onNotice }: { token: string; onNotice: (
         <input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Correo electrónico" className="w-full px-4 py-3 rounded-xl outline-none text-sm" style={{ border: "1px solid rgba(36,60,143,0.18)" }} />
         <input required minLength={6} type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Contraseña (mínimo 6 caracteres)" className="w-full px-4 py-3 rounded-xl outline-none text-sm" style={{ border: "1px solid rgba(36,60,143,0.18)" }} />
         <input required minLength={6} type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirmar contraseña" className="w-full px-4 py-3 rounded-xl outline-none text-sm" style={{ border: "1px solid rgba(36,60,143,0.18)" }} />
-        <button disabled={loading} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm" style={{ background: C.red, fontWeight: 600 }}><UserPlus size={16} /> {loading ? "Creando..." : "Crear administrador"}</button>
+        <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm" style={{ background: C.red, fontWeight: 600 }}><UserPlus size={16} /> {loading ? "Creando..." : "Crear administrador"}</button>
       </form>
     </section>
     <section className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}>
@@ -1249,7 +1249,7 @@ function ContentManager() {
   const [saved, setSaved] = useState(false);
   const selectedModule = modules.find((item) => item.key === selected) ?? modules[0];
 
-  return <div><div className="bg-white rounded-2xl p-6 mb-5" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}><p className="text-xs font-semibold uppercase tracking-wider" style={{ color: C.red }}>Editor local</p><h2 className="text-xl font-bold mt-1" style={{ color: C.navy }}>Contenido visible para usuarios</h2><p className="text-sm mt-2" style={{ color: "#8b94ab" }}>Selecciona un módulo y prepara la información. Por ahora los cambios solo viven en esta vista.</p></div><div className="grid md:grid-cols-3 gap-4 mb-6">{modules.map((item) => <button key={item.key} onClick={() => { setSelected(item.key); setSaved(false); }} className="text-left bg-white rounded-2xl p-5" style={{ boxShadow: selected === item.key ? `0 0 0 2px ${C.red}` : "0 4px 18px rgba(36,60,143,0.06)" }}><div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ color: C.navy, background: "rgba(36,60,143,0.08)" }}>{item.icon}</div><h3 className="font-bold" style={{ color: C.navy }}>{item.title}</h3><p className="text-sm mt-2 leading-relaxed" style={{ color: "#8b94ab" }}>{item.detail}</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold" style={{ color: C.red }}><FilePenLine size={15} /> Editar módulo</span></button>)}</div><div className="bg-white rounded-2xl p-6" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}><div className="flex items-center justify-between mb-5"><div><h3 className="text-lg font-bold" style={{ color: C.navy }}>{selectedModule.title}</h3><p className="text-sm" style={{ color: "#8b94ab" }}>Borrador de contenido</p></div>{saved && <span className="text-xs font-semibold" style={{ color: "#1b806d" }}>Guardado localmente</span>}</div><label className="block text-xs font-semibold mb-2" style={{ color: C.navy }}>Título</label><input value={title} onChange={(event) => { setTitle(event.target.value); setSaved(false); }} className="w-full px-4 py-3 rounded-xl outline-none text-sm mb-4" style={{ border: "1px solid rgba(36,60,143,0.18)" }} /><label className="block text-xs font-semibold mb-2" style={{ color: C.navy }}>Descripción</label><textarea value={description} onChange={(event) => { setDescription(event.target.value); setSaved(false); }} rows={5} className="w-full px-4 py-3 rounded-xl outline-none text-sm resize-y" style={{ border: "1px solid rgba(36,60,143,0.18)" }} /><button onClick={() => setSaved(true)} className="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-semibold" style={{ background: C.red }}><Check size={16} /> Guardar borrador</button></div></div>;
+  return <div><div className="bg-white rounded-2xl p-6 mb-5" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}><p className="text-xs font-semibold uppercase tracking-wider" style={{ color: C.red }}>Editor local</p><h2 className="text-xl font-bold mt-1" style={{ color: C.navy }}>Contenido visible para usuarios</h2><p className="text-sm mt-2" style={{ color: "#8b94ab" }}>Selecciona un módulo y prepara la información. Por ahora los cambios solo viven en esta vista.</p></div><div className="grid md:grid-cols-3 gap-4 mb-6">{modules.map((item) => <button key={item.key} onClick={() => { setSelected(item.key); setSaved(false); }} className="text-left bg-white rounded-2xl p-5" style={{ boxShadow: selected === item.key ? `0 0 0 2px ${C.red}` : "0 4px 18px rgba(36,60,143,0.06)" }}><div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ color: C.navy, background: "rgba(36,60,143,0.08)" }}>{item.icon}</div><h3 className="font-bold" style={{ color: C.navy }}>{item.title}</h3><p className="text-sm mt-2 leading-relaxed" style={{ color: "#8b94ab" }}>{item.detail}</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold" style={{ color: C.red }}><FilePenLine size={15} /> Editar módulo</span></button>)}</div><div className="bg-white rounded-2xl p-6" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}><div className="flex items-center justify-between mb-5"><div><h3 className="text-lg font-bold" style={{ color: C.navy }}>{selectedModule.title}</h3><p className="text-sm" style={{ color: "#8b94ab" }}>Borrador de contenido</p></div>{saved && <span className="text-xs font-semibold" style={{ color: "#1b806d" }}>Guardado localmente</span>}</div><label htmlFor="content-title-input" className="block text-xs font-semibold mb-2" style={{ color: C.navy }}>Título</label><input id="content-title-input" value={title} onChange={(event) => { setTitle(event.target.value); setSaved(false); }} className="w-full px-4 py-3 rounded-xl outline-none text-sm mb-4" style={{ border: "1px solid rgba(36,60,143,0.18)" }} /><label htmlFor="content-desc-input" className="block text-xs font-semibold mb-2" style={{ color: C.navy }}>Descripción</label><textarea id="content-desc-input" value={description} onChange={(event) => { setDescription(event.target.value); setSaved(false); }} rows={5} className="w-full px-4 py-3 rounded-xl outline-none text-sm resize-y" style={{ border: "1px solid rgba(36,60,143,0.18)" }} /><button type="button" onClick={() => setSaved(true)} className="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-semibold" style={{ background: C.red }}><Check size={16} /> Guardar borrador</button></div></div>;
 }
 
 function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLogout: () => void; t: (k: string) => string; lang: string; setLang: (l: string) => void }) {
@@ -1452,7 +1452,14 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
 // ─── DESTINATION CARD ─────────────────────────────────────────────────────────
 function DestCard({ dest, onClick, cardBtn }: { dest: typeof destinations[0]; onClick: () => void; cardBtn: string }) {
   return (
-    <div className="group bg-white cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-2" style={{ borderRadius: 18, boxShadow: "0 4px 20px rgba(36,60,143,0.08)" }} onClick={onClick}>
+    <div
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+      className="group bg-white cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-2"
+      style={{ borderRadius: 18, boxShadow: "0 4px 20px rgba(36,60,143,0.08)" }}
+      onClick={onClick}
+    >
       <div className="relative overflow-hidden" style={{ height: 240 }}>
         <img src={dest.image} alt={dest.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
@@ -1531,7 +1538,15 @@ function DestModal({ dest, activeTab, setActiveTab, onClose, onOpenMaps, t }: {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6" style={{ background: "rgba(10,18,50,0.72)", backdropFilter: "blur(4px)" }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6"
+      style={{ background: "rgba(10,18,50,0.72)", backdropFilter: "blur(4px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div className="relative w-full bg-white flex flex-col overflow-hidden" style={{ maxWidth: 900, maxHeight: "90vh", borderRadius: 24, boxShadow: "0 32px 80px rgba(10,18,50,0.35)" }}>
         <button onClick={onClose} className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all hover:opacity-80" style={{ background: "rgba(10,18,50,0.4)", color: "white" }}><X size={18} /></button>
 

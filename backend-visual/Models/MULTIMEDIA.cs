@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiPrueba.models
@@ -6,10 +6,10 @@ namespace ApiPrueba.models
     public class MULTIMEDIA
     {
         [Key]
-        public int IdMultimedia { get; set; }
+        public int? IdMultimedia { get; set; }
 
         [ForeignKey("id_contenido")]
-        public int IdContenido { get; set; }
+        public int? IdContenido { get; set; }
 
         [Required(ErrorMessage = "campo Requerido")]
         public string tipoContenido { get; set; }

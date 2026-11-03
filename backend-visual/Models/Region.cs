@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiPrueba.Models
@@ -6,7 +6,7 @@ namespace ApiPrueba.Models
     public class Region
     {
         [Key]
-        public int idRegion { get; set; }
+        public int? idRegion { get; set; }
 
         [Required]
         [MaxLength(100)]

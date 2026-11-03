@@ -1,4 +1,4 @@
-﻿using ApiPrueba.Models;
+using ApiPrueba.Models;
 using ApiPrueba.Repositorios.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -132,7 +132,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _recenaController.PostRecena(Recena);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -181,7 +181,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _recenaController.PutRecena(Recena);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -231,7 +231,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _recenaController.DeleteRecena(Recena);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -278,7 +278,7 @@ namespace ApiPrueba.Controllers
 
             var comentario = resena.Comentario ?? string.Empty;
             foreach (var palabra in request.Palabras.Where(x => !string.IsNullOrWhiteSpace(x)))
-                comentario = System.Text.RegularExpressions.Regex.Replace(comentario, $"\\b{System.Text.RegularExpressions.Regex.Escape(palabra.Trim())}\\b", "***", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                comentario = System.Text.RegularExpressions.Regex.Replace(comentario, $"\\b{System.Text.RegularExpressions.Regex.Escape(palabra.Trim())}\\b", "***", System.Text.RegularExpressions.RegexOptions.IgnoreCase, TimeSpan.FromSeconds(2));
 
             resena.Comentario = comentario;
             await _resenas.SaveChangesAsync();

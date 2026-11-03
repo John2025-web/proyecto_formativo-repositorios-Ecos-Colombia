@@ -36,7 +36,12 @@ builder.Services.AddExternal(builder.Configuration);
 
 // Registrar autenticación JWT
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
+var rawJwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? jwtSettings["Key"];
+if (string.IsNullOrEmpty(rawJwtKey))
+{
+    rawJwtKey = "ThisIsA256BitKeyThatIsExactly32BytesLongAndEncodedInBase64";
+}
+var key = Encoding.UTF8.GetBytes(rawJwtKey);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -135,4 +140,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();

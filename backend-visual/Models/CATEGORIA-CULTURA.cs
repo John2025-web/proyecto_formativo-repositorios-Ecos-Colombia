@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ApiPrueba.models
 {
@@ -6,7 +6,7 @@ namespace ApiPrueba.models
 
     {
         [Key]
-        public int IdCategoria { get; set; }
+        public int? IdCategoria { get; set; }
 
         [Required(ErrorMessage = "Campo Requerido")]
         public string Nombre { get; set; }

@@ -1,4 +1,4 @@
-﻿using ApiPrueba.models;
+using ApiPrueba.models;
 using ApiPrueba.Repositories;
 using ApiPrueba.Repositories.@interface;
 using Microsoft.AspNetCore.Authorization;
@@ -129,7 +129,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _contenidoController.PostContenido(contenido);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return BadRequest(new
                         {
@@ -179,7 +179,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _contenidoController.PutContenido(contenido);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {

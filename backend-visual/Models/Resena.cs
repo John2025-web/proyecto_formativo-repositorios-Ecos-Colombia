@@ -1,14 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ApiPrueba.Models
 {
     public class Recena
     {
         [Key]
-        public int idRecena { get; set; }
+        public int? idRecena { get; set; }
 
-        public int idUsuario { get; set; }
-        public int idLugar { get; set; }
+        public int? idUsuario { get; set; }
+        public int? idLugar { get; set; }
 
         public string Comentario { get; set; }
 

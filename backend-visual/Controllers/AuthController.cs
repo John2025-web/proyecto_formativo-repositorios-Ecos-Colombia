@@ -1,4 +1,4 @@
-﻿using ApiPrueba.Models;
+using ApiPrueba.Models;
 using ApiPrueba.Data;
 using ApiPrueba.DBcontext;
 using Microsoft.AspNetCore.Mvc;
@@ -45,8 +45,11 @@ namespace ApiPrueba.Controllers
 
             if (isAdmin)
             {
-                validCredentials = login.Usuario == _configuration["Auth:Username"]
-                    && login.contraseña == _configuration["Auth:Password"];
+                var adminUser = Environment.GetEnvironmentVariable("ADMIN_USERNAME") ?? _configuration["Auth:Username"];
+                var adminPass = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? _configuration["Auth:Password"];
+                validCredentials = !string.IsNullOrEmpty(adminPass)
+                    && login.Usuario == adminUser
+                    && login.contraseña == adminPass;
 
                 if (!validCredentials)
                 {
@@ -70,7 +73,13 @@ namespace ApiPrueba.Controllers
 
             if (validCredentials)
             {
-                var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+                var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+                    ?? _configuration["Jwt:Key"];
+                if (string.IsNullOrEmpty(jwtKey))
+                {
+                    jwtKey = "ThisIsA256BitKeyThatIsExactly32BytesLongAndEncodedInBase64";
+                }
+                var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
                 var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
                 var tokeOptions = new JwtSecurityToken(

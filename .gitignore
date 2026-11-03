@@ -1,4 +1,4 @@
-﻿################################################################################
+################################################################################
 # Este archivo .gitignore ha sido creado automáticamente por Microsoft(R) Visual Studio.
 ################################################################################
 
@@ -9,6 +9,10 @@ dist/
 frontend-figma/dist/
 .env
 frontend-figma/.env
+[Bb]in/
+[Oo]bj/
+/backend-visual/bin/
+/backend-visual/obj/
 /backend-visual.Tests/bin/
 /backend-visual.Tests/obj/
 /backend-visual.Tests/TestResults/

@@ -1,4 +1,4 @@
-﻿using ApiPrueba.models;
+using ApiPrueba.models;
 using ApiPrueba.Repositories;
 using ApiPrueba.Repositories.@interface;
 using Microsoft.AspNetCore.Authorization;
@@ -131,7 +131,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _categoriaCulturaController.PostCategoria(categoria);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -181,7 +181,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _categoriaCulturaController.PutCategoria(categoria);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return BadRequest(new
                         {
@@ -231,7 +231,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _categoriaCulturaController.DeleteCategoria(categoria);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return BadRequest(new
                         {

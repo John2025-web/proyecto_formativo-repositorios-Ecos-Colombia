@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ApiPrueba.models;
 using ApiPrueba.Repositories.@interface;
@@ -169,7 +169,7 @@ namespace ApiPrueba.Controllers
             {
                 var response = await _administradoresController.PostAdministrador(administrador);
 
-                if (response != null)
+                if (response)
                 {
                     return Ok(response);
                 }
@@ -216,7 +216,7 @@ namespace ApiPrueba.Controllers
             {
                 var response = await _administradoresController.PutAdministrador(administrador);
 
-                if (response == null)
+                if (!response)
                 {
                     return StatusCode(StatusCodes.Status400BadRequest, new
                     {
@@ -263,7 +263,7 @@ namespace ApiPrueba.Controllers
             {
                 var response = await _administradoresController.DeleteAdministrador(administrador);
 
-                if (response == null)
+                if (!response)
                 {
                     return StatusCode(StatusCodes.Status400BadRequest, new
                     {

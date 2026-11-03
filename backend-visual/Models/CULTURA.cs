@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiPrueba.models
@@ -7,7 +7,7 @@ namespace ApiPrueba.models
     {
         [Key]
         [Column("id_cultura")]
-        public int IdCultura { get; set; }
+        public int? IdCultura { get; set; }
 
         [Required(ErrorMessage = "Campo Requerido")]
         [Column("nombre")]
@@ -19,7 +19,7 @@ namespace ApiPrueba.models
 
         [Required(ErrorMessage = "Campo Requerido")]
         [Column("idCategoria")]
-        public int IdCategoria { get; set; }
+        public int? IdCategoria { get; set; }
     }
 }
 

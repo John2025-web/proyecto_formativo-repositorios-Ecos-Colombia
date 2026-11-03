@@ -1,4 +1,4 @@
-﻿using ApiPrueba.models;
+using ApiPrueba.models;
 using ApiPrueba.Models;
 using ApiPrueba.repositorios;
 using ApiPrueba.Repositorios;
@@ -131,7 +131,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _cultradiController.PostculturaTradicion(culturaTradicion);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -180,7 +180,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _cultradiController.PutculturaTradicion(culturaTradicion);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -229,7 +229,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _cultradiController.DeleteculturaTradicion(culturaTradicion);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {

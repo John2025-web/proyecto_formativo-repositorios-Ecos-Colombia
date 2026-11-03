@@ -1,4 +1,4 @@
-﻿using ApiPrueba.models;
+using ApiPrueba.models;
 using ApiPrueba.Models;
 using ApiPrueba.Repositorios;
 using ApiPrueba.Repositorios.Interfaces;
@@ -130,7 +130,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _GastronoController.PostGastronomia(gastronomia);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -179,7 +179,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _GastronoController.PutGastronomia(gastronomia);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -228,7 +228,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _GastronoController.DeleteGastronomia(gastronomia);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {

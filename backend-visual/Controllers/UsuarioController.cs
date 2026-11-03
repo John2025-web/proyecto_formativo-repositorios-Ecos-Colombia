@@ -1,4 +1,4 @@
-﻿using ApiPrueba.Models;
+using ApiPrueba.Models;
 using ApiPrueba.Repositorios.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -142,7 +142,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _usuarioController.PostUsuario(Usuario);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -191,7 +191,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _usuarioController.PutUsuario(Usuario);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
@@ -240,7 +240,7 @@ namespace ApiPrueba.Controllers
                 {
                     var response = await _usuarioController.DeleteUsuario(Usuario);
 
-                    if (response == null)
+                    if (!response)
                     {
                         return StatusCode(StatusCodes.Status400BadRequest, new
                         {
