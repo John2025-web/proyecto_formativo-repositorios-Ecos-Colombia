@@ -31,7 +31,7 @@ const TR: Record<string, Record<string, string>> = {
     orContinue: "o continúa con", noAccount: "¿No tienes cuenta?", register: "Regístrate",
     signIn: "Iniciar sesión", signingIn: "Iniciando sesión...", continueGoogle: "Continuar con Google",
     welcome: "Bienvenido", signInContinue: "Inicia sesión para continuar", forgotPassword: "¿Olvidaste tu contraseña?",
-    email: "Usuario", passwordLabel: "Contraseña", terms: "Términos de servicio", privacy: "Política de privacidad",
+    email: "Usuario", claveAcceso: "Contraseña", terms: "Términos de servicio", privacy: "Política de privacidad",
     destMarker: "Destino", cityMarker: "Ciudad",
   },
   EN: {
@@ -47,7 +47,7 @@ const TR: Record<string, Record<string, string>> = {
     orContinue: "or continue with", noAccount: "Don't have an account?", register: "Sign up",
     signIn: "Sign in", signingIn: "Signing in...", continueGoogle: "Continue with Google",
     welcome: "Welcome", signInContinue: "Sign in to continue", forgotPassword: "Forgot your password?",
-    email: "Email address", passwordLabel: "Password", terms: "Terms of service", privacy: "Privacy policy",
+    email: "Email address", claveAcceso: "Password", terms: "Terms of service", privacy: "Privacy policy",
     destMarker: "Destination", cityMarker: "City",
   },
   PT: {
@@ -63,7 +63,7 @@ const TR: Record<string, Record<string, string>> = {
     orContinue: "ou continue com", noAccount: "Não tem uma conta?", register: "Cadastre-se",
     signIn: "Entrar", signingIn: "Entrando...", continueGoogle: "Continuar com Google",
     welcome: "Bem-vindo", signInContinue: "Entre para continuar", forgotPassword: "Esqueceu sua senha?",
-    email: "Endereço de e-mail", passwordLabel: "Senha", terms: "Termos de serviço", privacy: "Política de privacidade",
+    email: "Endereço de e-mail", claveAcceso: "Senha", terms: "Termos de serviço", privacy: "Política de privacidade",
     destMarker: "Destino", cityMarker: "Cidade",
   },
   FR: {
@@ -79,7 +79,7 @@ const TR: Record<string, Record<string, string>> = {
     orContinue: "ou continuez avec", noAccount: "Pas de compte?", register: "S'inscrire",
     signIn: "Se connecter", signingIn: "Connexion...", continueGoogle: "Continuer avec Google",
     welcome: "Bienvenue", signInContinue: "Connectez-vous pour continuer", forgotPassword: "Mot de passe oublié?",
-    email: "Adresse e-mail", passwordLabel: "Mot de passe", terms: "Conditions d'utilisation", privacy: "Politique de confidentialité",
+    email: "Adresse e-mail", claveAcceso: "Mot de passe", terms: "Conditions d'utilisation", privacy: "Politique de confidentialité",
     destMarker: "Destination", cityMarker: "Ville",
   },
   DE: {
@@ -95,7 +95,7 @@ const TR: Record<string, Record<string, string>> = {
     orContinue: "oder weiter mit", noAccount: "Noch kein Konto?", register: "Registrieren",
     signIn: "Anmelden", signingIn: "Anmeldung...", continueGoogle: "Mit Google fortfahren",
     welcome: "Willkommen", signInContinue: "Melde dich an, um fortzufahren", forgotPassword: "Passwort vergessen?",
-    email: "E-Mail-Adresse", passwordLabel: "Passwort", terms: "Nutzungsbedingungen", privacy: "Datenschutzrichtlinie",
+    email: "E-Mail-Adresse", claveAcceso: "Passwort", terms: "Nutzungsbedingungen", privacy: "Datenschutzrichtlinie",
     destMarker: "Ziel", cityMarker: "Stadt",
   },
 };
@@ -1021,7 +1021,7 @@ function LoginScreen({ onLogin, t }: { onLogin: (u: UserType) => void; t: (k: st
               </div>
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="password-login-input" className="text-xs font-semibold" style={{ color: C.navy }}>{t("passwordLabel")}</label>
+                  <label htmlFor="password-login-input" className="text-xs font-semibold" style={{ color: C.navy }}>{t("claveAcceso")}</label>
                   <a href="#" className="text-xs font-semibold hover:opacity-70 transition-opacity" style={{ color: C.red }}>{t("forgotPassword")}</a>
                 </div>
                 <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200" style={{ border: `1.5px solid ${passF ? C.navy : "rgba(36,60,143,0.18)"}`, background: passF ? "rgba(36,60,143,0.025)" : "#fafafa", boxShadow: passF ? "0 0 0 3px rgba(36,60,143,0.08)" : "none" }}>

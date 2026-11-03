@@ -74,11 +74,8 @@ namespace ApiPrueba.Controllers
             if (validCredentials)
             {
                 var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
-                    ?? _configuration["Jwt:Key"];
-                if (string.IsNullOrEmpty(jwtKey))
-                {
-                    jwtKey = "ThisIsA256BitKeyThatIsExactly32BytesLongAndEncodedInBase64";
-                }
+                    ?? _configuration["Jwt:Key"]
+                    ?? Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
                 var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
                 var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 

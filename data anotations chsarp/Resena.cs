@@ -70,11 +70,12 @@ namespace tablas_ecoscolombia
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
-}
-public class EcosColombiaContext : DbContext
-{
-    public async Task<bool> SaveAsync()
+
+    public class EcosColombiaContext : DbContext
     {
-        return await SaveChangesAsync() > 0;
+        public async Task<bool> SaveAsync()
+        {
+            return await SaveChangesAsync() > 0;
+        }
     }
 }
