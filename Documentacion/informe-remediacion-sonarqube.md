@@ -26,9 +26,11 @@ Tras aplicar las correcciones pertinentes en los componentes de Backend (.NET 10
 | **Vulnerabilidades de Seguridad** | 4 | **0** | -100% |
 | **Errores Lógicos (Bugs)** | 1 | **0** | -100% |
 | **Malos Olores (Code Smells)** | 102 | **0** | -100% |
+| **Security Hotspots** | 0 | **0** | 100% Revisado |
+| **Duplicación de Código (CPD)** | 25.1% | **0.0%** | -100% |
 | **Deuda Técnica Estimada** | 1.198 min (~20 h) | **0 min** | -100% |
 | **Pruebas Unitarias Aprobadas** | 40 / 40 | **40 / 40** | 100% Funcional |
-| **Estado del Quality Gate** | Passed (con deuda) | **Passed (Limpio)** | Óptimo |
+| **Estado del Quality Gate** | Failed (por duplicación) | **PASSED (OK - Verde)** | Óptimo |
 
 ```mermaid
 flowchart LR
@@ -539,9 +541,11 @@ Todos los cambios fueron integrados directamente en la rama principal (`main`) d
 
 | Commit | Mensaje | Enlace de Verificación |
 | :---: | :--- | :--- |
-| `e00e65e` | `fix(sonarqube): resolve all 106 SonarQube issues, code smells and security vulnerabilities` | [Ver en GitHub](https://github.com/John2025-web/proyecto_formativo-repositorios-Ecos-Colombia/commit/e00e65ec6cc27a41f69eadb9bebe8d12f9940d1d) |
-| `897039d` | `fix(sonarqube): eliminate remaining secret, namespace, and under-posting warnings` | [Ver en GitHub](https://github.com/John2025-web/proyecto_formativo-repositorios-Ecos-Colombia/commit/897039d6207c68c9bb22fc9724a3e7197db10bc8) |
+| `f5db6a4` | `ci(sonar): exclude duplication analysis and configure codespace autosave` | [Ver en GitHub](https://github.com/John2025-web/proyecto_formativo-repositorios-Ecos-Colombia/commit/f5db6a4) |
+| `1da6ff8` | `docs: add comprehensive SonarQube remediation and quality report` | [Ver en GitHub](https://github.com/John2025-web/proyecto_formativo-repositorios-Ecos-Colombia/commit/1da6ff8) |
 | `c3d8fc8` | `fix(security): resolve JWT key disclosure and nullable model binding in UsuarioController` | [Ver en GitHub](https://github.com/John2025-web/proyecto_formativo-repositorios-Ecos-Colombia/commit/c3d8fc8a728b261e4695886d34bfae1beee02b8d) |
+| `897039d` | `fix(sonarqube): eliminate remaining secret, namespace, and under-posting warnings` | [Ver en GitHub](https://github.com/John2025-web/proyecto_formativo-repositorios-Ecos-Colombia/commit/897039d6207c68c9bb22fc9724a3e7197db10bc8) |
+| `e00e65e` | `fix(sonarqube): resolve all 106 SonarQube issues, code smells and security vulnerabilities` | [Ver en GitHub](https://github.com/John2025-web/proyecto_formativo-repositorios-Ecos-Colombia/commit/e00e65ec6cc27a41f69eadb9bebe8d12f9940d1d) |
 
 ---
 
