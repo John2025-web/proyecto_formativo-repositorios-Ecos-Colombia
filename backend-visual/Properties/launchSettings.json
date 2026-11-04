@@ -1,6 +1,17 @@
 {
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
+    "ApiPrueba": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "http://localhost:5154",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "JWT_SECRET_KEY": "EcosColombia2025SecretKeyDefaultDevelopmentFallbackKey12345"
+      }
+    },
     "http": {
       "commandName": "Project",
       "dotnetRunMessages": true,

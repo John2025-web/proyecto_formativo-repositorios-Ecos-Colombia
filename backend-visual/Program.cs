@@ -73,35 +73,38 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-try
+// Preparación asíncrona de base de datos sin bloquear el inicio del host de Swagger
+_ = Task.Run(async () =>
 {
-    using var scope = app.Services.CreateScope();
-    var usuarioDb = scope.ServiceProvider.GetRequiredService<UsuarioService>();
-    await usuarioDb.Database.ExecuteSqlRawAsync("""
-        IF OBJECT_ID(N'[dbo].[Usuario]', N'U') IS NULL
-        BEGIN
-            CREATE TABLE [dbo].[Usuario]
-            (
-                [idUsuario] int IDENTITY(1,1) NOT NULL PRIMARY KEY,
-                [Nombre] nvarchar(100) NOT NULL,
-                [Correo] nvarchar(150) NOT NULL,
-                [PaisOrigen] nvarchar(100) NULL,
-                [IdiomaPreferido] nvarchar(50) NULL,
-                [TipoUsuario] nvarchar(50) NULL,
-                [Contraseña] nvarchar(100) NOT NULL
-            );
-        END
-        ELSE IF COL_LENGTH(N'dbo.Usuario', N'Contraseña') IS NULL
-        BEGIN
-            ALTER TABLE [dbo].[Usuario] ADD [Contraseña] nvarchar(100) NULL;
-        END
-        IF COL_LENGTH(N'dbo.Usuario', N'Activo') IS NULL
-            ALTER TABLE [dbo].[Usuario] ADD [Activo] bit NOT NULL CONSTRAINT [DF_Usuario_Activo] DEFAULT 1;
-        IF COL_LENGTH(N'dbo.Usuario', N'MotivoDeshabilitacion') IS NULL
-            ALTER TABLE [dbo].[Usuario] ADD [MotivoDeshabilitacion] nvarchar(500) NULL;
-        IF OBJECT_ID(N'[dbo].[Resena]', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.Resena', N'Visible') IS NULL
-            ALTER TABLE [dbo].[Resena] ADD [Visible] bit NOT NULL CONSTRAINT [DF_Resena_Visible] DEFAULT 1;
-        """);
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var usuarioDb = scope.ServiceProvider.GetRequiredService<UsuarioService>();
+        await usuarioDb.Database.ExecuteSqlRawAsync("""
+            IF OBJECT_ID(N'[dbo].[Usuario]', N'U') IS NULL
+            BEGIN
+                CREATE TABLE [dbo].[Usuario]
+                (
+                    [idUsuario] int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                    [Nombre] nvarchar(100) NOT NULL,
+                    [Correo] nvarchar(150) NOT NULL,
+                    [PaisOrigen] nvarchar(100) NULL,
+                    [IdiomaPreferido] nvarchar(50) NULL,
+                    [TipoUsuario] nvarchar(50) NULL,
+                    [Contraseña] nvarchar(100) NOT NULL
+                );
+            END
+            ELSE IF COL_LENGTH(N'dbo.Usuario', N'Contraseña') IS NULL
+            BEGIN
+                ALTER TABLE [dbo].[Usuario] ADD [Contraseña] nvarchar(100) NULL;
+            END
+            IF COL_LENGTH(N'dbo.Usuario', N'Activo') IS NULL
+                ALTER TABLE [dbo].[Usuario] ADD [Activo] bit NOT NULL CONSTRAINT [DF_Usuario_Activo] DEFAULT 1;
+            IF COL_LENGTH(N'dbo.Usuario', N'MotivoDeshabilitacion') IS NULL
+                ALTER TABLE [dbo].[Usuario] ADD [MotivoDeshabilitacion] nvarchar(500) NULL;
+            IF OBJECT_ID(N'[dbo].[Resena]', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.Resena', N'Visible') IS NULL
+                ALTER TABLE [dbo].[Resena] ADD [Visible] bit NOT NULL CONSTRAINT [DF_Resena_Visible] DEFAULT 1;
+            """);
 
         var administradorDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await administradorDb.Database.ExecuteSqlRawAsync("""
@@ -118,24 +121,32 @@ try
             ELSE IF COL_LENGTH(N'dbo.ADMINISTRADORES', N'password_hash') IS NULL
                 ALTER TABLE [dbo].[ADMINISTRADORES] ADD [password_hash] nvarchar(100) NULL;
             """);
-}
+    }
     catch (Exception ex)
     {
         app.Logger.LogWarning(ex, "No se pudo preparar la base de datos durante el arranque. La API iniciara, pero las operaciones que requieren SQL pueden fallar hasta recuperar la conexion.");
     }
+});
 
-if (app.Environment.IsDevelopment())
+// Habilitar Swagger siempre para que el host y la documentación estén disponibles de inmediato
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ecos Colombia API v1");
+    c.RoutePrefix = "swagger";
+});
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("ReactPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Redireccionar raíz al host de Swagger
+app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapControllers();
 
 await app.RunAsync();
