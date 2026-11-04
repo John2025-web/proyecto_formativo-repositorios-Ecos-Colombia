@@ -1,8 +1,9 @@
 <Solution>
-  <Folder Name="/backend-visual.Tests/">
-    <Project Path="backend-visual.Tests/ApiPrueba.Tests.csproj" />
+  <Folder Name="/Backend/" />
+  <Folder Name="/Backend/Api/">
+    <Project Path="Backend/Api/ApiPrueba.csproj" />
   </Folder>
-  <Folder Name="/backend-visual/">
-    <Project Path="backend-visual/ApiPrueba.csproj" />
+  <Folder Name="/Backend/Tests/">
+    <Project Path="Backend/Tests/ApiPrueba.Tests.csproj" />
   </Folder>
 </Solution>

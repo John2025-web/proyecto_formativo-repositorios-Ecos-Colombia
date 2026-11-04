@@ -4,13 +4,21 @@
 
 /.vs
 node_modules/
+Frontend/node_modules/
 frontend-figma/node_modules/
 dist/
+Frontend/dist/
 frontend-figma/dist/
 .env
+Frontend/.env
 frontend-figma/.env
 [Bb]in/
 [Oo]bj/
+/Backend/Api/bin/
+/Backend/Api/obj/
+/Backend/Tests/bin/
+/Backend/Tests/obj/
+/Backend/Tests/TestResults/
 /backend-visual/bin/
 /backend-visual/obj/
 /backend-visual.Tests/bin/

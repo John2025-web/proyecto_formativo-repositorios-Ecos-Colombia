@@ -7,7 +7,7 @@
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/backend-visual/ApiPrueba.csproj",
+        "${workspaceFolder}/Backend/Api/ApiPrueba.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary"
       ],
