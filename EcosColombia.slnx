@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/backend-visual.Tests/">
+    <Project Path="backend-visual.Tests/ApiPrueba.Tests.csproj" />
+  </Folder>
+  <Folder Name="/backend-visual/">
+    <Project Path="backend-visual/ApiPrueba.csproj" />
+  </Folder>
+</Solution>
