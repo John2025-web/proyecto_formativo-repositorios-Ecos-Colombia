@@ -1,4 +1,4 @@
-using ApiPrueba.models;
+﻿using ApiPrueba.models;
 using ApiPrueba.Models;
 using ApiPrueba.Repositorios;
 using ApiPrueba.Repositorios.Interfaces;
@@ -10,6 +10,7 @@ namespace ApiPrueba.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+        [Tags("GASTRONOMIA")]
     public class gastronoController : ControllerBase
     {
         private readonly IGastroRepo _GastronoController;

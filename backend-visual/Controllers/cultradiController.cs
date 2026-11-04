@@ -1,4 +1,4 @@
-using ApiPrueba.models;
+﻿using ApiPrueba.models;
 using ApiPrueba.Models;
 using ApiPrueba.repositorios;
 using ApiPrueba.Repositorios;
@@ -11,6 +11,7 @@ namespace ApiPrueba.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+        [Tags("CULTURA_TRADICION")]
     public class cultradiController : ControllerBase
     {
         private readonly culturatradiRepository _cultradiController;

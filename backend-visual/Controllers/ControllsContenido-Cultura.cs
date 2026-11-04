@@ -1,4 +1,4 @@
-using ApiPrueba.models;
+﻿using ApiPrueba.models;
 using ApiPrueba.Repositories;
 using ApiPrueba.Repositories.@interface;
 using Microsoft.AspNetCore.Authorization;
@@ -9,6 +9,7 @@ namespace ApiPrueba.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+        [Tags("CONTENIDO_CULTURA")]
     public class CONTENIDO_CULTURAController : ControllerBase
     {
         private readonly ICONTENIDO_CULTURARepository _contenidoCulturaController;

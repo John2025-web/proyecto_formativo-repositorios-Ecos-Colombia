@@ -1,4 +1,4 @@
-using ApiPrueba.models;
+﻿using ApiPrueba.models;
 using ApiPrueba.repositorios;
 using ApiPrueba.Repositorios.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -9,6 +9,7 @@ namespace ApiPrueba.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+        [Tags("MULTIMEDIA")]
     public class multimediaController : ControllerBase
     {
         private readonly IMultimediaRepo _multimediaController;

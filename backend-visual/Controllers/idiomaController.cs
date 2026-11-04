@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ApiPrueba.models;
 using ApiPrueba.repositorios;
@@ -9,6 +9,7 @@ namespace ApiPrueba.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+        [Tags("IDIOMA")]
     public class idiomaController : ControllerBase
     {
         private readonly IidiomaRepo _IdiomaController;

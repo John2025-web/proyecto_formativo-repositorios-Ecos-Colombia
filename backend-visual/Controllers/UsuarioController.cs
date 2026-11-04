@@ -1,4 +1,4 @@
-using ApiPrueba.Models;
+﻿using ApiPrueba.Models;
 using ApiPrueba.Repositorios.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +10,7 @@ namespace ApiPrueba.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Roles = "Administrador")]
+        [Tags("Usuario")]
     public class UserController : ControllerBase
     {
         private readonly IUsuarioRepo _usuarioController;

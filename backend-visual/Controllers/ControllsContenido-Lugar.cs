@@ -1,4 +1,4 @@
-using ApiPrueba.models;
+﻿using ApiPrueba.models;
 using ApiPrueba.Models;
 using ApiPrueba.Repositories;
 using ApiPrueba.Repositories.@interface;
@@ -10,6 +10,7 @@ namespace ApiPrueba.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+        [Tags("CONTENIDO_LUGAR")]
     public class CONTENIDO_LUGARController : ControllerBase
     {
         private readonly ICONTENIDO_LUGARRepository _contenidoLugarController;

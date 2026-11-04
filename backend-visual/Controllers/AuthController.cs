@@ -1,4 +1,4 @@
-using ApiPrueba.Models;
+﻿using ApiPrueba.Models;
 using ApiPrueba.Data;
 using ApiPrueba.DBcontext;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +14,7 @@ namespace ApiPrueba.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+        [Tags("Auth")]
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _configuration;

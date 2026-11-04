@@ -1,4 +1,4 @@
-using ApiPrueba.models;
+﻿using ApiPrueba.models;
 using ApiPrueba.Models;
 using ApiPrueba.Repositorios;
 using ApiPrueba.Repositorios.Interfaces;
@@ -10,6 +10,7 @@ namespace ApiPrueba.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+        [Tags("LUGAR_TURISTICO")]
     public class LugarTuriController : ControllerBase
     {
         private readonly ILugarTuristicoRepo _LugarTuriController;

@@ -1,4 +1,4 @@
-using ApiPrueba.models;
+﻿using ApiPrueba.models;
 using ApiPrueba.Models;
 using ApiPrueba.Repositories.@interface;
 using ApiPrueba.Repositorios;
@@ -11,6 +11,7 @@ namespace ApiPrueba.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+        [Tags("CulturaLugar")]
     public class CultuLugarController : ControllerBase
     {
         private readonly IculturaLugarRepo _CultuLugarController;
