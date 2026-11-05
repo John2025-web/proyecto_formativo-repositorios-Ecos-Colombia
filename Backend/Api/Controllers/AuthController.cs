@@ -1,4 +1,4 @@
-﻿using ApiPrueba.Models;
+using ApiPrueba.Models;
 using ApiPrueba.Data;
 using ApiPrueba.DBcontext;
 using Microsoft.AspNetCore.Mvc;
@@ -102,7 +102,11 @@ namespace ApiPrueba.Controllers
                     Expires = DateTimeOffset.UtcNow.AddMinutes(30),
                     IsEssential = true
                 });
-                return Ok(new { mensaje = "Inicio de sesión correcto." });
+                return Ok(new
+                {
+                    mensaje = "Inicio de sesión correcto.",
+                    token = tokenString
+                });
             }
 
             return Unauthorized();

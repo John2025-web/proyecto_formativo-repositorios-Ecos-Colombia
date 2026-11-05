@@ -1,0 +1,539 @@
+{
+  "info": {
+    "_postman_id": "ecos-colombia-api-v1",
+    "name": "Ecos Colombia API - Pruebas Oficiales (Swagger & Azure SQL)",
+    "description": "Colección completa de pruebas de API para el proyecto formativo Ecos Colombia. Incluye autenticación JWT, manejo de cookies, pruebas CRUD para Usuarios, Reseñas, Cultura, Lugares Turísticos, Regiones, Gastronomía y Administradores.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:7119",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testUserId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "testLugarId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "testRecenaId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Autenticacion (Auth)",
+      "item": [
+        {
+          "name": "Login - Administrador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.token);",
+                  "    console.log('Token JWT capturado y guardado en variable collection: ' + jsonData.token.substring(0, 15) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"admin\",\n  \"contraseña\": \"admin123\",\n  \"rol\": \"Administrador\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/Login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Auth", "Login"]
+            },
+            "description": "Inicia sesión como Administrador. La API genera la cookie 'access_token' y devuelve el token JWT en el cuerpo JSON."
+          }
+        },
+        {
+          "name": "Login - Usuario Turista",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"juan.perez@ecoscolombia.com\",\n  \"contraseña\": \"Turista2026*\",\n  \"rol\": \"Usuario\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/Login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Auth", "Login"]
+            }
+          }
+        },
+        {
+          "name": "Register - Nuevo Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Maria Gomez\",\n  \"correo\": \"maria.gomez@test.com\",\n  \"password\": \"ClaveSegura2026*\",\n  \"paisOrigen\": \"Colombia\",\n  \"idiomaPreferido\": \"ES\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/Register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Auth", "Register"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/Logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Auth", "Logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Usuarios (Usuario)",
+      "item": [
+        {
+          "name": "Listar Usuarios (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Usuario/obtenerUsuario",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Usuario", "obtenerUsuario"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Usuario por ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Usuario/{{testUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Usuario", "{{testUserId}}"]
+            }
+          }
+        },
+        {
+          "name": "Crear Usuario",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carlos Rodriguez\",\n  \"correo\": \"carlos.rodriguez@example.com\",\n  \"tipoUsuario\": \"Usuario\",\n  \"paisOrigen\": \"Ecuador\",\n  \"idiomaPreferido\": \"ES\",\n  \"activo\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Usuario",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Usuario"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Estado Usuario (Activo/Inactivo)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": 1,\n  \"activo\": true,\n  \"motivoDeshabilitacion\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Usuario",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Usuario"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Reseñas (Resena)",
+      "item": [
+        {
+          "name": "Listar Reseñas",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Recena",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Recena"]
+            }
+          }
+        },
+        {
+          "name": "Crear Reseña",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": 1,\n  \"idLugar\": 1,\n  \"comentario\": \"Excelente experiencia en el Parque Tayrona. Playas hermosas y naturaleza exuberante.\",\n  \"calificacion\": 5,\n  \"visible\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Recena",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Recena"]
+            }
+          }
+        },
+        {
+          "name": "Censurar Reseña (Admin - Algoritmo Seguro SonarQube)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Recena/{{testRecenaId}}/censurar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Recena", "{{testRecenaId}}", "censurar"]
+            },
+            "description": "Ejecuta el filtro de censura con timeout contra ReDoS (vulnerabilidad corregida en auditoría SonarQube)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Lugares Turísticos (LUGAR-TURISTICO)",
+      "item": [
+        {
+          "name": "Listar Lugares Turísticos",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/LugarTuri",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "LugarTuri"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Lugar Turístico por ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/LugarTuri/{{testLugarId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "LugarTuri", "{{testLugarId}}"]
+            }
+          }
+        },
+        {
+          "name": "Crear Lugar Turístico",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Caño Cristales\",\n  \"ciudad\": \"La Macarena\",\n  \"descripcion\": \"El río de los siete colores más hermoso del mundo ubicado en la Sierra de la Macarena.\",\n  \"imagen\": \"https://ecoscolombia.blob.core.windows.net/imagenes/cano-cristales.jpg\",\n  \"ubicacion\": \"Meta, Colombia\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/LugarTuri",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "LugarTuri"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05. Cultura y Tradiciones (CULTURA)",
+      "item": [
+        {
+          "name": "Listar Elementos Culturales",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ControllsCultura",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ControllsCultura"]
+            }
+          }
+        },
+        {
+          "name": "Crear Elemento Cultural",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carnaval de Barranquilla\",\n  \"descripcion\": \"Obra Maestra del Patrimonio Oral e Intangible de la Humanidad por la UNESCO.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ControllsCultura",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ControllsCultura"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06. Regiones de Colombia (Region)",
+      "item": [
+        {
+          "name": "Listar Regiones",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Region",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Region"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "07. Gastronomía Colombiana (GASTRONOMIA)",
+      "item": [
+        {
+          "name": "Listar Platos Gastronómicos",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/gastrono",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "gastrono"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
