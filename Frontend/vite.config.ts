@@ -29,9 +29,8 @@ export default defineConfig({
     allowedHosts: ['.app.github.dev'],
     proxy: {
       '/api': {
-        target: 'https://localhost:7119',
+        target: 'http://localhost:5154',
         changeOrigin: true,
-        secure: false,
       },
     },
   },

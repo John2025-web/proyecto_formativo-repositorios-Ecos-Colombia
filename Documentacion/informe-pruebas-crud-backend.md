@@ -51,6 +51,20 @@ Comando de pruebas:
 dotnet test backend-visual.Tests/ApiPrueba.Tests.csproj --logger "console;verbosity=minimal"
 ```
 
+Build de regresión del frontend:
+
+```bash
+npm --prefix frontend-figma run build
+```
+
+Smoke HTTP reproducible, con frontend y API ya iniciados:
+
+```bash
+./scripts/smoke-test.sh
+```
+
+Permite configurar `FRONTEND_URL` y `API_URL`; por defecto usa `http://localhost:4173` y `http://localhost:5154`.
+
 Comando de cobertura OpenCover:
 
 ```bash
@@ -58,6 +72,23 @@ dotnet test backend-visual.Tests/ApiPrueba.Tests.csproj --no-build --logger "con
 ```
 
 La cobertura agregada informada para el ensamblado `ApiPrueba` fue **21,26% de líneas**, **1,25% de ramas** y **55,85% de métodos**. Es una métrica global del ensamblado, no una cobertura individual de cada tabla ni controlador. El bajo porcentaje de ramas muestra que aún faltan escenarios alternos.
+
+## Pruebas según objetivo
+
+| Tipo | Resultado | Alcance |
+| --- | --- | --- |
+| Funcionales | 40/40 pruebas aprobadas | 18 ciclos CRUD de repositorio y 22 casos HTTP directos de `CULTURAController`. |
+| Regresión | Build frontend aprobado | `npm --prefix frontend-figma run build`; suite .NET completa. |
+| Smoke | 7 checks aprobados | Home HTTP 200, Swagger 200, WeatherForecast 200 con cinco elementos y CRUD protegido 401 directo y a través del proxy Vite. |
+| Contrato | Aprobado parcialmente | OpenAPI 3.0.4 documenta 45 rutas e incluye `/api/CULTURA`; el smoke verifica también la forma de WeatherForecast. |
+| Seguridad | Comprobación básica aprobada | Ruta protegida devuelve 401 sin token. No equivale a un análisis OWASP ni sustituye ZAP/SonarCloud. |
+| End-to-End | Parcial | Se probó el recorrido HTTP del proxy Vite hacia una ruta protegida del API; no se automatizó interacción real de navegador. |
+| Rendimiento | No ejecutado | No hay k6, JMeter, NBomber, `ab`, `wrk` ni `hey` disponibles; no se hizo carga artificial. |
+| Usabilidad/accesibilidad | No ejecutado | No hay navegador automatizado ni herramienta WCAG/axe disponible en el entorno. |
+| Compatibilidad | No ejecutado | No hay matriz de navegadores/dispositivos ni BrowserStack disponible. |
+| Exploratorias | Pendiente manual | Requiere una persona recorriendo los flujos con datos y objetivos definidos. |
+
+Para repetir el smoke, inicia una API en `API_URL` y Vite en `FRONTEND_URL` y ejecuta `./scripts/smoke-test.sh`. El API debe usar configuración de prueba: el arranque puede ejecutar SQL de preparación, por lo que no debe apuntarse a producción ni a una base compartida.
 
 ## Hallazgo corregido durante las pruebas
 
@@ -80,8 +111,17 @@ Las 18 pruebas CRUD pasan con estos cambios. Se recomienda contrastar los nombre
 - Las 18 pruebas ejecutan los repositorios reales contra EF Core InMemory; no conectan con SQL Server ni alteran bases de datos existentes.
 - El proveedor InMemory no reproduce todas las restricciones y el comportamiento relacional de SQL Server. Se recomienda validar esquema, claves foráneas y migraciones con una base SQL de pruebas antes de considerar completa la verificación de persistencia.
 - Solo `CULTURAController` tiene pruebas directas de sus respuestas HTTP. Los otros controladores no se probaron mediante el pipeline ASP.NET Core, autorización, serialización ni rutas HTTP.
+- La comprobación HTTP de integración no inicia sesión ni completa formularios; CAPTCHA, base SQL y credenciales reales no están disponibles en el entorno de prueba.
 - Los casos CRUD usan fixtures genéricos. No cubren todas las reglas de negocio ni todos los valores límite de cada entidad.
 - La cobertura de ramas es baja y la cifra agregada no identifica por sí sola qué entidad necesita más pruebas.
+
+## Pendientes para completar la guía
+
+- **Rendimiento:** definir umbrales de latencia/errores y entorno aislado; ejecutar carga, estrés, pico y soak con k6, JMeter o NBomber. No se lanzó carga sin esos límites ni una base dedicada.
+- **Seguridad:** complementar el caso 401 con pruebas por rol, entradas inválidas y escaneo OWASP ZAP en un entorno de prueba autorizado.
+- **Usabilidad y accesibilidad:** recorrer tareas con usuarios y evaluar WCAG con teclado y un analizador axe/Nielsen.
+- **Compatibilidad:** repetir los flujos principales en navegadores, dispositivos y versiones definidos; BrowserStack no está disponible aquí.
+- **Exploratorias:** preparar charters y registrar sesiones, hallazgos, pasos de reproducción y severidad.
 
 ## Próximos pasos recomendados
 

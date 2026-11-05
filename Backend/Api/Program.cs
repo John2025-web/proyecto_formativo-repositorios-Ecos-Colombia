@@ -2,6 +2,7 @@ using ApiPrueba;
 using ApiPrueba.Data;
 using ApiPrueba.Dependecias;
 using ApiPrueba.DBcontext;
+using ApiPrueba.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -38,6 +39,10 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+builder.Services.AddHttpClient<RecaptchaVerifier>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactPolicy", policy =>
@@ -48,7 +53,8 @@ builder.Services.AddCors(options =>
                 "http://localhost:5173"
             )
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 builder.Services.AddDbContext<AppDbContext>(options =>

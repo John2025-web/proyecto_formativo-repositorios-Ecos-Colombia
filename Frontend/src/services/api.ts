@@ -4,6 +4,14 @@ const API_URL = import.meta.env.DEV
 
 type LoginResponse = {
     mensaje?: string;
+    expiraEn: string;
+};
+
+type SessionResponse = {
+    nombre: string;
+    correo: string;
+    rol: UserRole;
+    expiraEn: string;
 };
 
 export type UserRole = "Administrador" | "Usuario";
@@ -107,7 +115,7 @@ export async function deleteReview(token: string, review: AdminReview) {
     });
 }
 
-export async function login(usuario: string, password: string, rol: UserRole) {
+export async function login(usuario: string, password: string, rol: UserRole, captchaToken: string) {
     const response = await fetch(`${API_URL}/api/Auth/Login`, {
         method: "POST",
         credentials: "include",
@@ -117,7 +125,8 @@ export async function login(usuario: string, password: string, rol: UserRole) {
         body: JSON.stringify({
             Usuario: usuario,
             contraseña: password,
-            Rol: rol
+            Rol: rol,
+            CaptchaToken: captchaToken
         })
     });
 
@@ -126,11 +135,36 @@ export async function login(usuario: string, password: string, rol: UserRole) {
     }
 
     if (!response.ok) {
-        throw new Error(`Error del servidor: ${response.status}`);
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.mensaje || `Error del servidor: ${response.status}`);
     }
 
     const data: LoginResponse = await response.json();
-    return { token: "" };
+    return { token: "", expiresAt: Date.parse(data.expiraEn) };
+}
+
+export async function getSession() {
+    const response = await fetch(`${API_URL}/api/Auth/Session`, {
+        credentials: "include"
+    });
+
+    if (!response.ok) {
+        throw new Error("No hay una sesión activa.");
+    }
+
+    const data: SessionResponse = await response.json();
+    const expiresAt = Date.parse(data.expiraEn);
+    if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+        throw new Error("La sesión expiró.");
+    }
+
+    return {
+        name: data.nombre,
+        email: data.correo,
+        role: data.rol,
+        token: "",
+        expiresAt
+    };
 }
 
 export async function logout() {
@@ -140,14 +174,16 @@ export async function logout() {
     });
 }
 
-export async function registerUser(data: { nombre: string; correo: string; password: string }) {
+export async function registerUser(data: { nombre: string; correo: string; password: string; captchaToken: string }) {
     const response = await fetch(`${API_URL}/api/Auth/Register`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             Nombre: data.nombre,
             Correo: data.correo,
             Password: data.password,
+            CaptchaToken: data.captchaToken,
             IdiomaPreferido: "ES",
             TipoUsuario: "Usuario"
         })

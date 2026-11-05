@@ -8,24 +8,26 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using ApiPrueba.Services;
 
 
 namespace ApiPrueba.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-        [Tags("Auth")]
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _configuration;
         private readonly UsuarioService _usuarios;
         private readonly AppDbContext _administradores;
+        private readonly RecaptchaVerifier _recaptcha;
 
-        public AuthController(IConfiguration configuration, UsuarioService usuarios, AppDbContext administradores)
+        public AuthController(IConfiguration configuration, UsuarioService usuarios, AppDbContext administradores, RecaptchaVerifier recaptcha)
         {
             _configuration = configuration;
             _usuarios = usuarios;
             _administradores = administradores;
+            _recaptcha = recaptcha;
         }
 
         [HttpPost("Login")]
@@ -39,6 +41,11 @@ namespace ApiPrueba.Controllers
                 return BadRequest(new { mensaje = "Usuario, contraseña y rol son obligatorios." });
             }
 
+            if (!await _recaptcha.VerifyAsync(login.CaptchaToken, HttpContext.RequestAborted))
+            {
+                return BadRequest(new { mensaje = "Completa la verificación reCAPTCHA e inténtalo de nuevo." });
+            }
+
             var rol = login.Rol.Trim();
             var isAdmin = rol.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
             var isUser = rol.Equals("Usuario", StringComparison.OrdinalIgnoreCase);
@@ -46,14 +53,8 @@ namespace ApiPrueba.Controllers
 
             if (isAdmin)
             {
-                var adminUser = Environment.GetEnvironmentVariable("ADMIN_USERNAME")
-                    ?? (!string.IsNullOrWhiteSpace(_configuration["Auth:Username"]) ? _configuration["Auth:Username"] : "admin");
-                var adminPass = Environment.GetEnvironmentVariable("ADMIN_PASSWORD")
-                    ?? _configuration["Auth:Password"];
-
-                validCredentials = (!string.IsNullOrEmpty(adminPass) && login.Usuario == adminUser && login.contraseña == adminPass)
-                    || ((login.Usuario.Equals("admin", StringComparison.OrdinalIgnoreCase) || login.Usuario.Equals("AdminEcos", StringComparison.OrdinalIgnoreCase))
-                        && (login.contraseña == "admin123" || login.contraseña == "AdminEcos2026*"));
+                validCredentials = login.Usuario == _configuration["Auth:Username"]
+                    && login.contraseña == _configuration["Auth:Password"];
 
                 if (!validCredentials)
                 {
@@ -67,40 +68,31 @@ namespace ApiPrueba.Controllers
             else if (isUser)
             {
                 var identifier = login.Usuario.Trim();
-                if ((identifier.Equals("turista@ecoscolombia.com", StringComparison.OrdinalIgnoreCase) || identifier.Equals("usuario", StringComparison.OrdinalIgnoreCase))
-                    && (login.contraseña == "turista123" || login.contraseña == "admin123"))
-                {
-                    validCredentials = true;
-                }
-                else
-                {
-                    var user = await _usuarios.usuario.FirstOrDefaultAsync(x =>
-                        x.Correo == identifier || x.Nombre == identifier);
-                    validCredentials = user != null
-                        && user.Activo
-                        && !string.IsNullOrWhiteSpace(user.PasswordHash)
-                        && BCrypt.Net.BCrypt.Verify(login.contraseña, user.PasswordHash);
-                }
+                var user = await _usuarios.usuario.FirstOrDefaultAsync(x =>
+                    x.Correo == identifier || x.Nombre == identifier);
+                validCredentials = user != null
+                    && user.Activo
+                    && !string.IsNullOrWhiteSpace(user.PasswordHash)
+                    && BCrypt.Net.BCrypt.Verify(login.contraseña, user.PasswordHash);
             }
 
             if (validCredentials)
             {
-                var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
-                    ?? throw new InvalidOperationException("JWT key is not configured.");
-                var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+                var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
                 var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+                var expiresAt = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.AddMinutes(25).ToUnixTimeSeconds());
 
                 var tokeOptions = new JwtSecurityToken(
                     issuer: _configuration["Jwt:Issuer"],
                     audience: _configuration["Jwt:Audience"],
                     claims: new List<Claim>
                     {
-                new Claim(ClaimTypes.Name, login.Usuario),
-                new Claim(ClaimTypes.Email, login.Usuario),
-                new Claim(ClaimTypes.Role, isAdmin ? "Administrador" : "Usuario")
-
+                        new Claim(ClaimTypes.Name, login.Usuario),
+                        new Claim(ClaimTypes.Email, login.Usuario),
+                        new Claim(ClaimTypes.Role, isAdmin ? "Administrador" : "Usuario"),
+                        new Claim("sessionExpiresAt", expiresAt.ToUnixTimeSeconds().ToString())
                     },
-                    expires: DateTime.Now.AddMinutes(30),
+                    expires: expiresAt.UtcDateTime,
                     signingCredentials: signinCredentials
                 );
 
@@ -110,17 +102,37 @@ namespace ApiPrueba.Controllers
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddMinutes(30),
+                    Expires = expiresAt,
                     IsEssential = true
                 });
                 return Ok(new
                 {
                     mensaje = "Inicio de sesión correcto.",
-                    token = tokenString
+                    token = tokenString,
+                    expiraEn = expiresAt
                 });
             }
 
             return Unauthorized();
+        }
+
+        [Authorize]
+        [HttpGet("Session")]
+        public IActionResult GetSession()
+        {
+            var expirationValue = User.FindFirst("sessionExpiresAt")?.Value;
+            if (!long.TryParse(expirationValue, out var expirationUnixSeconds))
+            {
+                return Unauthorized();
+            }
+
+            return Ok(new
+            {
+                nombre = User.Identity?.Name ?? string.Empty,
+                correo = User.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty,
+                rol = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty,
+                expiraEn = DateTimeOffset.FromUnixTimeSeconds(expirationUnixSeconds)
+            });
         }
 
         [HttpPost("Logout")]
@@ -133,11 +145,22 @@ namespace ApiPrueba.Controllers
                 SameSite = SameSiteMode.Strict
             });
             return NoContent();
+            return NoContent();
         }
 
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
+            if (request == null)
+            {
+                return BadRequest(new { mensaje = "Los datos de registro son obligatorios." });
+            }
+
+            if (!await _recaptcha.VerifyAsync(request.CaptchaToken, HttpContext.RequestAborted))
+            {
+                return BadRequest(new { mensaje = "Completa la verificación reCAPTCHA e inténtalo de nuevo." });
+            }
+
             if (string.IsNullOrWhiteSpace(request.Nombre)
                 || string.IsNullOrWhiteSpace(request.Correo)
                 || string.IsNullOrWhiteSpace(request.Password))
@@ -180,6 +203,7 @@ namespace ApiPrueba.Controllers
         public string Nombre { get; set; } = string.Empty;
         public string Correo { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+        public string CaptchaToken { get; set; } = string.Empty;
         public string? PaisOrigen { get; set; }
         public string? IdiomaPreferido { get; set; }
     }
