@@ -1,38 +1,37 @@
 {
-  "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "ApiPrueba": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger",
-      "applicationUrl": "http://localhost:5154",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "JWT_SECRET_KEY": "EcosColombia2025SecretKeyDefaultDevelopmentFallbackKey12345"
-      }
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5154"
     },
     "http": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger",
-      "applicationUrl": "http://localhost:5154",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "JWT_SECRET_KEY": "EcosColombia2025SecretKeyDefaultDevelopmentFallbackKey12345"
-      }
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5154"
     },
     "https": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger",
-      "applicationUrl": "https://localhost:7119;http://localhost:5154",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "JWT_SECRET_KEY": "EcosColombia2025SecretKeyDefaultDevelopmentFallbackKey12345"
-      }
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7119;http://localhost:5154"
     },
     "IIS Express": {
       "commandName": "IISExpress",
@@ -42,6 +41,15 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "JWT_SECRET_KEY": "EcosColombia2025SecretKeyDefaultDevelopmentFallbackKey12345"
       }
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:52869/",
+      "sslPort": 44364
     }
   }
 }
