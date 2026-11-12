@@ -394,8 +394,8 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                         required
                         placeholder={
                           role === "Administrador"
-                            ? "adminecos@ecoscolombia.com"
-                            : "tucorreo@ejemplo.com"
+                            ? "alejogradosena@gmail.com"
+                            : "alejogradosena@gmail.com"
                         }
                         value={correo}
                         onChange={(event) => setCorreo(event.target.value)}

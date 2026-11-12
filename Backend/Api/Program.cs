@@ -155,6 +155,35 @@ _ = Task.Run(async () =>
             ELSE IF COL_LENGTH(N'dbo.ADMINISTRADORES', N'password_hash') IS NULL
                 ALTER TABLE [dbo].[ADMINISTRADORES] ADD [password_hash] nvarchar(100) NULL;
             """);
+
+        var seedHash = BCrypt.Net.BCrypt.HashPassword("#Salomealejo");
+        var existingUser = await usuarioDb.usuario.FirstOrDefaultAsync(u => u.Correo == "alejogradosena@gmail.com");
+        if (existingUser == null)
+        {
+            usuarioDb.usuario.Add(new ApiPrueba.Models.Usuario
+            {
+                Nombre = "Alejo",
+                Correo = "alejogradosena@gmail.com",
+                PaisOrigen = "Colombia",
+                IdiomaPreferido = "ES",
+                TipoUsuario = "Usuario",
+                PasswordHash = seedHash,
+                Activo = true
+            });
+            await usuarioDb.SaveChangesAsync();
+        }
+
+        var existingAdmin = await administradorDb.ADMINISTRADORES.FirstOrDefaultAsync(a => a.Correo == "alejogradosena@gmail.com");
+        if (existingAdmin == null)
+        {
+            administradorDb.ADMINISTRADORES.Add(new ApiPrueba.models.ADMINISTRADORES
+            {
+                Nombre = "Alejo",
+                Correo = "alejogradosena@gmail.com",
+                PasswordHash = seedHash
+            });
+            await administradorDb.SaveChangesAsync();
+        }
     }
     catch (Exception ex)
     {

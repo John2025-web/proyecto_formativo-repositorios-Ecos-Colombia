@@ -160,6 +160,43 @@ public class AuthControllerTests
     }
 
     [Fact]
+    public async Task Login_WorksWithRealConfiguredCredentials_AlejoGradoSena()
+    {
+        var (userDb, adminDb) = CreateInMemoryDatabases();
+        using var httpClient = new HttpClient();
+        var recaptcha = new RecaptchaVerifier(httpClient, _config, NullLogger<RecaptchaVerifier>.Instance);
+        var emailService = new EmailVerificationService(_config, NullLogger<EmailVerificationService>.Instance);
+        var controller = CreateController(userDb, adminDb, recaptcha, emailService);
+
+        var login = new Login
+        {
+            Usuario = "alejogradosena@gmail.com",
+            contraseña = "#Salomealejo",
+            Rol = "Usuario",
+            CaptchaToken = "ALPHANUMERIC_CONFIRMED:X8k2M9"
+        };
+
+        var step1Result = await controller.Login(login);
+        var step1Ok = Assert.IsType<OkObjectResult>(step1Result);
+        var step1Json = System.Text.Json.JsonSerializer.Serialize(step1Ok.Value);
+        using var doc = System.Text.Json.JsonDocument.Parse(step1Json);
+        Assert.True(doc.RootElement.GetProperty("requiereVerificacion").GetBoolean());
+        Assert.Equal("alejogradosena@gmail.com", doc.RootElement.GetProperty("correo").GetString());
+        var generatedCode = doc.RootElement.GetProperty("codigoSimulado").GetString();
+        Assert.False(string.IsNullOrWhiteSpace(generatedCode));
+
+        var verifyResult = controller.VerificarCodigo(new VerifyLoginCodeRequest
+        {
+            Correo = "alejogradosena@gmail.com",
+            Rol = "Usuario",
+            CodigoVerificacion = generatedCode!
+        });
+
+        var verifyOk = Assert.IsType<OkObjectResult>(verifyResult);
+        Assert.Equal(200, verifyOk.StatusCode);
+    }
+
+    [Fact]
     public async Task Login_ReturnsUnauthorized_WhenCredentialsAreInvalid()
     {
         var (userDb, adminDb) = CreateInMemoryDatabases();
