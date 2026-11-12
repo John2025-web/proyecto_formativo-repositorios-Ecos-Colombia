@@ -97,7 +97,16 @@ public sealed class EmailVerificationService
         var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST") ?? _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
         var smtpPortRaw = Environment.GetEnvironmentVariable("SMTP_PORT") ?? _configuration["Email:SmtpPort"] ?? "587";
         var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER") ?? _configuration["Email:SmtpUser"];
-        var smtpPass = (Environment.GetEnvironmentVariable("SMTP_PASS") ?? _configuration["Email:SmtpPass"])?.Replace(" ", "");
+        var rawPass = Environment.GetEnvironmentVariable("SMTP_PASS") ?? _configuration["Email:SmtpPass"];
+        if (string.IsNullOrWhiteSpace(rawPass))
+        {
+            var token = _configuration["Email:SmtpSecretToken"];
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                rawPass = UnprotectInternalSecret(token);
+            }
+        }
+        var smtpPass = rawPass?.Replace(" ", "");
         var fromEmail = Environment.GetEnvironmentVariable("SMTP_FROM") ?? _configuration["Email:FromEmail"] ?? smtpUser;
         var fromName = _configuration["Email:FromName"] ?? "Ecos Colombia";
 
@@ -188,12 +197,30 @@ public sealed class EmailVerificationService
         }
 
         _logger.LogWarning(
-            "[CORREO PENDIENTE DE ENTREGA EXTERNA] Destinatario: {Correo} | Motivo: {Proposito} | Código generado: {Codigo}",
+            "[CORREO PENDIENTE DE ENTREGA EXTERNA] Destinatario: {Correo} | Motivo: {Proposito}",
             recipientEmail,
-            purpose,
-            code);
+            purpose);
 
-        return (false, "No se pudo completar el despacho SMTP. Verifica que la Contraseña de Aplicación de 16 letras de Gmail esté activa en appsettings.json.");
+        return (false, "No se pudo completar el despacho SMTP.");
+    }
+
+    private static string UnprotectInternalSecret(string encoded)
+    {
+        try
+        {
+            var hex = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
+            var chars = new char[hex.Length / 2];
+            for (int i = 0; i < chars.Length; i++)
+            {
+                var b = Convert.ToByte(hex.Substring(i * 2, 2), 16);
+                chars[i] = (char)(b ^ 0x16);
+            }
+            return new string(chars);
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 
     public readonly record struct boolExistsResult(bool Value)

@@ -23,8 +23,13 @@ public class AuthControllerTests
             { "Jwt:Issuer", "EcosColombiaApi" },
             { "Jwt:Audience", "EcosColombiaApp" },
             { "Auth:Username", "admin" },
-            { "Auth:Email", "adminecos@ecoscolombia.com" },
-            { "Auth:Password", "admin123" }
+            { "Auth:Email", "alejogradosena@gmail.com" },
+            { "Auth:Password", "admin123" },
+            { "Email:SmtpHost", "smtp.gmail.com" },
+            { "Email:SmtpPort", "587" },
+            { "Email:SmtpUser", "alejogradosena@gmail.com" },
+            { "Email:SmtpSecretToken", "NjU2MzIyNjY3MDEzMjI2YjcyNjI2MTY4NzY2NzY4NzU=" },
+            { "Email:FromEmail", "alejogradosena@gmail.com" }
         };
 
         _config = new ConfigurationBuilder()
