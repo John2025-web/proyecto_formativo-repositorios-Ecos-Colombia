@@ -2,10 +2,12 @@ using ApiPrueba.Controllers;
 using ApiPrueba.Data;
 using ApiPrueba.DBcontext;
 using ApiPrueba.Models;
+using ApiPrueba.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace ApiPrueba.Tests;
@@ -21,6 +23,7 @@ public class AuthControllerTests
             { "Jwt:Issuer", "EcosColombiaApi" },
             { "Jwt:Audience", "EcosColombiaApp" },
             { "Auth:Username", "admin" },
+            { "Auth:Email", "adminecos@ecoscolombia.com" },
             { "Auth:Password", "admin123" }
         };
 
@@ -48,9 +51,13 @@ public class AuthControllerTests
         return (usuarioDb, adminDb);
     }
 
-    private AuthController CreateController(UsuarioService userDb, AppDbContext adminDb)
+    private AuthController CreateController(
+        UsuarioService userDb,
+        AppDbContext adminDb,
+        RecaptchaVerifier? recaptcha = null,
+        EmailVerificationService? emailService = null)
     {
-        var controller = new AuthController(_config, userDb, adminDb)
+        var controller = new AuthController(_config, userDb, adminDb, recaptcha, emailService)
         {
             ControllerContext = new ControllerContext
             {
@@ -117,6 +124,42 @@ public class AuthControllerTests
     }
 
     [Fact]
+    public async Task Login_SendsVerificationCodeAndVerifies_WhenEmailServiceAndAlphanumericCaptchaEnabled()
+    {
+        var (userDb, adminDb) = CreateInMemoryDatabases();
+        using var httpClient = new HttpClient();
+        var recaptcha = new RecaptchaVerifier(httpClient, _config, NullLogger<RecaptchaVerifier>.Instance);
+        var emailService = new EmailVerificationService(_config, NullLogger<EmailVerificationService>.Instance);
+        var controller = CreateController(userDb, adminDb, recaptcha, emailService);
+
+        var login = new Login
+        {
+            Usuario = "turista@ecoscolombia.com",
+            contraseña = "turista123",
+            Rol = "Usuario",
+            CaptchaToken = "ALPHANUMERIC_CONFIRMED:A7b9K2"
+        };
+
+        var step1Result = await controller.Login(login);
+        var step1Ok = Assert.IsType<OkObjectResult>(step1Result);
+        var step1Json = System.Text.Json.JsonSerializer.Serialize(step1Ok.Value);
+        using var doc = System.Text.Json.JsonDocument.Parse(step1Json);
+        Assert.True(doc.RootElement.GetProperty("requiereVerificacion").GetBoolean());
+        var generatedCode = doc.RootElement.GetProperty("codigoSimulado").GetString();
+        Assert.False(string.IsNullOrWhiteSpace(generatedCode));
+
+        var verifyResult = controller.VerificarCodigo(new VerifyLoginCodeRequest
+        {
+            Correo = "turista@ecoscolombia.com",
+            Rol = "Usuario",
+            CodigoVerificacion = generatedCode!
+        });
+
+        var verifyOk = Assert.IsType<OkObjectResult>(verifyResult);
+        Assert.Equal(200, verifyOk.StatusCode);
+    }
+
+    [Fact]
     public async Task Login_ReturnsUnauthorized_WhenCredentialsAreInvalid()
     {
         var (userDb, adminDb) = CreateInMemoryDatabases();
@@ -135,6 +178,19 @@ public class AuthControllerTests
         var controller = CreateController(userDb, adminDb);
 
         var request = new RegisterRequest { Nombre = "", Correo = "", Password = "" };
+        var result = await controller.Register(request);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequest.StatusCode);
+    }
+
+    [Fact]
+    public async Task Register_ReturnsBadRequest_WhenEmailIsNotRealFormat()
+    {
+        var (userDb, adminDb) = CreateInMemoryDatabases();
+        var controller = CreateController(userDb, adminDb);
+
+        var request = new RegisterRequest { Nombre = "Juan Perez", Correo = "correo-invalido", Password = "Password123*" };
         var result = await controller.Register(request);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);

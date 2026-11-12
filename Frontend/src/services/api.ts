@@ -2,9 +2,17 @@ const API_URL = import.meta.env.DEV
     ? ""
     : (import.meta.env.VITE_API_URL || "https://localhost:7119").replace(/\/$/, "");
 
-type LoginResponse = {
+export type LoginApiResponse = {
     mensaje?: string;
-    expiraEn: string;
+    token?: string;
+    nombre?: string;
+    correo?: string;
+    rol?: UserRole;
+    expiraEn?: string;
+    requiereVerificacion?: boolean;
+    enviadoPorSmtp?: boolean;
+    codigoSimulado?: string | null;
+    expiraCodigoEn?: string;
 };
 
 type SessionResponse = {
@@ -15,6 +23,12 @@ type SessionResponse = {
 };
 
 export type UserRole = "Administrador" | "Usuario";
+
+const REAL_EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+export function isValidRealEmail(email: string): boolean {
+    return REAL_EMAIL_REGEX.test(email.trim());
+}
 
 async function authorizedRequest(path: string, token: string, options: RequestInit = {}) {
     const response = await fetch(`${API_URL}${path}`, {
@@ -115,7 +129,7 @@ export async function deleteReview(token: string, review: AdminReview) {
     });
 }
 
-export async function login(usuario: string, password: string, rol: UserRole, captchaToken: string) {
+export async function login(usuario: string, password: string, rol: UserRole, captchaToken: string): Promise<LoginApiResponse> {
     const response = await fetch(`${API_URL}/api/Auth/Login`, {
         method: "POST",
         credentials: "include",
@@ -123,7 +137,7 @@ export async function login(usuario: string, password: string, rol: UserRole, ca
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            Usuario: usuario,
+            Usuario: usuario.trim(),
             contraseña: password,
             Rol: rol,
             CaptchaToken: captchaToken
@@ -131,7 +145,8 @@ export async function login(usuario: string, password: string, rol: UserRole, ca
     });
 
     if (response.status === 401) {
-        throw new Error("Usuario o contraseña incorrectos");
+        const err = await response.json().catch(() => null);
+        throw new Error(err?.mensaje || "Correo electrónico o contraseña incorrectos");
     }
 
     if (!response.ok) {
@@ -139,8 +154,36 @@ export async function login(usuario: string, password: string, rol: UserRole, ca
         throw new Error(error?.mensaje || `Error del servidor: ${response.status}`);
     }
 
-    const data: LoginResponse = await response.json();
-    return { token: "", expiresAt: Date.parse(data.expiraEn) };
+    return response.json();
+}
+
+export async function verifyLoginCode(correo: string, rol: UserRole, codigoVerificacion: string) {
+    const response = await fetch(`${API_URL}/api/Auth/VerificarCodigo`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            Correo: correo.trim(),
+            Rol: rol,
+            CodigoVerificacion: codigoVerificacion.trim()
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.mensaje || `Error al verificar el código: ${response.status}`);
+    }
+
+    const data: LoginApiResponse = await response.json();
+    return {
+        token: data.token || "",
+        nombre: data.nombre || correo.split("@")[0],
+        correo: data.correo || correo,
+        rol: data.rol || rol,
+        expiresAt: data.expiraEn ? Date.parse(data.expiraEn) : Date.now() + 25 * 60 * 1000
+    };
 }
 
 export async function getSession() {
@@ -180,8 +223,8 @@ export async function registerUser(data: { nombre: string; correo: string; passw
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            Nombre: data.nombre,
-            Correo: data.correo,
+            Nombre: data.nombre.trim(),
+            Correo: data.correo.trim().toLowerCase(),
             Password: data.password,
             CaptchaToken: data.captchaToken,
             IdiomaPreferido: "ES",
@@ -194,4 +237,3 @@ export async function registerUser(data: { nombre: string; correo: string; passw
         throw new Error(error?.mensaje || `Error del servidor: ${response.status}`);
     }
 }
-

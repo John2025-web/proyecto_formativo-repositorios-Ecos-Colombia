@@ -43,15 +43,17 @@ builder.Services.AddHttpClient<RecaptchaVerifier>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(5);
 });
+builder.Services.AddSingleton<EmailVerificationService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactPolicy", policy =>
     {
         policy
-            .WithOrigins(
-                "https://stunning-orbit-7v4vrvq6w7rp296w-5173.app.github.dev",
-                "http://localhost:5173"
-            )
+            .SetIsOriginAllowed(origin =>
+                origin.StartsWith("http://localhost:", StringComparison.OrdinalIgnoreCase)
+                || origin.StartsWith("https://localhost:", StringComparison.OrdinalIgnoreCase)
+                || origin.EndsWith(".app.github.dev", StringComparison.OrdinalIgnoreCase)
+                || origin.EndsWith(".github.dev", StringComparison.OrdinalIgnoreCase))
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
