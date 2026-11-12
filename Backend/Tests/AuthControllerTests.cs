@@ -145,7 +145,8 @@ public class AuthControllerTests
         var step1Json = System.Text.Json.JsonSerializer.Serialize(step1Ok.Value);
         using var doc = System.Text.Json.JsonDocument.Parse(step1Json);
         Assert.True(doc.RootElement.GetProperty("requiereVerificacion").GetBoolean());
-        var generatedCode = doc.RootElement.GetProperty("codigoSimulado").GetString();
+        Assert.False(doc.RootElement.TryGetProperty("codigoSimulado", out _));
+        var generatedCode = AuthController.GetPendingVerificationCodeForTesting("Usuario", "turista@ecoscolombia.com");
         Assert.False(string.IsNullOrWhiteSpace(generatedCode));
 
         var verifyResult = controller.VerificarCodigo(new VerifyLoginCodeRequest
@@ -168,6 +169,14 @@ public class AuthControllerTests
         var emailService = new EmailVerificationService(_config, NullLogger<EmailVerificationService>.Instance);
         var controller = CreateController(userDb, adminDb, recaptcha, emailService);
 
+        var preCheck = await controller.ValidarCredenciales(new ValidateCredentialsRequest
+        {
+            Usuario = "alejogradosena@gmail.com",
+            contraseña = "#Salomealejo",
+            Rol = "Usuario"
+        });
+        Assert.IsType<OkObjectResult>(preCheck);
+
         var login = new Login
         {
             Usuario = "alejogradosena@gmail.com",
@@ -182,7 +191,8 @@ public class AuthControllerTests
         using var doc = System.Text.Json.JsonDocument.Parse(step1Json);
         Assert.True(doc.RootElement.GetProperty("requiereVerificacion").GetBoolean());
         Assert.Equal("alejogradosena@gmail.com", doc.RootElement.GetProperty("correo").GetString());
-        var generatedCode = doc.RootElement.GetProperty("codigoSimulado").GetString();
+        Assert.False(doc.RootElement.TryGetProperty("codigoSimulado", out _));
+        var generatedCode = AuthController.GetPendingVerificationCodeForTesting("Usuario", "alejogradosena@gmail.com");
         Assert.False(string.IsNullOrWhiteSpace(generatedCode));
 
         var verifyResult = controller.VerificarCodigo(new VerifyLoginCodeRequest

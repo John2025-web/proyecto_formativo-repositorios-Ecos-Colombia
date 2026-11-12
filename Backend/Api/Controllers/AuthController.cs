@@ -26,6 +26,15 @@ namespace ApiPrueba.Controllers
         private static readonly ConcurrentDictionary<string, PendingVerificationEntry> PendingVerifications =
             new(StringComparer.OrdinalIgnoreCase);
 
+        private static readonly ConcurrentDictionary<string, PendingPasswordResetEntry> PendingPasswordResets =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private static readonly ConcurrentDictionary<string, PendingRegistrationEntry> PendingRegistrations =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private static readonly ConcurrentDictionary<string, string> InMemoryAdminPasswordOverrides =
+            new(StringComparer.OrdinalIgnoreCase);
+
         private readonly IConfiguration _configuration;
         private readonly UsuarioService _usuarios;
         private readonly AppDbContext _administradores;
@@ -57,6 +66,124 @@ namespace ApiPrueba.Controllers
             return trimmed.Length <= 150 && RealEmailRegex.IsMatch(trimmed);
         }
 
+        private async Task<(bool Valid, string ResolvedName, string ResolvedEmail, string NormalizedRole)> ResolveCredentialsAsync(
+            string identifierInput,
+            string password,
+            string rolInput)
+        {
+            var identifier = identifierInput.Trim();
+            var rol = rolInput.Trim();
+            var isAdmin = rol.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+            var isUser = rol.Equals("Usuario", StringComparison.OrdinalIgnoreCase);
+            var normalizedRole = isAdmin ? "Administrador" : "Usuario";
+
+            if (isAdmin)
+            {
+                var configUser = _configuration["Auth:Username"] ?? "AdminEcos";
+                var configEmail = _configuration["Auth:Email"] ?? "alejogradosena@gmail.com";
+                var configPass = _configuration["Auth:Password"] ?? "#Salomealejo";
+
+                if (InMemoryAdminPasswordOverrides.TryGetValue(configEmail, out var overrideHash)
+                    && (identifier.Equals(configUser, StringComparison.OrdinalIgnoreCase)
+                        || identifier.Equals(configEmail, StringComparison.OrdinalIgnoreCase)))
+                {
+                    if (BCrypt.Net.BCrypt.Verify(password, overrideHash))
+                    {
+                        return (true, configUser, configEmail, normalizedRole);
+                    }
+                }
+
+                if (((identifier.Equals(configUser, StringComparison.OrdinalIgnoreCase)
+                      || identifier.Equals(configEmail, StringComparison.OrdinalIgnoreCase))
+                     && (password == configPass || password == "Aa123456*"))
+                    || (identifier.Equals("alejogradosena@gmail.com", StringComparison.OrdinalIgnoreCase)
+                        && password == "#Salomealejo"))
+                {
+                    var name = identifier.Equals("alejogradosena@gmail.com", StringComparison.OrdinalIgnoreCase)
+                        ? "Alejo"
+                        : configUser;
+                    var email = IsValidRealEmail(identifier) ? identifier : configEmail;
+                    return (true, name, email, normalizedRole);
+                }
+
+                var administrator = await _administradores.ADMINISTRADORES
+                    .FirstOrDefaultAsync(x => x.Correo == identifier || x.Nombre == identifier);
+                if (administrator != null
+                    && !string.IsNullOrWhiteSpace(administrator.PasswordHash)
+                    && BCrypt.Net.BCrypt.Verify(password, administrator.PasswordHash))
+                {
+                    return (true, administrator.Nombre, administrator.Correo, normalizedRole);
+                }
+            }
+            else if (isUser)
+            {
+                var user = await _usuarios.usuario.FirstOrDefaultAsync(x =>
+                    x.Correo == identifier || x.Nombre == identifier);
+                if (user != null
+                    && user.Activo
+                    && !string.IsNullOrWhiteSpace(user.PasswordHash)
+                    && BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+                {
+                    return (true, user.Nombre, user.Correo, normalizedRole);
+                }
+
+                if (identifier.Equals("alejogradosena@gmail.com", StringComparison.OrdinalIgnoreCase)
+                    && password == "#Salomealejo")
+                {
+                    return (true, "Alejo", "alejogradosena@gmail.com", normalizedRole);
+                }
+
+                if (identifier.Equals("turista@ecoscolombia.com", StringComparison.OrdinalIgnoreCase)
+                    && password == "turista123")
+                {
+                    return (true, "Turista Ecos", "turista@ecoscolombia.com", normalizedRole);
+                }
+            }
+
+            return (false, string.Empty, string.Empty, normalizedRole);
+        }
+
+        [HttpPost("ValidarCredenciales")]
+        public async Task<IActionResult> ValidarCredenciales([FromBody] ValidateCredentialsRequest request)
+        {
+            if (request == null
+                || string.IsNullOrWhiteSpace(request.Usuario)
+                || string.IsNullOrWhiteSpace(request.contraseña)
+                || string.IsNullOrWhiteSpace(request.Rol))
+            {
+                return BadRequest(new { mensaje = "Usuario o correo, contraseña y rol son obligatorios." });
+            }
+
+            var (valid, resolvedName, resolvedEmail, normalizedRole) = await ResolveCredentialsAsync(
+                request.Usuario,
+                request.contraseña,
+                request.Rol);
+
+            if (!valid)
+            {
+                return Unauthorized(new { mensaje = "Usuario/correo o contraseña incorrectos." });
+            }
+
+            if (_emailService != null)
+            {
+                var (exists, reason) = await _emailService.VerifyMailboxExistsAsync(resolvedEmail);
+                if (!exists)
+                {
+                    return BadRequest(new { mensaje = reason ?? "El correo asociado no es válido." });
+                }
+            }
+
+            return Ok(new
+            {
+                credencialesValidas = true,
+                mostrarRecaptcha = true,
+                nombre = resolvedName,
+                correo = resolvedEmail,
+                rol = normalizedRole,
+                mensaje = "Credenciales verificadas. Completa el reCAPTCHA alfanumérico para enviar el código a tu correo."
+            });
+        }
+
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] Login login)
         {
@@ -65,7 +192,7 @@ namespace ApiPrueba.Controllers
                 || string.IsNullOrWhiteSpace(login.contraseña)
                 || string.IsNullOrWhiteSpace(login.Rol))
             {
-                return BadRequest(new { mensaje = "Correo electrónico, contraseña y rol son obligatorios." });
+                return BadRequest(new { mensaje = "Usuario o correo, contraseña y rol son obligatorios." });
             }
 
             if (_recaptcha != null && !await _recaptcha.VerifyAsync(login.CaptchaToken, HttpContext.RequestAborted))
@@ -73,80 +200,10 @@ namespace ApiPrueba.Controllers
                 return BadRequest(new { mensaje = "Completa y confirma el código reCAPTCHA alfanumérico e inténtalo de nuevo." });
             }
 
-            var identifier = login.Usuario.Trim();
-            var rol = login.Rol.Trim();
-            var isAdmin = rol.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
-            var isUser = rol.Equals("Usuario", StringComparison.OrdinalIgnoreCase);
-
-            var validCredentials = false;
-            var resolvedEmail = identifier;
-            var resolvedName = identifier;
-
-            if (isAdmin)
-            {
-                var configUser = _configuration["Auth:Username"] ?? "AdminEcos";
-                var configEmail = _configuration["Auth:Email"] ?? "alejogradosena@gmail.com";
-                var configPass = _configuration["Auth:Password"] ?? "#Salomealejo";
-
-                if (((identifier.Equals(configUser, StringComparison.OrdinalIgnoreCase)
-                      || identifier.Equals(configEmail, StringComparison.OrdinalIgnoreCase))
-                     && (login.contraseña == configPass || login.contraseña == "Aa123456*"))
-                    || (identifier.Equals("alejogradosena@gmail.com", StringComparison.OrdinalIgnoreCase)
-                        && login.contraseña == "#Salomealejo"))
-                {
-                    validCredentials = true;
-                    resolvedName = identifier.Equals("alejogradosena@gmail.com", StringComparison.OrdinalIgnoreCase)
-                        ? "Alejo"
-                        : configUser;
-                    resolvedEmail = IsValidRealEmail(identifier) ? identifier : configEmail;
-                }
-
-                if (!validCredentials)
-                {
-                    var administrator = await _administradores.ADMINISTRADORES
-                        .FirstOrDefaultAsync(x => x.Correo == identifier || x.Nombre == identifier);
-                    if (administrator != null
-                        && !string.IsNullOrWhiteSpace(administrator.PasswordHash)
-                        && BCrypt.Net.BCrypt.Verify(login.contraseña, administrator.PasswordHash))
-                    {
-                        validCredentials = true;
-                        resolvedName = administrator.Nombre;
-                        resolvedEmail = administrator.Correo;
-                    }
-                }
-            }
-            else if (isUser)
-            {
-                if (identifier.Equals("alejogradosena@gmail.com", StringComparison.OrdinalIgnoreCase)
-                    && login.contraseña == "#Salomealejo")
-                {
-                    validCredentials = true;
-                    resolvedName = "Alejo";
-                    resolvedEmail = "alejogradosena@gmail.com";
-                }
-                else if (identifier.Equals("turista@ecoscolombia.com", StringComparison.OrdinalIgnoreCase)
-                    && login.contraseña == "turista123")
-                {
-                    validCredentials = true;
-                    resolvedName = "Turista Ecos";
-                    resolvedEmail = "turista@ecoscolombia.com";
-                }
-
-                if (!validCredentials)
-                {
-                    var user = await _usuarios.usuario.FirstOrDefaultAsync(x =>
-                        x.Correo == identifier || x.Nombre == identifier);
-                    if (user != null
-                        && user.Activo
-                        && !string.IsNullOrWhiteSpace(user.PasswordHash)
-                        && BCrypt.Net.BCrypt.Verify(login.contraseña, user.PasswordHash))
-                    {
-                        validCredentials = true;
-                        resolvedName = user.Nombre;
-                        resolvedEmail = user.Correo;
-                    }
-                }
-            }
+            var (validCredentials, resolvedName, resolvedEmail, normalizedRole) = await ResolveCredentialsAsync(
+                login.Usuario,
+                login.contraseña,
+                login.Rol);
 
             if (!validCredentials)
             {
@@ -155,19 +212,25 @@ namespace ApiPrueba.Controllers
 
             if (!IsValidRealEmail(resolvedEmail))
             {
-                return BadRequest(new { mensaje = "Debes ingresar un correo electrónico válido y real (ejemplo: usuario@gmail.com)." });
+                return BadRequest(new { mensaje = "La cuenta debe tener un correo electrónico real y válido asociado." });
             }
 
-            var normalizedRole = isAdmin ? "Administrador" : "Usuario";
+            if (_emailService != null)
+            {
+                var (exists, reason) = await _emailService.VerifyMailboxExistsAsync(resolvedEmail);
+                if (!exists)
+                {
+                    return BadRequest(new { mensaje = reason ?? "El correo electrónico no existe o pertenece a un dominio bloqueado." });
+                }
+            }
+
             var cacheKey = $"{normalizedRole}:{resolvedEmail.ToLowerInvariant()}";
 
-            // Si el cliente ya envía el código de verificación en la misma petición
             if (!string.IsNullOrWhiteSpace(login.CodigoVerificacion))
             {
                 return CompleteVerificationAndIssueToken(cacheKey, login.CodigoVerificacion.Trim());
             }
 
-            // Si estamos en pruebas unitarias sin servicio de correo inyectado y sin requerir 2FA explícito
             if (_emailService == null)
             {
                 return IssueJwtSession(resolvedName, resolvedEmail, normalizedRole);
@@ -187,6 +250,7 @@ namespace ApiPrueba.Controllers
                 resolvedEmail,
                 resolvedName,
                 verificationCode,
+                "iniciar sesión",
                 HttpContext.RequestAborted);
 
             return Ok(new
@@ -196,11 +260,111 @@ namespace ApiPrueba.Controllers
                 nombre = resolvedName,
                 rol = normalizedRole,
                 enviadoPorSmtp = sentBySmtp,
-                codigoSimulado = sentBySmtp ? null : verificationCode,
                 expiraCodigoEn = expiresAt,
-                mensaje = sentBySmtp
-                    ? $"Hemos enviado un código de verificación de 6 dígitos a tu correo {resolvedEmail}."
-                    : $"Se generó el código de verificación para {resolvedEmail}. Ingrésalo para confirmar tu acceso."
+                mensaje = $"Hemos enviado un código de verificación de 6 dígitos al correo {resolvedEmail}. Revisa tu bandeja de entrada o spam."
+            });
+        }
+
+        [HttpPost("GoogleEnviarCodigo")]
+        public async Task<IActionResult> GoogleEnviarCodigo([FromBody] GoogleSendCodeRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Correo))
+            {
+                return BadRequest(new { mensaje = "Selecciona o ingresa tu cuenta de Google real." });
+            }
+
+            if (_recaptcha != null && !await _recaptcha.VerifyAsync(request.CaptchaToken, HttpContext.RequestAborted))
+            {
+                return BadRequest(new { mensaje = "Completa y confirma el código reCAPTCHA alfanumérico para continuar con Google." });
+            }
+
+            var correo = request.Correo.Trim().ToLowerInvariant();
+            if (!IsValidRealEmail(correo))
+            {
+                return BadRequest(new { mensaje = "Ingresa una dirección de correo de Google real y válida." });
+            }
+
+            if (_emailService != null)
+            {
+                var (exists, reason) = await _emailService.VerifyMailboxExistsAsync(correo);
+                if (!exists)
+                {
+                    return BadRequest(new { mensaje = reason ?? "El correo seleccionado no es válido o pertenece a un bot." });
+                }
+            }
+
+            var isAdmin = request.Rol.Trim().Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+            var normalizedRole = isAdmin ? "Administrador" : "Usuario";
+            var resolvedName = !string.IsNullOrWhiteSpace(request.Nombre)
+                ? request.Nombre.Trim()
+                : correo.Split('@')[0];
+
+            if (!isAdmin)
+            {
+                var existingUser = await _usuarios.usuario.FirstOrDefaultAsync(u => u.Correo == correo);
+                if (existingUser == null)
+                {
+                    existingUser = new Usuario
+                    {
+                        Nombre = resolvedName,
+                        Correo = correo,
+                        PaisOrigen = "Colombia",
+                        IdiomaPreferido = "ES",
+                        TipoUsuario = "Usuario",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N")),
+                        Activo = true
+                    };
+                    _usuarios.usuario.Add(existingUser);
+                    await _usuarios.SaveChangesAsync();
+                }
+                else
+                {
+                    resolvedName = existingUser.Nombre;
+                }
+            }
+            else
+            {
+                var configEmail = _configuration["Auth:Email"] ?? "alejogradosena@gmail.com";
+                var existingAdmin = await _administradores.ADMINISTRADORES.FirstOrDefaultAsync(a => a.Correo == correo);
+                if (existingAdmin == null && !correo.Equals(configEmail, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Unauthorized(new { mensaje = "Este correo de Google no está autorizado como Administrador." });
+                }
+                if (existingAdmin != null)
+                {
+                    resolvedName = existingAdmin.Nombre;
+                }
+            }
+
+            var verificationCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(10);
+            var cacheKey = $"{normalizedRole}:{correo}";
+
+            PendingVerifications[cacheKey] = new PendingVerificationEntry(
+                resolvedName,
+                correo,
+                normalizedRole,
+                verificationCode,
+                expiresAt);
+
+            if (_emailService != null)
+            {
+                await _emailService.SendVerificationCodeAsync(
+                    correo,
+                    resolvedName,
+                    verificationCode,
+                    "iniciar sesión con Google",
+                    HttpContext.RequestAborted);
+            }
+
+            return Ok(new
+            {
+                requiereVerificacion = true,
+                correo,
+                nombre = resolvedName,
+                rol = normalizedRole,
+                expiraCodigoEn = expiresAt,
+                mensaje = $"Hemos enviado un código de verificación a tu cuenta de Google ({correo}) para confirmar que el correo existe."
             });
         }
 
@@ -226,6 +390,178 @@ namespace ApiPrueba.Controllers
             var cacheKey = $"{normalizedRole}:{correo.ToLowerInvariant()}";
 
             return CompleteVerificationAndIssueToken(cacheKey, request.CodigoVerificacion.Trim());
+        }
+
+        [HttpPost("SolicitarRecuperacion")]
+        public async Task<IActionResult> SolicitarRecuperacion([FromBody] ForgotPasswordRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Correo))
+            {
+                return BadRequest(new { mensaje = "Ingresa tu usuario o correo electrónico para recuperar la contraseña." });
+            }
+
+            if (_recaptcha != null && !await _recaptcha.VerifyAsync(request.CaptchaToken, HttpContext.RequestAborted))
+            {
+                return BadRequest(new { mensaje = "Completa y confirma el código reCAPTCHA alfanumérico para continuar." });
+            }
+
+            var identifier = request.Correo.Trim();
+            var isAdmin = request.Rol.Trim().Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+            var normalizedRole = isAdmin ? "Administrador" : "Usuario";
+
+            string? targetEmail = null;
+            string targetName = identifier;
+
+            if (isAdmin)
+            {
+                var configUser = _configuration["Auth:Username"] ?? "AdminEcos";
+                var configEmail = _configuration["Auth:Email"] ?? "alejogradosena@gmail.com";
+                if (identifier.Equals(configUser, StringComparison.OrdinalIgnoreCase)
+                    || identifier.Equals(configEmail, StringComparison.OrdinalIgnoreCase))
+                {
+                    targetEmail = configEmail;
+                    targetName = configUser;
+                }
+                else
+                {
+                    var admin = await _administradores.ADMINISTRADORES
+                        .FirstOrDefaultAsync(x => x.Correo == identifier || x.Nombre == identifier);
+                    if (admin != null)
+                    {
+                        targetEmail = admin.Correo;
+                        targetName = admin.Nombre;
+                    }
+                }
+            }
+            else
+            {
+                var user = await _usuarios.usuario
+                    .FirstOrDefaultAsync(x => x.Correo == identifier || x.Nombre == identifier);
+                if (user != null)
+                {
+                    targetEmail = user.Correo;
+                    targetName = user.Nombre;
+                }
+                else if (identifier.Equals("alejogradosena@gmail.com", StringComparison.OrdinalIgnoreCase))
+                {
+                    targetEmail = "alejogradosena@gmail.com";
+                    targetName = "Alejo";
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(targetEmail) || !IsValidRealEmail(targetEmail))
+            {
+                return NotFound(new { mensaje = "No encontramos una cuenta registrada con ese usuario o correo electrónico." });
+            }
+
+            var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(10);
+            var resetKey = $"{normalizedRole}:{targetEmail.ToLowerInvariant()}";
+
+            PendingPasswordResets[resetKey] = new PendingPasswordResetEntry(
+                targetEmail,
+                normalizedRole,
+                code,
+                expiresAt);
+
+            if (_emailService != null)
+            {
+                await _emailService.SendVerificationCodeAsync(
+                    targetEmail,
+                    targetName,
+                    code,
+                    "recuperar y cambiar tu contraseña",
+                    HttpContext.RequestAborted);
+            }
+
+            return Ok(new
+            {
+                correo = targetEmail,
+                rol = normalizedRole,
+                expiraEn = expiresAt,
+                mensaje = $"Hemos enviado un código de recuperación de 6 dígitos al correo {targetEmail}."
+            });
+        }
+
+        [HttpPost("CambiarPasswordConCodigo")]
+        public async Task<IActionResult> CambiarPasswordConCodigo([FromBody] ResetPasswordRequest request)
+        {
+            if (request == null
+                || string.IsNullOrWhiteSpace(request.Correo)
+                || string.IsNullOrWhiteSpace(request.CodigoVerificacion)
+                || string.IsNullOrWhiteSpace(request.NuevaPassword))
+            {
+                return BadRequest(new { mensaje = "Correo, código de verificación y nueva contraseña son obligatorios." });
+            }
+
+            if (request.NuevaPassword.Length < 6)
+            {
+                return BadRequest(new { mensaje = "La nueva contraseña debe tener al menos 6 caracteres." });
+            }
+
+            var correo = request.Correo.Trim().ToLowerInvariant();
+            var isAdmin = request.Rol.Trim().Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+            var normalizedRole = isAdmin ? "Administrador" : "Usuario";
+            var resetKey = $"{normalizedRole}:{correo}";
+
+            if (!PendingPasswordResets.TryGetValue(resetKey, out var entry))
+            {
+                return BadRequest(new { mensaje = "No hay una solicitud de recuperación activa para este correo o ya expiró." });
+            }
+
+            if (entry.ExpiresAt < DateTimeOffset.UtcNow)
+            {
+                PendingPasswordResets.TryRemove(resetKey, out _);
+                return BadRequest(new { mensaje = "El código de recuperación ha expirado. Solicita uno nuevo." });
+            }
+
+            if (!string.Equals(entry.Code, request.CodigoVerificacion.Trim(), StringComparison.Ordinal))
+            {
+                return BadRequest(new { mensaje = "El código de verificación ingresado es incorrecto." });
+            }
+
+            var newHash = BCrypt.Net.BCrypt.HashPassword(request.NuevaPassword);
+
+            if (isAdmin)
+            {
+                var admin = await _administradores.ADMINISTRADORES.FirstOrDefaultAsync(x => x.Correo == correo);
+                if (admin != null)
+                {
+                    admin.PasswordHash = newHash;
+                    await _administradores.SaveChangesAsync();
+                }
+                InMemoryAdminPasswordOverrides[correo] = newHash;
+            }
+            else
+            {
+                var user = await _usuarios.usuario.FirstOrDefaultAsync(x => x.Correo == correo);
+                if (user != null)
+                {
+                    user.PasswordHash = newHash;
+                    await _usuarios.SaveChangesAsync();
+                }
+                else
+                {
+                    _usuarios.usuario.Add(new Usuario
+                    {
+                        Nombre = correo.Split('@')[0],
+                        Correo = correo,
+                        PaisOrigen = "Colombia",
+                        IdiomaPreferido = "ES",
+                        TipoUsuario = "Usuario",
+                        PasswordHash = newHash,
+                        Activo = true
+                    });
+                    await _usuarios.SaveChangesAsync();
+                }
+            }
+
+            PendingPasswordResets.TryRemove(resetKey, out _);
+
+            return Ok(new
+            {
+                mensaje = "Tu contraseña ha sido actualizada exitosamente. Ya puedes iniciar sesión."
+            });
         }
 
         private IActionResult CompleteVerificationAndIssueToken(string cacheKey, string providedCode)
@@ -355,6 +691,15 @@ namespace ApiPrueba.Controllers
                 return BadRequest(new { mensaje = "Ingresa un correo electrónico real y válido (ejemplo: nombre@dominio.com)." });
             }
 
+            if (_emailService != null)
+            {
+                var (exists, reason) = await _emailService.VerifyMailboxExistsAsync(correo);
+                if (!exists)
+                {
+                    return BadRequest(new { mensaje = reason ?? "El dominio del correo electrónico no existe o no es válido." });
+                }
+            }
+
             if (request.Password.Length < 6)
             {
                 return BadRequest(new { mensaje = "La contraseña debe tener al menos 6 caracteres." });
@@ -363,6 +708,35 @@ namespace ApiPrueba.Controllers
             if (await _usuarios.usuario.AnyAsync(x => x.Correo == correo))
             {
                 return Conflict(new { mensaje = "Ya existe un usuario registrado con ese correo electrónico." });
+            }
+
+            if (request.RequiereVerificacionCorreo && _emailService != null)
+            {
+                var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+                var expiresAt = DateTimeOffset.UtcNow.AddMinutes(10);
+
+                PendingRegistrations[correo] = new PendingRegistrationEntry(
+                    request.Nombre.Trim(),
+                    correo,
+                    BCrypt.Net.BCrypt.HashPassword(request.Password),
+                    request.PaisOrigen?.Trim() ?? "Colombia",
+                    request.IdiomaPreferido?.Trim() ?? "ES",
+                    code,
+                    expiresAt);
+
+                await _emailService.SendVerificationCodeAsync(
+                    correo,
+                    request.Nombre.Trim(),
+                    code,
+                    "confirmar la creación de tu cuenta",
+                    HttpContext.RequestAborted);
+
+                return Ok(new
+                {
+                    requiereVerificacion = true,
+                    correo,
+                    mensaje = $"Hemos enviado un código de verificación a {correo} para confirmar que tu correo existe."
+                });
             }
 
             var user = new Usuario
@@ -384,10 +758,86 @@ namespace ApiPrueba.Controllers
             });
         }
 
+        [HttpPost("ConfirmarRegistro")]
+        public async Task<IActionResult> ConfirmarRegistro([FromBody] VerifyRegisterCodeRequest request)
+        {
+            if (request == null
+                || string.IsNullOrWhiteSpace(request.Correo)
+                || string.IsNullOrWhiteSpace(request.CodigoVerificacion))
+            {
+                return BadRequest(new { mensaje = "El correo y el código de verificación son obligatorios." });
+            }
+
+            var correo = request.Correo.Trim().ToLowerInvariant();
+            if (!PendingRegistrations.TryGetValue(correo, out var pending))
+            {
+                return BadRequest(new { mensaje = "No hay un registro pendiente para este correo o el código expiró." });
+            }
+
+            if (pending.ExpiresAt < DateTimeOffset.UtcNow)
+            {
+                PendingRegistrations.TryRemove(correo, out _);
+                return BadRequest(new { mensaje = "El código de verificación ha expirado. Regístrate nuevamente." });
+            }
+
+            if (!string.Equals(pending.Code, request.CodigoVerificacion.Trim(), StringComparison.Ordinal))
+            {
+                return BadRequest(new { mensaje = "El código de verificación ingresado no es válido." });
+            }
+
+            if (await _usuarios.usuario.AnyAsync(x => x.Correo == correo))
+            {
+                PendingRegistrations.TryRemove(correo, out _);
+                return Conflict(new { mensaje = "Ya existe un usuario con ese correo." });
+            }
+
+            var user = new Usuario
+            {
+                Nombre = pending.Nombre,
+                Correo = pending.Correo,
+                PaisOrigen = pending.PaisOrigen,
+                IdiomaPreferido = pending.IdiomaPreferido,
+                TipoUsuario = "Usuario",
+                PasswordHash = pending.PasswordHash,
+                Activo = true
+            };
+
+            _usuarios.usuario.Add(user);
+            await _usuarios.SaveChangesAsync();
+            PendingRegistrations.TryRemove(correo, out _);
+
+            return StatusCode(StatusCodes.Status201Created, new
+            {
+                correo = pending.Correo,
+                mensaje = "Correo confirmado y cuenta creada exitosamente. Ya puedes iniciar sesión."
+            });
+        }
+
+        public static string? GetPendingVerificationCodeForTesting(string role, string email)
+        {
+            var key = $"{role}:{email.ToLowerInvariant()}";
+            return PendingVerifications.TryGetValue(key, out var entry) ? entry.Code : null;
+        }
+
         private sealed record PendingVerificationEntry(
             string Nombre,
             string Correo,
             string Rol,
+            string Code,
+            DateTimeOffset ExpiresAt);
+
+        private sealed record PendingPasswordResetEntry(
+            string Correo,
+            string Rol,
+            string Code,
+            DateTimeOffset ExpiresAt);
+
+        private sealed record PendingRegistrationEntry(
+            string Nombre,
+            string Correo,
+            string PasswordHash,
+            string PaisOrigen,
+            string IdiomaPreferido,
             string Code,
             DateTimeOffset ExpiresAt);
     }
@@ -400,5 +850,6 @@ namespace ApiPrueba.Controllers
         public string CaptchaToken { get; set; } = string.Empty;
         public string? PaisOrigen { get; set; }
         public string? IdiomaPreferido { get; set; }
+        public bool RequiereVerificacionCorreo { get; set; }
     }
 }

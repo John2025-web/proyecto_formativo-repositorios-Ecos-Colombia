@@ -11,8 +11,16 @@ export type LoginApiResponse = {
     expiraEn?: string;
     requiereVerificacion?: boolean;
     enviadoPorSmtp?: boolean;
-    codigoSimulado?: string | null;
     expiraCodigoEn?: string;
+};
+
+export type ValidateCredentialsResponse = {
+    credencialesValidas: boolean;
+    mostrarRecaptcha: boolean;
+    nombre: string;
+    correo: string;
+    rol: UserRole;
+    mensaje?: string;
 };
 
 type SessionResponse = {
@@ -129,6 +137,33 @@ export async function deleteReview(token: string, review: AdminReview) {
     });
 }
 
+export async function validateCredentials(usuario: string, password: string, rol: UserRole): Promise<ValidateCredentialsResponse> {
+    const response = await fetch(`${API_URL}/api/Auth/ValidarCredenciales`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            Usuario: usuario.trim(),
+            contraseña: password,
+            Rol: rol
+        })
+    });
+
+    if (response.status === 401) {
+        const err = await response.json().catch(() => null);
+        throw new Error(err?.mensaje || "Usuario/correo o contraseña incorrectos");
+    }
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.mensaje || `Error del servidor: ${response.status}`);
+    }
+
+    return response.json();
+}
+
 export async function login(usuario: string, password: string, rol: UserRole, captchaToken: string): Promise<LoginApiResponse> {
     const response = await fetch(`${API_URL}/api/Auth/Login`, {
         method: "POST",
@@ -146,12 +181,35 @@ export async function login(usuario: string, password: string, rol: UserRole, ca
 
     if (response.status === 401) {
         const err = await response.json().catch(() => null);
-        throw new Error(err?.mensaje || "Correo electrónico o contraseña incorrectos");
+        throw new Error(err?.mensaje || "Usuario/correo o contraseña incorrectos");
     }
 
     if (!response.ok) {
         const error = await response.json().catch(() => null);
         throw new Error(error?.mensaje || `Error del servidor: ${response.status}`);
+    }
+
+    return response.json();
+}
+
+export async function googleSendVerificationCode(data: { correo: string; nombre?: string; rol: UserRole; captchaToken: string }): Promise<LoginApiResponse> {
+    const response = await fetch(`${API_URL}/api/Auth/GoogleEnviarCodigo`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            Correo: data.correo.trim().toLowerCase(),
+            Nombre: data.nombre?.trim(),
+            Rol: data.rol,
+            CaptchaToken: data.captchaToken
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.mensaje || `Error al iniciar sesión con Google: ${response.status}`);
     }
 
     return response.json();
@@ -186,6 +244,51 @@ export async function verifyLoginCode(correo: string, rol: UserRole, codigoVerif
     };
 }
 
+export async function requestPasswordRecovery(correo: string, rol: UserRole, captchaToken: string) {
+    const response = await fetch(`${API_URL}/api/Auth/SolicitarRecuperacion`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            Correo: correo.trim(),
+            Rol: rol,
+            CaptchaToken: captchaToken
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.mensaje || `No fue posible solicitar la recuperación: ${response.status}`);
+    }
+
+    return response.json() as Promise<{ correo: string; rol: UserRole; expiraEn: string; mensaje: string }>;
+}
+
+export async function resetPasswordWithCode(data: { correo: string; rol: UserRole; codigoVerificacion: string; nuevaPassword: string }) {
+    const response = await fetch(`${API_URL}/api/Auth/CambiarPasswordConCodigo`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            Correo: data.correo.trim(),
+            Rol: data.rol,
+            CodigoVerificacion: data.codigoVerificacion.trim(),
+            NuevaPassword: data.nuevaPassword
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.mensaje || `No fue posible cambiar la contraseña: ${response.status}`);
+    }
+
+    return response.json() as Promise<{ mensaje: string }>;
+}
+
 export async function getSession() {
     const response = await fetch(`${API_URL}/api/Auth/Session`, {
         credentials: "include"
@@ -217,7 +320,7 @@ export async function logout() {
     });
 }
 
-export async function registerUser(data: { nombre: string; correo: string; password: string; captchaToken: string }) {
+export async function registerUser(data: { nombre: string; correo: string; password: string; captchaToken: string; requiereVerificacionCorreo?: boolean }) {
     const response = await fetch(`${API_URL}/api/Auth/Register`, {
         method: "POST",
         credentials: "include",
@@ -228,7 +331,8 @@ export async function registerUser(data: { nombre: string; correo: string; passw
             Password: data.password,
             CaptchaToken: data.captchaToken,
             IdiomaPreferido: "ES",
-            TipoUsuario: "Usuario"
+            TipoUsuario: "Usuario",
+            RequiereVerificacionCorreo: data.requiereVerificacionCorreo ?? true
         })
     });
 
@@ -236,4 +340,25 @@ export async function registerUser(data: { nombre: string; correo: string; passw
         const error = await response.json().catch(() => null);
         throw new Error(error?.mensaje || `Error del servidor: ${response.status}`);
     }
+
+    return response.json().catch(() => ({}));
+}
+
+export async function confirmRegistrationCode(correo: string, codigoVerificacion: string) {
+    const response = await fetch(`${API_URL}/api/Auth/ConfirmarRegistro`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            Correo: correo.trim().toLowerCase(),
+            CodigoVerificacion: codigoVerificacion.trim()
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.mensaje || `No fue posible confirmar el registro: ${response.status}`);
+    }
+
+    return response.json() as Promise<{ correo: string; mensaje: string }>;
 }
