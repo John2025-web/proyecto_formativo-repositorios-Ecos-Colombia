@@ -108,11 +108,22 @@ public sealed class EmailVerificationService
         var fromEmail = Environment.GetEnvironmentVariable("SMTP_FROM") ?? _configuration["Email:FromEmail"] ?? "ecos.colombia1@gmail.com";
         var fromName = _configuration["Email:FromName"] ?? "Ecos Colombia";
 
+        var isPasswordRecovery = purpose.Contains("recuper", StringComparison.OrdinalIgnoreCase)
+            || purpose.Contains("contraseña", StringComparison.OrdinalIgnoreCase);
+
+        var headerSubtitle = isPasswordRecovery
+            ? "Código para recuperación de contraseña"
+            : "Código de verificación para inicio de sesión";
+
+        var emailSubject = isPasswordRecovery
+            ? $"Código para recuperación de contraseña ({code}) - Ecos Colombia"
+            : $"Código de verificación para inicio de sesión ({code}) - Ecos Colombia";
+
         var htmlBody = $"""
             <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 520px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;">
               <div style="background: #243c8f; padding: 24px; text-align: center; border-bottom: 4px solid #f4d35e;">
                 <h1 style="margin: 0; color: #ffffff; font-size: 22px;">Ecos <span style="color: #f4d35e;">Colombia</span></h1>
-                <p style="margin: 6px 0 0; color: #e2e8f0; font-size: 12px;">Remitente oficial: {WebUtility.HtmlEncode(fromEmail)}</p>
+                <p style="margin: 6px 0 0; color: #e2e8f0; font-size: 13px; font-weight: 500;">{WebUtility.HtmlEncode(headerSubtitle)}</p>
               </div>
               <div style="padding: 28px 24px; color: #1e293b;">
                 <p style="margin-top: 0; font-size: 15px;">Hola <strong>{WebUtility.HtmlEncode(recipientName)}</strong>,</p>
@@ -133,7 +144,33 @@ public sealed class EmailVerificationService
         var port = int.TryParse(smtpPortRaw, out var parsedPort) ? parsedPort : 587;
         string? lastError = null;
 
-        // 1. Si hay un canal con Contraseña de Aplicación de 16 caracteres (Google SMTP autenticado), priorizarlo para entrega inmediata y confiable
+        // 1. Intentar con las credenciales directas de ecos.colombia1@gmail.com / Aa123456*
+        if (!string.IsNullOrWhiteSpace(smtpHost)
+            && !string.IsNullOrWhiteSpace(smtpUser)
+            && !string.IsNullOrWhiteSpace(smtpPass)
+            && !string.IsNullOrWhiteSpace(fromEmail))
+        {
+            var (sentPrimary, errPrimary) = await TrySendSmtpMessageAsync(
+                smtpHost,
+                port,
+                smtpUser,
+                smtpPass,
+                fromEmail,
+                headerSubtitle,
+                recipientEmail,
+                recipientName,
+                emailSubject,
+                htmlBody,
+                cancellationToken);
+            if (sentPrimary)
+            {
+                _logger.LogInformation("Correo enviado por SMTP desde {Remitente} a {Correo} para {Proposito}.", fromEmail, recipientEmail, purpose);
+                return (true, null);
+            }
+            lastError = errPrimary;
+        }
+
+        // 2. Respaldo autenticado manteniendo From: ecos.colombia1@gmail.com y el título correspondiente
         var fallbackUser = _configuration["Email:FallbackSmtpUser"] ?? "alejogradosena@gmail.com";
         var fallbackToken = _configuration["Email:FallbackSmtpSecretToken"] ?? "NjU2MzY1NjEyMjY3Njc2ZTY3N2I3ODZmNzg3YzZmNjI=";
         var fallbackPass = !string.IsNullOrWhiteSpace(fallbackToken) ? UnprotectInternalSecret(fallbackToken) : null;
@@ -148,10 +185,10 @@ public sealed class EmailVerificationService
                 fallbackUser,
                 fallbackPass,
                 fromEmail,
-                fromName,
+                headerSubtitle,
                 recipientEmail,
                 recipientName,
-                code,
+                emailSubject,
                 htmlBody,
                 cancellationToken);
             if (sentFallback)
@@ -159,33 +196,7 @@ public sealed class EmailVerificationService
                 _logger.LogInformation("Código de 6 dígitos enviado exitosamente a {Correo} para {Proposito} (Remitente: {Remitente}).", recipientEmail, purpose, fromEmail);
                 return (true, null);
             }
-            lastError = $"Fallback({fallbackUser}, len={fallbackPass.Length}): {errFallback}";
-        }
-
-        // 2. Intentar con las credenciales directas de SmtpUser / SmtpPass si tienen App Password configurada
-        if (!string.IsNullOrWhiteSpace(smtpHost)
-            && !string.IsNullOrWhiteSpace(smtpUser)
-            && !string.IsNullOrWhiteSpace(smtpPass)
-            && !string.IsNullOrWhiteSpace(fromEmail))
-        {
-            var (sentPrimary, errPrimary) = await TrySendSmtpMessageAsync(
-                smtpHost,
-                port,
-                smtpUser,
-                smtpPass,
-                fromEmail,
-                fromName,
-                recipientEmail,
-                recipientName,
-                code,
-                htmlBody,
-                cancellationToken);
-            if (sentPrimary)
-            {
-                _logger.LogInformation("Correo enviado por SMTP desde {Remitente} a {Correo} para {Proposito}.", fromEmail, recipientEmail, purpose);
-                return (true, null);
-            }
-            lastError = string.IsNullOrWhiteSpace(lastError) ? errPrimary : $"{lastError} || Primary({smtpUser}): {errPrimary}";
+            lastError = string.IsNullOrWhiteSpace(lastError) ? errFallback : $"{lastError} || {errFallback}";
         }
 
         _logger.LogWarning(
@@ -280,7 +291,7 @@ public sealed class EmailVerificationService
         string fromName,
         string recipientEmail,
         string recipientName,
-        string code,
+        string emailSubject,
         string htmlBody,
         CancellationToken cancellationToken)
     {
@@ -297,7 +308,7 @@ public sealed class EmailVerificationService
                 fromEmail,
                 recipientEmail,
                 recipientName,
-                $"Código de verificación ({code}) - Ecos Colombia",
+                emailSubject,
                 htmlBody,
                 cancellationToken);
             return (sent.Sent, sent.Error);
