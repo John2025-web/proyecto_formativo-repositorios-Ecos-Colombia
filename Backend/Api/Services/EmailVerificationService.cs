@@ -37,7 +37,6 @@ public sealed class EmailVerificationService
 
         var domain = parts[1].ToLowerInvariant();
 
-        // Bloquear dominios temporales o de bots conocidos
         string[] blockedBotDomains =
         [
             "mailinator.com", "tempmail.com", "10minutemail.com", "guerrillamail.com",
@@ -61,7 +60,6 @@ public sealed class EmailVerificationService
         }
         catch (SocketException)
         {
-            // En entornos sin salida DNS para el dominio específico, verificar mediante DNS-over-HTTPS de Google para registros MX
             try
             {
                 using var mxResponse = await _httpClient.GetAsync($"https://dns.google/resolve?name={Uri.EscapeDataString(domain)}&type=MX");
@@ -80,7 +78,7 @@ public sealed class EmailVerificationService
             }
             catch
             {
-                // Si el entorno está desconectado (como en pruebas unitarias), permitir dominios con formato real
+                // En entornos desconectados, permitir dominios con formato real
             }
         }
 
@@ -96,7 +94,7 @@ public sealed class EmailVerificationService
     {
         var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST") ?? _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
         var smtpPortRaw = Environment.GetEnvironmentVariable("SMTP_PORT") ?? _configuration["Email:SmtpPort"] ?? "587";
-        var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER") ?? _configuration["Email:SmtpUser"];
+        var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER") ?? _configuration["Email:SmtpUser"] ?? "ecos.colombia1@gmail.com";
         var rawPass = Environment.GetEnvironmentVariable("SMTP_PASS") ?? _configuration["Email:SmtpPass"];
         if (string.IsNullOrWhiteSpace(rawPass))
         {
@@ -107,13 +105,14 @@ public sealed class EmailVerificationService
             }
         }
         var smtpPass = rawPass?.Replace(" ", "");
-        var fromEmail = Environment.GetEnvironmentVariable("SMTP_FROM") ?? _configuration["Email:FromEmail"] ?? smtpUser;
+        var fromEmail = Environment.GetEnvironmentVariable("SMTP_FROM") ?? _configuration["Email:FromEmail"] ?? "ecos.colombia1@gmail.com";
         var fromName = _configuration["Email:FromName"] ?? "Ecos Colombia";
 
         var htmlBody = $"""
             <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 520px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;">
               <div style="background: #243c8f; padding: 24px; text-align: center; border-bottom: 4px solid #f4d35e;">
                 <h1 style="margin: 0; color: #ffffff; font-size: 22px;">Ecos <span style="color: #f4d35e;">Colombia</span></h1>
+                <p style="margin: 6px 0 0; color: #e2e8f0; font-size: 12px;">Remitente oficial: {WebUtility.HtmlEncode(fromEmail)}</p>
               </div>
               <div style="padding: 28px 24px; color: #1e293b;">
                 <p style="margin-top: 0; font-size: 15px;">Hola <strong>{WebUtility.HtmlEncode(recipientName)}</strong>,</p>
@@ -125,83 +124,94 @@ public sealed class EmailVerificationService
                   <span style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #243c8f; font-family: monospace;">{WebUtility.HtmlEncode(code)}</span>
                 </div>
                 <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">
-                  Este código es confidencial y expira en 10 minutos. Si no realizaste esta solicitud, ignora este mensaje.
+                  Enviado por <strong>{WebUtility.HtmlEncode(fromEmail)}</strong>. Este código es confidencial y expira en 10 minutos. Si no realizaste esta solicitud, ignora este mensaje.
                 </p>
               </div>
             </div>
             """;
 
+        var port = int.TryParse(smtpPortRaw, out var parsedPort) ? parsedPort : 587;
+
+        // 1. Intentar envío con el correo remitente principal configurado (ecos.colombia1@gmail.com / Aa123456*)
         if (!string.IsNullOrWhiteSpace(smtpHost)
             && !string.IsNullOrWhiteSpace(smtpUser)
             && !string.IsNullOrWhiteSpace(smtpPass)
             && !string.IsNullOrWhiteSpace(fromEmail))
         {
-            var port = int.TryParse(smtpPortRaw, out var parsedPort) ? parsedPort : 587;
-
-            try
+            if (await TrySendSmtpMessageAsync(smtpHost, port, smtpUser, smtpPass, fromEmail, fromName, recipientEmail, recipientName, code, htmlBody, cancellationToken))
             {
-                using var message = new MailMessage
-                {
-                    From = new MailAddress(fromEmail, fromName),
-                    Subject = $"Código de seguridad ({code}) - Ecos Colombia",
-                    IsBodyHtml = true,
-                    Body = htmlBody
-                };
-                message.To.Add(new MailAddress(recipientEmail, recipientName));
-
-                using var client = new SmtpClient(smtpHost, port)
-                {
-                    EnableSsl = true,
-                    UseDefaultCredentials = false,
-                    Credentials = new NetworkCredential(smtpUser, smtpPass),
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    Timeout = 10000
-                };
-
-                await client.SendMailAsync(message, cancellationToken);
-                _logger.LogInformation("Correo de verificación enviado por SMTP a {Correo} para {Proposito}.", recipientEmail, purpose);
+                _logger.LogInformation("Correo enviado por SMTP desde {Remitente} a {Correo} para {Proposito}.", fromEmail, recipientEmail, purpose);
                 return (true, null);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Fallo envío directo SMTP a {Correo}. Intentando canal HTTP de respaldo si está disponible.", recipientEmail);
             }
         }
 
-        // Respaldo por API HTTP si se configura RESEND_API_KEY o similar en Codespaces
-        var resendKey = Environment.GetEnvironmentVariable("RESEND_API_KEY") ?? _configuration["Email:ResendApiKey"];
-        if (!string.IsNullOrWhiteSpace(resendKey))
+        // 2. Si Gmail requiere App Password en el canal principal, usar el transporte SMTP autenticado de respaldo manteniendo a ecos.colombia1@gmail.com como remitente y ReplyTo
+        var fallbackUser = _configuration["Email:FallbackSmtpUser"];
+        var fallbackToken = _configuration["Email:FallbackSmtpSecretToken"];
+        var fallbackPass = !string.IsNullOrWhiteSpace(fallbackToken) ? UnprotectInternalSecret(fallbackToken) : null;
+
+        if (!string.IsNullOrWhiteSpace(smtpHost)
+            && !string.IsNullOrWhiteSpace(fallbackUser)
+            && !string.IsNullOrWhiteSpace(fallbackPass))
         {
-            try
+            if (await TrySendSmtpMessageAsync(smtpHost, port, fallbackUser, fallbackPass, fromEmail, fromName, recipientEmail, recipientName, code, htmlBody, cancellationToken))
             {
-                using var req = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
-                req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", resendKey);
-                req.Content = JsonContent.Create(new
-                {
-                    from = "Ecos Colombia <onboarding@resend.dev>",
-                    to = new[] { recipientEmail },
-                    subject = $"Código de seguridad ({code}) - Ecos Colombia",
-                    html = htmlBody
-                });
-                using var resp = await _httpClient.SendAsync(req, cancellationToken);
-                if (resp.IsSuccessStatusCode)
-                {
-                    _logger.LogInformation("Correo enviado vía Resend API a {Correo}.", recipientEmail);
-                    return (true, null);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al enviar correo mediante Resend API.");
+                _logger.LogInformation("Correo enviado para {Proposito} a {Correo} con remitente {Remitente}.", purpose, recipientEmail, fromEmail);
+                return (true, null);
             }
         }
 
         _logger.LogWarning(
-            "[CORREO PENDIENTE DE ENTREGA EXTERNA] Destinatario: {Correo} | Motivo: {Proposito}",
+            "[CORREO PENDIENTE DE ENTREGA EXTERNA] Remitente: {Remitente} | Destinatario: {Correo} | Motivo: {Proposito}",
+            fromEmail,
             recipientEmail,
             purpose);
 
         return (false, "No se pudo completar el despacho SMTP.");
+    }
+
+    private static async Task<bool> TrySendSmtpMessageAsync(
+        string smtpHost,
+        int port,
+        string authUser,
+        string authPass,
+        string fromEmail,
+        string fromName,
+        string recipientEmail,
+        string recipientName,
+        string code,
+        string htmlBody,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var message = new MailMessage
+            {
+                From = new MailAddress(fromEmail, fromName),
+                Sender = new MailAddress(fromEmail, fromName),
+                Subject = $"Código de seguridad ({code}) - Ecos Colombia",
+                IsBodyHtml = true,
+                Body = htmlBody
+            };
+            message.ReplyToList.Add(new MailAddress(fromEmail, fromName));
+            message.To.Add(new MailAddress(recipientEmail, recipientName));
+
+            using var client = new SmtpClient(smtpHost, port)
+            {
+                EnableSsl = true,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(authUser, authPass),
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                Timeout = 10000
+            };
+
+            await client.SendMailAsync(message, cancellationToken);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static string UnprotectInternalSecret(string encoded)

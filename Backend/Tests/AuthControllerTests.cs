@@ -23,13 +23,16 @@ public class AuthControllerTests
             { "Jwt:Issuer", "EcosColombiaApi" },
             { "Jwt:Audience", "EcosColombiaApp" },
             { "Auth:Username", "admin" },
-            { "Auth:Email", "alejogradosena@gmail.com" },
+            { "Auth:Email", "ecos.colombia1@gmail.com" },
             { "Auth:Password", "admin123" },
             { "Email:SmtpHost", "smtp.gmail.com" },
             { "Email:SmtpPort", "587" },
-            { "Email:SmtpUser", "alejogradosena@gmail.com" },
-            { "Email:SmtpSecretToken", "NjU2MzIyNjY3MDEzMjI2YjcyNjI2MTY4NzY2NzY4NzU=" },
-            { "Email:FromEmail", "alejogradosena@gmail.com" }
+            { "Email:SmtpUser", "ecos.colombia1@gmail.com" },
+            { "Email:SmtpPass", "Aa123456*" },
+            { "Email:SmtpSecretToken", "NTU3NzI3MjQyNTIyMjAzYw==" },
+            { "Email:FallbackSmtpUser", "alejogradosena@gmail.com" },
+            { "Email:FallbackSmtpSecretToken", "NjU2MzIyNjY3MDEzMjI2YjcyNjI2MTY4NzY2NzY4NzU=" },
+            { "Email:FromEmail", "ecos.colombia1@gmail.com" }
         };
 
         _config = new ConfigurationBuilder()
@@ -209,6 +212,40 @@ public class AuthControllerTests
 
         var verifyOk = Assert.IsType<OkObjectResult>(verifyResult);
         Assert.Equal(200, verifyOk.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_And_PasswordRecovery_WorksWithSenderAccount_EcosColombia1()
+    {
+        var (userDb, adminDb) = CreateInMemoryDatabases();
+        using var httpClient = new HttpClient();
+        var recaptcha = new RecaptchaVerifier(httpClient, _config, NullLogger<RecaptchaVerifier>.Instance);
+        var emailService = new EmailVerificationService(_config, NullLogger<EmailVerificationService>.Instance);
+        var controller = CreateController(userDb, adminDb, recaptcha, emailService);
+
+        var login = new Login
+        {
+            Usuario = "ecos.colombia1@gmail.com",
+            contraseña = "Aa123456*",
+            Rol = "Administrador",
+            CaptchaToken = "ALPHANUMERIC_CONFIRMED:E7c9O1"
+        };
+
+        var loginStep = await controller.Login(login);
+        var loginOk = Assert.IsType<OkObjectResult>(loginStep);
+        var loginJson = System.Text.Json.JsonSerializer.Serialize(loginOk.Value);
+        using var doc = System.Text.Json.JsonDocument.Parse(loginJson);
+        Assert.True(doc.RootElement.GetProperty("requiereVerificacion").GetBoolean());
+        Assert.Equal("ecos.colombia1@gmail.com", doc.RootElement.GetProperty("correo").GetString());
+
+        var recoveryResult = await controller.SolicitarRecuperacion(new ForgotPasswordRequest
+        {
+            Correo = "ecos.colombia1@gmail.com",
+            Rol = "Administrador",
+            CaptchaToken = "ALPHANUMERIC_CONFIRMED:R8k2M4"
+        });
+        var recoveryOk = Assert.IsType<OkObjectResult>(recoveryResult);
+        Assert.Equal(200, recoveryOk.StatusCode);
     }
 
     [Fact]

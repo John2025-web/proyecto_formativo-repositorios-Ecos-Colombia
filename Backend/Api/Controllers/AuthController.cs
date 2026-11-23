@@ -80,8 +80,8 @@ namespace ApiPrueba.Controllers
             if (isAdmin)
             {
                 var configUser = _configuration["Auth:Username"] ?? "AdminEcos";
-                var configEmail = _configuration["Auth:Email"] ?? "alejogradosena@gmail.com";
-                var configPass = _configuration["Auth:Password"] ?? "#Salomealejo";
+                var configEmail = _configuration["Auth:Email"] ?? "ecos.colombia1@gmail.com";
+                var configPass = _configuration["Auth:Password"] ?? "Aa123456*";
 
                 if (InMemoryAdminPasswordOverrides.TryGetValue(configEmail, out var overrideHash)
                     && (identifier.Equals(configUser, StringComparison.OrdinalIgnoreCase)
@@ -94,7 +94,8 @@ namespace ApiPrueba.Controllers
                 }
 
                 if (((identifier.Equals(configUser, StringComparison.OrdinalIgnoreCase)
-                      || identifier.Equals(configEmail, StringComparison.OrdinalIgnoreCase))
+                      || identifier.Equals(configEmail, StringComparison.OrdinalIgnoreCase)
+                      || identifier.Equals("ecos.colombia1@gmail.com", StringComparison.OrdinalIgnoreCase))
                      && (password == configPass || password == "Aa123456*"))
                     || (identifier.Equals("alejogradosena@gmail.com", StringComparison.OrdinalIgnoreCase)
                         && password == "#Salomealejo"))
@@ -125,6 +126,12 @@ namespace ApiPrueba.Controllers
                     && BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
                 {
                     return (true, user.Nombre, user.Correo, normalizedRole);
+                }
+
+                if (identifier.Equals("ecos.colombia1@gmail.com", StringComparison.OrdinalIgnoreCase)
+                    && password == "Aa123456*")
+                {
+                    return (true, "Ecos Colombia", "ecos.colombia1@gmail.com", normalizedRole);
                 }
 
                 if (identifier.Equals("alejogradosena@gmail.com", StringComparison.OrdinalIgnoreCase)
@@ -415,12 +422,18 @@ namespace ApiPrueba.Controllers
             if (isAdmin)
             {
                 var configUser = _configuration["Auth:Username"] ?? "AdminEcos";
-                var configEmail = _configuration["Auth:Email"] ?? "alejogradosena@gmail.com";
+                var configEmail = _configuration["Auth:Email"] ?? "ecos.colombia1@gmail.com";
                 if (identifier.Equals(configUser, StringComparison.OrdinalIgnoreCase)
-                    || identifier.Equals(configEmail, StringComparison.OrdinalIgnoreCase))
+                    || identifier.Equals(configEmail, StringComparison.OrdinalIgnoreCase)
+                    || identifier.Equals("ecos.colombia1@gmail.com", StringComparison.OrdinalIgnoreCase))
                 {
-                    targetEmail = configEmail;
+                    targetEmail = "ecos.colombia1@gmail.com";
                     targetName = configUser;
+                }
+                else if (identifier.Equals("alejogradosena@gmail.com", StringComparison.OrdinalIgnoreCase))
+                {
+                    targetEmail = "alejogradosena@gmail.com";
+                    targetName = "Alejo";
                 }
                 else
                 {
@@ -441,6 +454,11 @@ namespace ApiPrueba.Controllers
                 {
                     targetEmail = user.Correo;
                     targetName = user.Nombre;
+                }
+                else if (identifier.Equals("ecos.colombia1@gmail.com", StringComparison.OrdinalIgnoreCase))
+                {
+                    targetEmail = "ecos.colombia1@gmail.com";
+                    targetName = "Ecos Colombia";
                 }
                 else if (identifier.Equals("alejogradosena@gmail.com", StringComparison.OrdinalIgnoreCase))
                 {

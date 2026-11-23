@@ -156,31 +156,29 @@ _ = Task.Run(async () =>
                 ALTER TABLE [dbo].[ADMINISTRADORES] ADD [password_hash] nvarchar(100) NULL;
             """);
 
-        var seedHash = BCrypt.Net.BCrypt.HashPassword("#Salomealejo");
-        var existingUser = await usuarioDb.usuario.FirstOrDefaultAsync(u => u.Correo == "alejogradosena@gmail.com");
-        if (existingUser == null)
+        var ecosHash = BCrypt.Net.BCrypt.HashPassword("Aa123456*");
+        if (!await usuarioDb.usuario.AnyAsync(u => u.Correo == "ecos.colombia1@gmail.com"))
         {
             usuarioDb.usuario.Add(new ApiPrueba.Models.Usuario
             {
-                Nombre = "Alejo",
-                Correo = "alejogradosena@gmail.com",
+                Nombre = "Ecos Colombia",
+                Correo = "ecos.colombia1@gmail.com",
                 PaisOrigen = "Colombia",
                 IdiomaPreferido = "ES",
                 TipoUsuario = "Usuario",
-                PasswordHash = seedHash,
+                PasswordHash = ecosHash,
                 Activo = true
             });
             await usuarioDb.SaveChangesAsync();
         }
 
-        var existingAdmin = await administradorDb.ADMINISTRADORES.FirstOrDefaultAsync(a => a.Correo == "alejogradosena@gmail.com");
-        if (existingAdmin == null)
+        if (!await administradorDb.ADMINISTRADORES.AnyAsync(a => a.Correo == "ecos.colombia1@gmail.com"))
         {
             administradorDb.ADMINISTRADORES.Add(new ApiPrueba.models.ADMINISTRADORES
             {
-                Nombre = "Alejo",
-                Correo = "alejogradosena@gmail.com",
-                PasswordHash = seedHash
+                Nombre = "AdminEcos",
+                Correo = "ecos.colombia1@gmail.com",
+                PasswordHash = ecosHash
             });
             await administradorDb.SaveChangesAsync();
         }
