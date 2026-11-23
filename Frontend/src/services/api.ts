@@ -1,6 +1,8 @@
 const API_URL = import.meta.env.DEV
     ? ""
-    : (import.meta.env.VITE_API_URL || "https://localhost:7119").replace(/\/$/, "");
+    : (import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes("-7119.app.github.dev")
+        ? import.meta.env.VITE_API_URL.replace(/\/$/, "")
+        : "");
 
 export type LoginApiResponse = {
     mensaje?: string;
