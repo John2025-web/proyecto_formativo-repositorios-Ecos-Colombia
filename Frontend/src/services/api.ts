@@ -164,7 +164,7 @@ export async function validateCredentials(usuario: string, password: string, rol
     return response.json();
 }
 
-export async function login(usuario: string, password: string, rol: UserRole, captchaToken: string): Promise<LoginApiResponse> {
+export async function login(usuario: string, password: string, rol: UserRole, captchaToken = ""): Promise<LoginApiResponse> {
     const response = await fetch(`${API_URL}/api/Auth/Login`, {
         method: "POST",
         credentials: "include",
@@ -215,8 +215,8 @@ export async function googleSendVerificationCode(data: { correo: string; nombre?
     return response.json();
 }
 
-export async function verifyLoginCode(correo: string, rol: UserRole, codigoVerificacion: string) {
-    const response = await fetch(`${API_URL}/api/Auth/VerificarCodigo`, {
+export async function validateSixDigitCode(correo: string, rol: UserRole, codigoVerificacion: string) {
+    const response = await fetch(`${API_URL}/api/Auth/ValidarCodigo6Digitos`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -226,6 +226,36 @@ export async function verifyLoginCode(correo: string, rol: UserRole, codigoVerif
             Correo: correo.trim(),
             Rol: rol,
             CodigoVerificacion: codigoVerificacion.trim()
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.mensaje || `El código de 6 dígitos no es válido: ${response.status}`);
+    }
+
+    return response.json() as Promise<{
+        codigoValido: boolean;
+        mostrarRecaptcha: boolean;
+        correo: string;
+        nombre: string;
+        rol: UserRole;
+        mensaje: string;
+    }>;
+}
+
+export async function verifyLoginCode(correo: string, rol: UserRole, codigoVerificacion: string, captchaToken = "") {
+    const response = await fetch(`${API_URL}/api/Auth/VerificarCodigo`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            Correo: correo.trim(),
+            Rol: rol,
+            CodigoVerificacion: codigoVerificacion.trim(),
+            CaptchaToken: captchaToken
         })
     });
 

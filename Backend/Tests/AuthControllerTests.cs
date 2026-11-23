@@ -157,11 +157,12 @@ public class AuthControllerTests
         var generatedCode = AuthController.GetPendingVerificationCodeForTesting("Usuario", "turista@ecoscolombia.com");
         Assert.False(string.IsNullOrWhiteSpace(generatedCode));
 
-        var verifyResult = controller.VerificarCodigo(new VerifyLoginCodeRequest
+        var verifyResult = await controller.VerificarCodigo(new VerifyLoginCodeRequest
         {
             Correo = "turista@ecoscolombia.com",
             Rol = "Usuario",
-            CodigoVerificacion = generatedCode!
+            CodigoVerificacion = generatedCode!,
+            CaptchaToken = "ALPHANUMERIC_CONFIRMED:A7b9K2"
         });
 
         var verifyOk = Assert.IsType<OkObjectResult>(verifyResult);
@@ -203,11 +204,20 @@ public class AuthControllerTests
         var generatedCode = AuthController.GetPendingVerificationCodeForTesting("Usuario", "alejogradosena@gmail.com");
         Assert.False(string.IsNullOrWhiteSpace(generatedCode));
 
-        var verifyResult = controller.VerificarCodigo(new VerifyLoginCodeRequest
+        var check6Digit = controller.ValidarCodigo6Digitos(new VerifyLoginCodeRequest
         {
             Correo = "alejogradosena@gmail.com",
             Rol = "Usuario",
             CodigoVerificacion = generatedCode!
+        });
+        Assert.IsType<OkObjectResult>(check6Digit);
+
+        var verifyResult = await controller.VerificarCodigo(new VerifyLoginCodeRequest
+        {
+            Correo = "alejogradosena@gmail.com",
+            Rol = "Usuario",
+            CodigoVerificacion = generatedCode!,
+            CaptchaToken = "ALPHANUMERIC_CONFIRMED:X8k2M9"
         });
 
         var verifyOk = Assert.IsType<OkObjectResult>(verifyResult);

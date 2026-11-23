@@ -24,7 +24,7 @@ import {
   registerUser,
   requestPasswordRecovery,
   resetPasswordWithCode,
-  validateCredentials,
+  validateSixDigitCode,
   verifyLoginCode,
   type UserRole,
 } from "@/services/api";
@@ -67,6 +67,7 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
 
   // Estados de Verificación de Código (Login / Google / Registro)
   const [verificationCode, setVerificationCode] = useState("");
+  const [codeValidated, setCodeValidated] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
   const [pendingName, setPendingName] = useState("");
 
@@ -96,12 +97,13 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
   const switchView = (nextView: AuthViewMode) => {
     resetCaptchaAndMessages();
     setCredentialsVerified(false);
+    setCodeValidated(false);
     setVerificationCode("");
     setResetCode("");
     setViewMode(nextView);
   };
 
-  // Paso 1 del Login: Con el reCAPTCHA alfanumérico confirmado y usuario/correo + contraseña, valida y envía el código de 6 dígitos al correo
+  // Paso 1 del Login: Valida usuario/correo y contraseña y envía el código de 6 dígitos al correo desde ecos.colombia1@gmail.com
   const handleLoginSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
@@ -113,17 +115,14 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
       return;
     }
 
-    if (!captchaToken) {
-      setError("Completa y confirma el código reCAPTCHA de letras y números al azar para continuar.");
-      return;
-    }
-
     setLoading(true);
     try {
-      const response = await login(trimmedUser, password, role, captchaToken);
+      const response = await login(trimmedUser, password, role);
 
       if (response.requiereVerificacion) {
         setCredentialsVerified(true);
+        setCodeValidated(false);
+        setCaptchaToken(null);
         setPendingEmail(response.correo || pendingEmail || trimmedUser);
         setPendingName(response.nombre || pendingName || trimmedUser.split("@")[0]);
         setVerificationCode("");
@@ -151,14 +150,12 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
           ? requestError.message
           : "No fue posible iniciar sesión."
       );
-      recaptchaRef.current?.reset();
-      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }
   };
 
-  // Paso 2 del Login / Google: Verificar el código enviado al correo
+  // Paso 2 del Login: Primero valida el código de 6 dígitos correctamente; luego muestra y envía el reCAPTCHA para finalizar el acceso
   const handleVerifyLoginCode = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
@@ -168,9 +165,38 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
       return;
     }
 
+    if (!codeValidated) {
+      setLoading(true);
+      try {
+        const res = await validateSixDigitCode(pendingEmail, role, cleaned);
+        if (res.codigoValido) {
+          setCodeValidated(true);
+          setCaptchaToken(null);
+          setInfoMessage(
+            res.mensaje ||
+              "Código de 6 dígitos validado correctamente. Ahora confirma el reCAPTCHA para ingresar."
+          );
+        }
+      } catch (valError) {
+        setError(
+          valError instanceof Error
+            ? valError.message
+            : "El código de 6 dígitos ingresado no es válido."
+        );
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    if (!captchaToken) {
+      setError("Completa y confirma la verificación reCAPTCHA para finalizar el inicio de sesión.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const verified = await verifyLoginCode(pendingEmail, role, cleaned);
+      const verified = await verifyLoginCode(pendingEmail, role, cleaned, captchaToken);
       onLogin({
         name: verified.nombre || pendingName || pendingEmail.split("@")[0],
         email: verified.correo || pendingEmail,
@@ -182,8 +208,10 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
       setError(
         verifyError instanceof Error
           ? verifyError.message
-          : "El código de verificación no es válido."
+          : "El código de verificación o el reCAPTCHA no son válidos."
       );
+      recaptchaRef.current?.reset();
+      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }
@@ -727,27 +755,15 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                     </div>
                   </div>
 
-                  {/* reCAPTCHA alfanumérico (letras y números al azar) visible en la pantalla principal con confirmación */}
-                  <RecaptchaControl
-                    recaptchaRef={recaptchaRef}
-                    onChange={setCaptchaToken}
-                  />
-
                   <button
                     type="submit"
-                    disabled={loading || !captchaToken}
+                    disabled={loading}
                     className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white text-sm transition-all duration-200 active:scale-95 mt-1"
                     style={{
-                      background:
-                        loading || !captchaToken
-                          ? "rgba(238,66,102,0.65)"
-                          : C.red,
+                      background: loading ? "rgba(238,66,102,0.65)" : C.red,
                       fontWeight: 600,
                       boxShadow: "0 4px 20px rgba(238,66,102,0.30)",
-                      cursor:
-                        loading || !captchaToken
-                          ? "not-allowed"
-                          : "pointer",
+                      cursor: loading ? "not-allowed" : "pointer",
                     }}
                   >
                     {loading ? (
@@ -1358,32 +1374,52 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                       maxLength={6}
                       required
                       value={verificationCode}
-                      onChange={(e) =>
-                        setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                      }
+                      onChange={(e) => {
+                        setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                        if (codeValidated) {
+                          setCodeValidated(false);
+                          setCaptchaToken(null);
+                        }
+                      }}
                       placeholder="000000"
                       className="w-full px-4 py-3.5 rounded-xl text-center text-xl font-bold tracking-[0.4em] font-mono outline-none"
                       style={{
-                        border: "1.5px solid rgba(36,60,143,0.25)",
-                        background: "#fafafa",
+                        border: `1.5px solid ${codeValidated ? "#10b981" : "rgba(36,60,143,0.25)"}`,
+                        background: codeValidated ? "rgba(16, 185, 129, 0.05)" : "#fafafa",
                         color: C.navy,
                       }}
                     />
                   </div>
 
+                  {/* El reCAPTCHA aparece y se envía únicamente una vez se valide el código de 6 dígitos correctamente */}
+                  {codeValidated && (
+                    <RecaptchaControl
+                      recaptchaRef={recaptchaRef}
+                      onChange={setCaptchaToken}
+                    />
+                  )}
+
                   <button
                     type="submit"
-                    disabled={loading || verificationCode.trim().length !== 6}
+                    disabled={
+                      loading ||
+                      verificationCode.trim().length !== 6 ||
+                      (codeValidated && !captchaToken)
+                    }
                     className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white text-sm transition-all active:scale-95"
                     style={{
                       background:
-                        loading || verificationCode.trim().length !== 6
+                        loading ||
+                        verificationCode.trim().length !== 6 ||
+                        (codeValidated && !captchaToken)
                           ? "rgba(238,66,102,0.6)"
                           : C.red,
                       fontWeight: 600,
                       boxShadow: "0 4px 20px rgba(238,66,102,0.30)",
                       cursor:
-                        loading || verificationCode.trim().length !== 6
+                        loading ||
+                        verificationCode.trim().length !== 6 ||
+                        (codeValidated && !captchaToken)
                           ? "not-allowed"
                           : "pointer",
                     }}
@@ -1391,11 +1427,17 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                     {loading ? (
                       <>
                         <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                        Verificando código...
+                        {codeValidated
+                          ? "Iniciando sesión..."
+                          : "Validando código de 6 dígitos..."}
+                      </>
+                    ) : codeValidated ? (
+                      <>
+                        <CheckCircle2 size={16} /> Confirmar reCAPTCHA e ingresar
                       </>
                     ) : (
                       <>
-                        <CheckCircle2 size={16} /> Confirmar e iniciar sesión
+                        <CheckCircle2 size={16} /> Validar código de 6 dígitos
                       </>
                     )}
                   </button>
@@ -1413,11 +1455,20 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setViewMode("login");
-                      setCredentialsVerified(true);
+                    onClick={async () => {
+                      setError("");
+                      setCodeValidated(false);
                       setCaptchaToken(null);
-                      setInfoMessage("Confirma nuevamente el reCAPTCHA para reenviar un código nuevo a tu correo.");
+                      setLoading(true);
+                      try {
+                        await login(pendingEmail || usuario.trim(), password, role);
+                        setVerificationCode("");
+                        setInfoMessage(`Se envió un nuevo código de 6 dígitos a ${pendingEmail}.`);
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : "No se pudo reenviar el código.");
+                      } finally {
+                        setLoading(false);
+                      }
                     }}
                     disabled={loading}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold hover:opacity-75"

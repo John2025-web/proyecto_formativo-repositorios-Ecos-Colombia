@@ -21,6 +21,7 @@ namespace ApiPrueba.Models
         public string Correo { get; set; } = string.Empty;
         public string Rol { get; set; } = string.Empty;
         public string CodigoVerificacion { get; set; } = string.Empty;
+        public string? CaptchaToken { get; set; }
     }
 
     public class ForgotPasswordRequest

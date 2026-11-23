@@ -202,9 +202,11 @@ namespace ApiPrueba.Controllers
                 return BadRequest(new { mensaje = "Usuario o correo, contraseña y rol son obligatorios." });
             }
 
-            if (_recaptcha != null && !await _recaptcha.VerifyAsync(login.CaptchaToken, HttpContext.RequestAborted))
+            if (_recaptcha != null
+                && !string.IsNullOrWhiteSpace(login.CaptchaToken)
+                && !await _recaptcha.VerifyAsync(login.CaptchaToken, HttpContext.RequestAborted))
             {
-                return BadRequest(new { mensaje = "Completa y confirma el código reCAPTCHA alfanumérico e inténtalo de nuevo." });
+                return BadRequest(new { mensaje = "Completa y confirma el código reCAPTCHA e inténtalo de nuevo." });
             }
 
             var (validCredentials, resolvedName, resolvedEmail, normalizedRole) = await ResolveCredentialsAsync(
@@ -376,7 +378,7 @@ namespace ApiPrueba.Controllers
         }
 
         [HttpPost("VerificarCodigo")]
-        public IActionResult VerificarCodigo([FromBody] VerifyLoginCodeRequest request)
+        public async Task<IActionResult> VerificarCodigo([FromBody] VerifyLoginCodeRequest request)
         {
             if (request == null
                 || string.IsNullOrWhiteSpace(request.Correo)
@@ -392,11 +394,61 @@ namespace ApiPrueba.Controllers
                 return BadRequest(new { mensaje = "El formato del correo electrónico no es válido." });
             }
 
+            if (_recaptcha != null
+                && !string.IsNullOrWhiteSpace(request.CaptchaToken)
+                && !await _recaptcha.VerifyAsync(request.CaptchaToken, HttpContext.RequestAborted))
+            {
+                return BadRequest(new { mensaje = "Completa y confirma el código reCAPTCHA e inténtalo de nuevo." });
+            }
+
             var isAdmin = request.Rol.Trim().Equals("Administrador", StringComparison.OrdinalIgnoreCase);
             var normalizedRole = isAdmin ? "Administrador" : "Usuario";
             var cacheKey = $"{normalizedRole}:{correo.ToLowerInvariant()}";
 
-            return CompleteVerificationAndIssueToken(cacheKey, request.CodigoVerificacion.Trim());
+            return CompleteVerificationAndIssueToken(cacheKey, request.CodigoVerificacion.Trim(), consumeCode: !string.IsNullOrWhiteSpace(request.CaptchaToken) || _recaptcha == null);
+        }
+
+        [HttpPost("ValidarCodigo6Digitos")]
+        public IActionResult ValidarCodigo6Digitos([FromBody] VerifyLoginCodeRequest request)
+        {
+            if (request == null
+                || string.IsNullOrWhiteSpace(request.Correo)
+                || string.IsNullOrWhiteSpace(request.Rol)
+                || string.IsNullOrWhiteSpace(request.CodigoVerificacion))
+            {
+                return BadRequest(new { mensaje = "El correo, el rol y el código de 6 dígitos son obligatorios." });
+            }
+
+            var correo = request.Correo.Trim();
+            var isAdmin = request.Rol.Trim().Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+            var normalizedRole = isAdmin ? "Administrador" : "Usuario";
+            var cacheKey = $"{normalizedRole}:{correo.ToLowerInvariant()}";
+
+            if (!PendingVerifications.TryGetValue(cacheKey, out var entry))
+            {
+                return BadRequest(new { mensaje = "No hay un código de verificación pendiente para este correo o ya expiró. Solicita uno nuevo." });
+            }
+
+            if (entry.ExpiresAt < DateTimeOffset.UtcNow)
+            {
+                PendingVerifications.TryRemove(cacheKey, out _);
+                return BadRequest(new { mensaje = "El código de verificación ha expirado. Inicia sesión nuevamente para recibir otro." });
+            }
+
+            if (!string.Equals(entry.Code, request.CodigoVerificacion.Trim(), StringComparison.Ordinal))
+            {
+                return BadRequest(new { mensaje = "El código de 6 dígitos ingresado es incorrecto." });
+            }
+
+            return Ok(new
+            {
+                codigoValido = true,
+                mostrarRecaptcha = true,
+                correo = entry.Correo,
+                nombre = entry.Nombre,
+                rol = entry.Rol,
+                mensaje = "Código de 6 dígitos validado correctamente. Completa la verificación reCAPTCHA para ingresar."
+            });
         }
 
         [HttpPost("SolicitarRecuperacion")]
@@ -582,7 +634,7 @@ namespace ApiPrueba.Controllers
             });
         }
 
-        private IActionResult CompleteVerificationAndIssueToken(string cacheKey, string providedCode)
+        private IActionResult CompleteVerificationAndIssueToken(string cacheKey, string providedCode, bool consumeCode = true)
         {
             if (!PendingVerifications.TryGetValue(cacheKey, out var entry))
             {
@@ -600,7 +652,10 @@ namespace ApiPrueba.Controllers
                 return BadRequest(new { mensaje = "El código de verificación ingresado es incorrecto." });
             }
 
-            PendingVerifications.TryRemove(cacheKey, out _);
+            if (consumeCode)
+            {
+                PendingVerifications.TryRemove(cacheKey, out _);
+            }
             return IssueJwtSession(entry.Nombre, entry.Correo, entry.Rol);
         }
 

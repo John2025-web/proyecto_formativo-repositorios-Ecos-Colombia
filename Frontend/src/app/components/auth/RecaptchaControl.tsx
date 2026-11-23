@@ -188,7 +188,7 @@ export default function RecaptchaControl({ onChange, recaptchaRef }: RecaptchaCo
             Verificación de seguridad reCAPTCHA
           </span>
         </div>
-        {confirmed ? (
+        {confirmed && (
           <span
             className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
             style={{
@@ -197,10 +197,6 @@ export default function RecaptchaControl({ onChange, recaptchaRef }: RecaptchaCo
             }}
           >
             <CheckCircle2 size={13} /> Confirmado
-          </span>
-        ) : (
-          <span className="text-[11px]" style={{ color: "#64748b" }}>
-            Letras y números al azar
           </span>
         )}
       </div>
