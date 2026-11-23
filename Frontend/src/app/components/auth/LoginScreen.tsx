@@ -101,8 +101,7 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
     setViewMode(nextView);
   };
 
-  // Paso 1A del Login: Validar usuario/correo y contraseña primero; si son correctos, aparece el reCAPTCHA
-  // Paso 1B del Login: Con el reCAPTCHA confirmado, envía el código al correo
+  // Paso 1 del Login: Con el reCAPTCHA alfanumérico confirmado y usuario/correo + contraseña, valida y envía el código de 6 dígitos al correo
   const handleLoginSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
@@ -114,32 +113,8 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
       return;
     }
 
-    if (!credentialsVerified) {
-      setLoading(true);
-      try {
-        const check = await validateCredentials(trimmedUser, password, role);
-        if (check.credencialesValidas) {
-          setCredentialsVerified(true);
-          setPendingEmail(check.correo);
-          setPendingName(check.nombre);
-          setInfoMessage(
-            "Usuario y contraseña correctos. Ahora confirma el reCAPTCHA de letras y números al azar para enviar el código de verificación a tu correo."
-          );
-        }
-      } catch (validationError) {
-        setError(
-          validationError instanceof Error
-            ? validationError.message
-            : "Usuario/correo o contraseña incorrectos."
-        );
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
     if (!captchaToken) {
-      setError("Completa y confirma el código reCAPTCHA alfanumérico para continuar.");
+      setError("Completa y confirma el código reCAPTCHA de letras y números al azar para continuar.");
       return;
     }
 
@@ -148,13 +123,14 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
       const response = await login(trimmedUser, password, role, captchaToken);
 
       if (response.requiereVerificacion) {
+        setCredentialsVerified(true);
         setPendingEmail(response.correo || pendingEmail || trimmedUser);
         setPendingName(response.nombre || pendingName || trimmedUser.split("@")[0]);
         setVerificationCode("");
         setViewMode("verify-login");
         setInfoMessage(
           response.mensaje ||
-            `Hemos enviado un código de verificación de 6 dígitos a tu correo ${
+            `Hemos enviado un código de verificación de 6 dígitos desde ecos.colombia1@gmail.com a tu correo ${
               response.correo || pendingEmail
             }.`
         );
@@ -671,10 +647,6 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                         value={usuario}
                         onChange={(event) => {
                           setUsuario(event.target.value);
-                          if (credentialsVerified) {
-                            setCredentialsVerified(false);
-                            setCaptchaToken(null);
-                          }
                         }}
                         onFocus={() => setEmailF(true)}
                         onBlur={() => setEmailF(false)}
@@ -735,10 +707,6 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                         value={password}
                         onChange={(event) => {
                           setPassword(event.target.value);
-                          if (credentialsVerified) {
-                            setCredentialsVerified(false);
-                            setCaptchaToken(null);
-                          }
                         }}
                         onFocus={() => setPassF(true)}
                         onBlur={() => setPassF(false)}
@@ -759,27 +727,25 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                     </div>
                   </div>
 
-                  {/* El reCAPTCHA aparece únicamente después de validar que el correo/usuario y contraseña sean correctos */}
-                  {credentialsVerified && (
-                    <RecaptchaControl
-                      recaptchaRef={recaptchaRef}
-                      onChange={setCaptchaToken}
-                    />
-                  )}
+                  {/* reCAPTCHA alfanumérico (letras y números al azar) visible en la pantalla principal con confirmación */}
+                  <RecaptchaControl
+                    recaptchaRef={recaptchaRef}
+                    onChange={setCaptchaToken}
+                  />
 
                   <button
                     type="submit"
-                    disabled={loading || (credentialsVerified && !captchaToken)}
+                    disabled={loading || !captchaToken}
                     className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-white text-sm transition-all duration-200 active:scale-95 mt-1"
                     style={{
                       background:
-                        loading || (credentialsVerified && !captchaToken)
+                        loading || !captchaToken
                           ? "rgba(238,66,102,0.65)"
                           : C.red,
                       fontWeight: 600,
                       boxShadow: "0 4px 20px rgba(238,66,102,0.30)",
                       cursor:
-                        loading || (credentialsVerified && !captchaToken)
+                        loading || !captchaToken
                           ? "not-allowed"
                           : "pointer",
                     }}
@@ -787,13 +753,7 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                     {loading ? (
                       <>
                         <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                        {credentialsVerified
-                          ? "Enviando código al correo..."
-                          : "Verificando credenciales..."}
-                      </>
-                    ) : credentialsVerified ? (
-                      <>
-                        Enviar código de verificación <ChevronRight size={16} />
+                        Enviando código de 6 dígitos al correo...
                       </>
                     ) : (
                       <>

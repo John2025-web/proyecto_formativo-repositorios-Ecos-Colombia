@@ -1,12 +1,14 @@
 {
   "name": "Ecos Colombia Dev Container",
+  "postStartCommand": "git pull --rebase --autostash origin main || true",
   "customizations": {
     "vscode": {
       "settings": {
         "files.autoSave": "afterDelay",
         "files.autoSaveDelay": 1000,
         "git.confirmSync": false,
-        "git.autofetch": true,
+        "git.autofetch": "all",
+        "git.autofetchPeriod": 60,
         "git.enableSmartCommit": true
       }
     }
