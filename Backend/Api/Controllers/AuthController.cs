@@ -831,6 +831,52 @@ namespace ApiPrueba.Controllers
             });
         }
 
+        [HttpPost("Soporte")]
+        public async Task<IActionResult> EnviarSoporte([FromBody] SupportMessageRequest request)
+        {
+            if (request == null
+                || string.IsNullOrWhiteSpace(request.CorreoRemitente)
+                || string.IsNullOrWhiteSpace(request.Asunto)
+                || string.IsNullOrWhiteSpace(request.Mensaje))
+            {
+                return BadRequest(new { mensaje = "Tu correo, el asunto y el mensaje son obligatorios para contactar a soporte." });
+            }
+
+            var senderEmail = request.CorreoRemitente.Trim().ToLowerInvariant();
+            if (!IsValidRealEmail(senderEmail))
+            {
+                return BadRequest(new { mensaje = "Por favor ingresa un correo electrónico válido para que soporte pueda responderte." });
+            }
+
+            var senderName = !string.IsNullOrWhiteSpace(request.NombreRemitente)
+                ? request.NombreRemitente.Trim()
+                : senderEmail.Split('@')[0];
+            var senderRole = !string.IsNullOrWhiteSpace(request.Rol)
+                ? request.Rol.Trim()
+                : "Visitante (Zona de Login)";
+
+            var sent = false;
+            if (_emailService != null)
+            {
+                (sent, _) = await _emailService.SendSupportMessageAsync(
+                    senderEmail,
+                    senderName,
+                    senderRole,
+                    request.Asunto.Trim(),
+                    request.Mensaje.Trim(),
+                    HttpContext.RequestAborted);
+            }
+
+            return Ok(new
+            {
+                enviado = sent,
+                destinatario = "ecos.colombia1@gmail.com",
+                remitente = senderEmail,
+                asunto = request.Asunto.Trim(),
+                mensaje = $"Tu mensaje fue enviado a ecos.colombia1@gmail.com identificando tu correo ({senderEmail}) como remitente."
+            });
+        }
+
         public static string? GetPendingVerificationCodeForTesting(string role, string email)
         {
             var key = $"{role}:{email.ToLowerInvariant()}";

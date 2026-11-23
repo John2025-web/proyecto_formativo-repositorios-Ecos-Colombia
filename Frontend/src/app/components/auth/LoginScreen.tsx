@@ -30,6 +30,7 @@ import {
 } from "@/services/api";
 import { C } from "@/app/theme";
 import RecaptchaControl, { type RecaptchaControlHandle } from "./RecaptchaControl";
+import SupportQuickAccess from "./SupportQuickAccess";
 import type { UserType } from "./types";
 import "./auth.css";
 
@@ -863,6 +864,14 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                     {t("register")}
                   </button>
                 </p>
+                <div className="text-center mt-3">
+                  <SupportQuickAccess
+                    defaultEmail={usuario.includes("@") ? usuario : pendingEmail}
+                    roleLabel={`Zona de Login (${role})`}
+                    label="Soporte o ayuda"
+                    textColor="#9b9baf"
+                  />
+                </div>
               </>
             )}
 
@@ -1473,7 +1482,13 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
             <a href="#" style={{ color: "#9b9baf" }}>
               {t("privacy")}
             </a>
-            .
+            {" · "}
+            <SupportQuickAccess
+              defaultEmail={usuario.includes("@") ? usuario : pendingEmail}
+              roleLabel={`Zona de Login (${role})`}
+              label="Soporte o ayuda"
+              textColor="#9b9baf"
+            />
           </p>
         </div>
       </div>

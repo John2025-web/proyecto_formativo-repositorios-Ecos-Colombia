@@ -249,6 +249,29 @@ public class AuthControllerTests
     }
 
     [Fact]
+    public async Task EnviarSoporte_SendsDirectlyToEcosColombia1_AndShowsSenderEmail()
+    {
+        var (userDb, adminDb) = CreateInMemoryDatabases();
+        var emailService = new EmailVerificationService(_config, NullLogger<EmailVerificationService>.Instance);
+        var controller = CreateController(userDb, adminDb, null, emailService);
+
+        var result = await controller.EnviarSoporte(new SupportMessageRequest
+        {
+            CorreoRemitente = "alejogradosena@gmail.com",
+            NombreRemitente = "Alejo",
+            Rol = "Usuario",
+            Asunto = "Consulta rápida de soporte",
+            Mensaje = "Necesito ayuda con mi cuenta en Ecos Colombia."
+        });
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var json = System.Text.Json.JsonSerializer.Serialize(okResult.Value);
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        Assert.Equal("ecos.colombia1@gmail.com", doc.RootElement.GetProperty("destinatario").GetString());
+        Assert.Equal("alejogradosena@gmail.com", doc.RootElement.GetProperty("remitente").GetString());
+    }
+
+    [Fact]
     public async Task Login_ReturnsUnauthorized_WhenCredentialsAreInvalid()
     {
         var (userDb, adminDb) = CreateInMemoryDatabases();

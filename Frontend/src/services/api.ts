@@ -362,3 +362,38 @@ export async function confirmRegistrationCode(correo: string, codigoVerificacion
 
     return response.json() as Promise<{ correo: string; mensaje: string }>;
 }
+
+export async function sendSupportEmail(data: {
+    correoRemitente: string;
+    nombreRemitente?: string;
+    rol?: string;
+    asunto: string;
+    mensaje: string;
+}) {
+    const response = await fetch(`${API_URL}/api/Auth/Soporte`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            CorreoRemitente: data.correoRemitente.trim(),
+            NombreRemitente: data.nombreRemitente?.trim(),
+            Rol: data.rol,
+            Asunto: data.asunto.trim(),
+            Mensaje: data.mensaje.trim()
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.mensaje || `No fue posible enviar el mensaje de soporte: ${response.status}`);
+    }
+
+    return response.json() as Promise<{
+        enviado: boolean;
+        destinatario: string;
+        remitente: string;
+        asunto: string;
+        mensaje: string;
+    }>;
+}
+

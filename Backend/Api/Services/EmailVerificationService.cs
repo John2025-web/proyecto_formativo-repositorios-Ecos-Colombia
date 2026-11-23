@@ -170,6 +170,122 @@ public sealed class EmailVerificationService
         return (false, "No se pudo completar el despacho SMTP.");
     }
 
+    public async Task<(bool Sent, string? ErrorMessage)> SendSupportMessageAsync(
+        string senderEmail,
+        string senderName,
+        string senderRole,
+        string subject,
+        string messageText,
+        CancellationToken cancellationToken = default)
+    {
+        var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST") ?? _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
+        var smtpPortRaw = Environment.GetEnvironmentVariable("SMTP_PORT") ?? _configuration["Email:SmtpPort"] ?? "587";
+        var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER") ?? _configuration["Email:SmtpUser"] ?? "ecos.colombia1@gmail.com";
+        var rawPass = Environment.GetEnvironmentVariable("SMTP_PASS") ?? _configuration["Email:SmtpPass"];
+        if (string.IsNullOrWhiteSpace(rawPass))
+        {
+            var token = _configuration["Email:SmtpSecretToken"];
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                rawPass = UnprotectInternalSecret(token);
+            }
+        }
+        var smtpPass = rawPass?.Replace(" ", "");
+        const string supportInbox = "ecos.colombia1@gmail.com";
+
+        var htmlBody = $"""
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 560px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;">
+              <div style="background: #243c8f; padding: 22px 24px; border-bottom: 4px solid #f4d35e;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 20px;">Soporte o Ayuda · Ecos <span style="color: #f4d35e;">Colombia</span></h1>
+                <p style="margin: 6px 0 0; color: #e2e8f0; font-size: 12px;">Solicitud recibida para: {supportInbox}</p>
+              </div>
+              <div style="padding: 24px; color: #1e293b;">
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px 16px; margin-bottom: 18px;">
+                  <p style="margin: 0 0 6px; font-size: 13px;"><strong>Correo de quien escribió:</strong> <span style="color: #243c8f; font-weight: 700;">{WebUtility.HtmlEncode(senderEmail)}</span></p>
+                  <p style="margin: 0 0 6px; font-size: 13px;"><strong>Nombre:</strong> {WebUtility.HtmlEncode(senderName)}</p>
+                  <p style="margin: 0 0 6px; font-size: 13px;"><strong>Rol / Apartado:</strong> {WebUtility.HtmlEncode(senderRole)}</p>
+                  <p style="margin: 0; font-size: 13px;"><strong>Asunto:</strong> {WebUtility.HtmlEncode(subject)}</p>
+                </div>
+                <p style="font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px;">Mensaje enviado:</p>
+                <div style="padding: 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">{WebUtility.HtmlEncode(messageText)}</div>
+              </div>
+            </div>
+            """;
+
+        var port = int.TryParse(smtpPortRaw, out var parsedPort) ? parsedPort : 587;
+        var displayFromName = $"{senderName} ({senderEmail})";
+        var emailSubject = $"[Soporte Ecos Colombia] {subject} - De: {senderEmail}";
+
+        if (!string.IsNullOrWhiteSpace(smtpHost)
+            && !string.IsNullOrWhiteSpace(smtpUser)
+            && !string.IsNullOrWhiteSpace(smtpPass))
+        {
+            if (await TrySendCustomSmtpAsync(smtpHost, port, smtpUser, smtpPass, supportInbox, displayFromName, senderEmail, supportInbox, emailSubject, htmlBody, cancellationToken))
+            {
+                return (true, null);
+            }
+        }
+
+        var fallbackUser = _configuration["Email:FallbackSmtpUser"];
+        var fallbackToken = _configuration["Email:FallbackSmtpSecretToken"];
+        var fallbackPass = !string.IsNullOrWhiteSpace(fallbackToken) ? UnprotectInternalSecret(fallbackToken) : null;
+
+        if (!string.IsNullOrWhiteSpace(smtpHost)
+            && !string.IsNullOrWhiteSpace(fallbackUser)
+            && !string.IsNullOrWhiteSpace(fallbackPass))
+        {
+            if (await TrySendCustomSmtpAsync(smtpHost, port, fallbackUser, fallbackPass, supportInbox, displayFromName, senderEmail, supportInbox, emailSubject, htmlBody, cancellationToken))
+            {
+                return (true, null);
+            }
+        }
+
+        return (false, "No se pudo despachar el mensaje de soporte en este momento.");
+    }
+
+    private static async Task<bool> TrySendCustomSmtpAsync(
+        string smtpHost,
+        int port,
+        string authUser,
+        string authPass,
+        string fromAddress,
+        string fromDisplayName,
+        string replyToSenderEmail,
+        string toAddress,
+        string subject,
+        string htmlBody,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var message = new MailMessage
+            {
+                From = new MailAddress(fromAddress, fromDisplayName),
+                Subject = subject,
+                IsBodyHtml = true,
+                Body = htmlBody
+            };
+            message.ReplyToList.Add(new MailAddress(replyToSenderEmail, fromDisplayName));
+            message.To.Add(new MailAddress(toAddress, "Soporte Ecos Colombia"));
+
+            using var client = new SmtpClient(smtpHost, port)
+            {
+                EnableSsl = true,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(authUser, authPass),
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                Timeout = 10000
+            };
+
+            await client.SendMailAsync(message, cancellationToken);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private static async Task<bool> TrySendSmtpMessageAsync(
         string smtpHost,
         int port,

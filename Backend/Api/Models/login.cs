@@ -51,4 +51,13 @@ namespace ApiPrueba.Models
         public string Correo { get; set; } = string.Empty;
         public string CodigoVerificacion { get; set; } = string.Empty;
     }
+
+    public class SupportMessageRequest
+    {
+        public string CorreoRemitente { get; set; } = string.Empty;
+        public string? NombreRemitente { get; set; }
+        public string? Rol { get; set; }
+        public string Asunto { get; set; } = string.Empty;
+        public string Mensaje { get; set; } = string.Empty;
+    }
 }

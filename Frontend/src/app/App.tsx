@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import LoginScreen from "@/app/components/auth/LoginScreen";
+import SupportQuickAccess from "@/app/components/auth/SupportQuickAccess";
 import type { UserType } from "@/app/components/auth/types";
 import { C } from "@/app/theme";
 import colombiaLogo from "@/imports/image-removebg-preview.png";
@@ -1043,7 +1044,11 @@ function AdminScreen({ user, onLogout }: { user: UserType; onLogout: () => void 
   return <div className="min-h-screen" style={{ background: "#f4f6fb", fontFamily: "'Poppins', sans-serif", color: "#24304f" }}>
     <header className="flex items-center justify-between px-8 py-4 bg-white" style={{ borderBottom: "1px solid rgba(36,60,143,0.1)" }}>
       <div className="flex items-center gap-3"><ImageWithFallback src={colombiaLogo} alt="Logo" style={{ width: 36, height: 36, objectFit: "contain" }} /><div><p className="font-bold" style={{ color: C.navy }}>Ecos <span style={{ color: C.red }}>Colombia</span></p><p className="text-xs" style={{ color: "#8b94ab" }}>Centro de administración</p></div></div>
-      <div className="flex items-center gap-3"><span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold" style={{ color: C.red, background: "rgba(238,66,102,0.08)" }}><ShieldCheck size={14} /> Administrador</span><button onClick={onLogout} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm" style={{ color: C.red }}><LogOut size={15} /> Salir</button></div>
+      <div className="flex items-center gap-4">
+        <SupportQuickAccess defaultEmail={user.email} defaultName={user.name} roleLabel="Administrador" label="Soporte o ayuda" textColor="#5a5a72" />
+        <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold" style={{ color: C.red, background: "rgba(238,66,102,0.08)" }}><ShieldCheck size={14} /> Administrador</span>
+        <button onClick={onLogout} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm" style={{ color: C.red }}><LogOut size={15} /> Salir</button>
+      </div>
     </header>
     <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 px-6 py-8">
       <aside className="lg:w-56 shrink-0"><p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#929bb0" }}>Administración</p><div className="flex lg:flex-col gap-2 overflow-x-auto">{navItems.map(([key, label, icon]) => <button key={key} onClick={() => setSection(key)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm whitespace-nowrap" style={{ color: section === key ? C.navy : "#68738b", background: section === key ? "#fff" : "transparent", boxShadow: section === key ? "0 4px 16px rgba(36,60,143,0.08)" : "none", fontWeight: section === key ? 600 : 500 }}>{icon}{label}</button>)}</div></aside>
@@ -1183,7 +1188,8 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
             })}
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-4">
+            <SupportQuickAccess defaultEmail={user.email} defaultName={user.name} roleLabel={user.role} label="Soporte o ayuda" textColor="#5a5a72" />
             {/* Language */}
             <div className="relative">
               <button onClick={() => { setLangOpen(!langOpen); setActiveNav(null); setUserMenuOpen(false); }}
@@ -1222,6 +1228,9 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
                     </span>
                   </div>
                   <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: "#5a5a72" }}><User size={14} /> {t("miPerfil")}</button>
+                  <div className="px-4 py-2 hover:bg-gray-50 transition-colors">
+                    <SupportQuickAccess defaultEmail={user.email} defaultName={user.name} roleLabel={user.role} label="Soporte o ayuda" textColor="#5a5a72" />
+                  </div>
                   <button onClick={() => { setUserMenuOpen(false); onLogout(); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-red-50 transition-colors" style={{ color: C.red }}><LogOut size={14} /> {t("cerrarSesion")}</button>
                 </div>
               )}
@@ -1271,6 +1280,9 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
               {navKeys.map((key, i) => (
                 <button key={key} onClick={() => { setMenuOpen(false); setActiveNav(navSectionKeys[i]); }} className="py-2.5 text-sm font-medium border-b text-left" style={{ color: C.navy, borderColor: "rgba(36,60,143,0.08)" }}>{t(key)}</button>
               ))}
+              <div className="py-2 border-b" style={{ borderColor: "rgba(36,60,143,0.08)" }}>
+                <SupportQuickAccess defaultEmail={user.email} defaultName={user.name} roleLabel={user.role} label="Soporte o ayuda" textColor={C.navy} />
+              </div>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm font-medium" style={{ color: C.navy }}>{user.name}</span>
                 <button onClick={onLogout} className="text-xs font-semibold flex items-center gap-1" style={{ color: C.red }}><LogOut size={13} /> {t("cerrarSesion")}</button>
