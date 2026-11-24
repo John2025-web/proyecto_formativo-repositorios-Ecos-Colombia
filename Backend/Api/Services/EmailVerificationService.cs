@@ -370,19 +370,19 @@ public sealed class EmailVerificationService
     {
         using var tcp = new TcpClient();
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutCts.CancelAfter(TimeSpan.FromSeconds(15));
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(5));
         await tcp.ConnectAsync(host, port, timeoutCts.Token);
 
         using var netStream = tcp.GetStream();
         using var plainReader = new StreamReader(netStream, System.Text.Encoding.ASCII, false, 1024, leaveOpen: true);
         using var plainWriter = new StreamWriter(netStream, System.Text.Encoding.ASCII, 1024, leaveOpen: true) { NewLine = "\r\n", AutoFlush = true };
 
-        static async Task<string> ReadSmtpResponseAsync(StreamReader reader)
+        static async Task<string> ReadSmtpResponseAsync(StreamReader reader, CancellationToken ct)
         {
             var sb = new System.Text.StringBuilder();
             while (true)
             {
-                var line = await reader.ReadLineAsync();
+                var line = await reader.ReadLineAsync(ct);
                 if (line == null) break;
                 sb.AppendLine(line);
                 if (line.Length >= 4 && line[3] == ' ') break;
@@ -390,15 +390,15 @@ public sealed class EmailVerificationService
             return sb.ToString();
         }
 
-        var banner = await ReadSmtpResponseAsync(plainReader);
+        var banner = await ReadSmtpResponseAsync(plainReader, timeoutCts.Token);
         if (!banner.StartsWith("220")) return (false, $"SMTP Banner: {banner}");
 
         await plainWriter.WriteLineAsync("EHLO ecoscolombia.local");
-        var ehlo1 = await ReadSmtpResponseAsync(plainReader);
+        var ehlo1 = await ReadSmtpResponseAsync(plainReader, timeoutCts.Token);
         if (!ehlo1.StartsWith("250")) return (false, $"SMTP EHLO: {ehlo1}");
 
         await plainWriter.WriteLineAsync("STARTTLS");
-        var startTlsResp = await ReadSmtpResponseAsync(plainReader);
+        var startTlsResp = await ReadSmtpResponseAsync(plainReader, timeoutCts.Token);
         if (!startTlsResp.StartsWith("220")) return (false, $"SMTP STARTTLS: {startTlsResp}");
 
         using var sslStream = new System.Net.Security.SslStream(netStream, false);
@@ -411,31 +411,31 @@ public sealed class EmailVerificationService
         using var sslWriter = new StreamWriter(sslStream, new System.Text.UTF8Encoding(false), 1024, leaveOpen: true) { NewLine = "\r\n", AutoFlush = true };
 
         await sslWriter.WriteLineAsync("EHLO ecoscolombia.local");
-        var ehlo2 = await ReadSmtpResponseAsync(sslReader);
+        var ehlo2 = await ReadSmtpResponseAsync(sslReader, timeoutCts.Token);
         if (!ehlo2.StartsWith("250")) return (false, $"SMTP TLS EHLO: {ehlo2}");
 
         await sslWriter.WriteLineAsync("AUTH LOGIN");
-        var authPrompt1 = await ReadSmtpResponseAsync(sslReader);
+        var authPrompt1 = await ReadSmtpResponseAsync(sslReader, timeoutCts.Token);
         if (!authPrompt1.StartsWith("334")) return (false, $"SMTP AUTH: {authPrompt1}");
 
         await sslWriter.WriteLineAsync(Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(authUser)));
-        var authPrompt2 = await ReadSmtpResponseAsync(sslReader);
+        var authPrompt2 = await ReadSmtpResponseAsync(sslReader, timeoutCts.Token);
         if (!authPrompt2.StartsWith("334")) return (false, $"SMTP USER: {authPrompt2}");
 
         await sslWriter.WriteLineAsync(Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(authPass)));
-        var authResp = await ReadSmtpResponseAsync(sslReader);
+        var authResp = await ReadSmtpResponseAsync(sslReader, timeoutCts.Token);
         if (!authResp.StartsWith("235")) return (false, $"SMTP PASS: {authResp}");
 
         await sslWriter.WriteLineAsync($"MAIL FROM:<{authUser}>");
-        var mailFromResp = await ReadSmtpResponseAsync(sslReader);
+        var mailFromResp = await ReadSmtpResponseAsync(sslReader, timeoutCts.Token);
         if (!mailFromResp.StartsWith("250")) return (false, $"SMTP MAIL FROM: {mailFromResp}");
 
         await sslWriter.WriteLineAsync($"RCPT TO:<{toEmail}>");
-        var rcptResp = await ReadSmtpResponseAsync(sslReader);
+        var rcptResp = await ReadSmtpResponseAsync(sslReader, timeoutCts.Token);
         if (!rcptResp.StartsWith("250")) return (false, $"SMTP RCPT TO: {rcptResp}");
 
         await sslWriter.WriteLineAsync("DATA");
-        var dataPrompt = await ReadSmtpResponseAsync(sslReader);
+        var dataPrompt = await ReadSmtpResponseAsync(sslReader, timeoutCts.Token);
         if (!dataPrompt.StartsWith("354")) return (false, $"SMTP DATA: {dataPrompt}");
 
         var encodedSubject = $"=?UTF-8?B?{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(subject))}?=";
@@ -454,7 +454,7 @@ public sealed class EmailVerificationService
         await sslWriter.WriteLineAsync(base64Html);
         await sslWriter.WriteLineAsync(".");
 
-        var sendResp = await ReadSmtpResponseAsync(sslReader);
+        var sendResp = await ReadSmtpResponseAsync(sslReader, timeoutCts.Token);
         await sslWriter.WriteLineAsync("QUIT");
         if (!sendResp.StartsWith("250")) return (false, $"SMTP SEND: {sendResp}");
 
