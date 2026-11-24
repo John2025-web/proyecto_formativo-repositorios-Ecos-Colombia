@@ -1415,13 +1415,20 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
                 <Globe size={14} /> {lang}
               </button>
               {langOpen && (
-                <div className="absolute right-0 top-full mt-2 rounded-xl overflow-hidden py-1" style={{ background: C.white, boxShadow: "0 8px 32px rgba(36,60,143,0.18)", border: "1px solid rgba(36,60,143,0.08)", minWidth: "160px", zIndex: 60 }}>
+                <div className="absolute right-0 top-full mt-2 rounded-xl overflow-hidden py-1.5" style={{ background: C.white, boxShadow: "0 10px 36px rgba(36,60,143,0.18)", border: "1px solid rgba(36,60,143,0.08)", minWidth: "235px", zIndex: 60 }}>
                   {LANGUAGES.map((l) => (
                     <button key={l.code} onClick={() => { setLang(l.code); setLangOpen(false); }}
-                      className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
-                      style={{ color: lang === l.code ? C.navy : "#5a5a72", fontWeight: lang === l.code ? 600 : 400 }}>
-                      <span className="flex items-center gap-2">{l.flag} {l.label}</span>
-                      {lang === l.code && <Check size={13} style={{ color: C.navy }} />}
+                      className="w-full flex items-center justify-between gap-4 px-4 py-2.5 text-sm text-left whitespace-nowrap hover:bg-gray-50 transition-colors"
+                      style={{
+                        color: lang === l.code ? C.navy : "#5a5a72",
+                        fontWeight: lang === l.code ? 600 : 400,
+                        background: lang === l.code ? "rgba(36,60,143,0.06)" : undefined,
+                      }}>
+                      <span className="flex items-center gap-2.5 whitespace-nowrap">
+                        <span className="w-5 text-center flex-shrink-0">{l.flag}</span>
+                        <span>{l.label}</span>
+                      </span>
+                      {lang === l.code && <Check size={14} className="flex-shrink-0" style={{ color: C.navy }} />}
                     </button>
                   ))}
                 </div>
