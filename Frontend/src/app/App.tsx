@@ -9,7 +9,11 @@ import LoginScreen from "@/app/components/auth/LoginScreen";
 import SupportQuickAccess from "@/app/components/auth/SupportQuickAccess";
 import type { UserType } from "@/app/components/auth/types";
 import { C } from "@/app/theme";
-import { EN_DESTINATIONS, EN_NAV_ITEMS_MAP } from "@/app/i18nDestinations";
+import {
+  getLocalizedDestinationContent,
+  getLocalizedNavItemsMap,
+  getLocalizedPlaceName,
+} from "@/app/i18nDestinations";
 import colombiaLogo from "@/imports/image-removebg-preview.png";
 import { logout, getSession, getAdminUsers, getAdminReviews, getAdministrators, createAdministrator, setUserStatus, censorReview, deleteReview, type AdminUser, type AdminReview, type AdminAccount } from "@/services/api";
 
@@ -175,6 +179,102 @@ const TR: Record<string, Record<string, string>> = {
     roleUser: "Benutzer",
     roleAdmin: "Administrator",
   },
+  ZH: {
+    navDestinos: "目的地", navExperiencias: "特色体验", navCultura: "文化", navBlog: "旅行博客", navContacto: "联系我们",
+    heroTitle: "探索哥伦比亚", heroSub: "无限多元的神奇之地 —— 从加勒比海到亚马逊，从安第斯山脉到太平洋。",
+    heroBadge: "欢迎回来", sectionLabel: "精选旅游目的地", sectionTitle: "您想前往哪里？",
+    sectionBtn: "查看所有目的地", cardBtn: "探索详情", howToGet: "路线导航", reserveBtn: "在 Airbnb 预订住宿",
+    tabHistoria: "历史", tabCultura: "文化", tabEventos: "节庆活动", tabSitios: "必游景点", tabRestaurantes: "推荐餐厅",
+    mapTitle: "哥伦比亚地图", mapExpand: "展开", mapMinimize: "收起", mapGoogle: "Google 地图",
+    cerrarSesion: "退出登录", miPerfil: "个人资料", hola: "您好",
+    departments: "个省份", municipalities: "个市镇", parks: "座国家自然公园", regions: "大独特自然区域",
+    readyToExplore: "准备好探索", findAccom: "为您的哥伦比亚冒险之旅寻找完美住宿",
+    orContinue: "或通过以下方式继续", noAccount: "还没有账号？", register: "立即注册",
+    signIn: "登录", signingIn: "正在登录...", continueGoogle: "使用 Google 账号继续",
+    welcome: "欢迎", signInContinue: "请登录以继续访问", forgotPassword: "忘记密码？",
+    email: "电子邮箱", password: "密码", terms: "服务条款", privacy: "隐私政策",
+    destMarker: "目的地", cityMarker: "城市",
+    supportHelp: "客服与帮助",
+    viewAll: "查看全部",
+    placesToExplore: "探索哥伦比亚地点",
+    placesCount: "个地点",
+    showPlaces: "展开地点列表",
+    minimizeList: "收起地点列表",
+    openInMaps: "在 Google 地图中打开",
+    historyOf: "历史渊源 ·",
+    cultureAndTraditions: "文化与传统",
+    upcomingEvents: "即将举行的节庆活动",
+    mustSeeSites: "必游旅游景点",
+    recommendedRestaurants: "精选推荐餐厅",
+    restaurantDescPrefix: "当地最受推崇的特色餐厅之一：",
+    restaurantDescSuffix: "在纯正的当地氛围中品尝地道哥伦比亚美食。",
+    roleUser: "普通用户",
+    roleAdmin: "系统管理员",
+  },
+  JA: {
+    navDestinos: "目的地", navExperiencias: "体験", navCultura: "文化", navBlog: "ブログ", navContacto: "お問い合わせ",
+    heroTitle: "コロンビアを発見しよう", heroSub: "無限の多様性に満ちた大地 — カリブ海からアマゾン、アンデス山脈から太平洋まで。",
+    heroBadge: "お帰りなさい", sectionLabel: "注目のデスティネーション", sectionTitle: "次はどこへ旅しますか？",
+    sectionBtn: "すべての目的地を見る", cardBtn: "詳しく見る", howToGet: "アクセス・地図", reserveBtn: "Airbnbで宿泊を予約",
+    tabHistoria: "歴史", tabCultura: "文化", tabEventos: "イベント", tabSitios: "観光名所", tabRestaurantes: "レストラン",
+    mapTitle: "コロンビア地図", mapExpand: "拡大", mapMinimize: "最小化", mapGoogle: "Google マップ",
+    cerrarSesion: "ログアウト", miPerfil: "マイプロフィール", hola: "こんにちは",
+    departments: "県（デパルタメント）", municipalities: "自治体", parks: "国立自然公園", regions: "つの自然地域",
+    readyToExplore: "旅の準備はできましたか：", findAccom: "あなたの冒険にぴったりの宿泊先を見つけましょう",
+    orContinue: "または次で続行", noAccount: "アカウントをお持ちでないですか？", register: "新規登録",
+    signIn: "ログイン", signingIn: "ログイン中...", continueGoogle: "Googleで続行",
+    welcome: "ようこそ", signInContinue: "続行するにはログインしてください", forgotPassword: "パスワードをお忘れですか？",
+    email: "メールアドレス", password: "パスワード", terms: "利用規約", privacy: "プライバシーポリシー",
+    destMarker: "観光地", cityMarker: "都市",
+    supportHelp: "サポート・ヘルプ",
+    viewAll: "すべて見る",
+    placesToExplore: "探索スポット一覧",
+    placesCount: "か所",
+    showPlaces: "スポットを表示",
+    minimizeList: "リストを折りたたむ",
+    openInMaps: "Google マップで開く",
+    historyOf: "歴史・",
+    cultureAndTraditions: "文化と伝統",
+    upcomingEvents: "注目のイベント・祭典",
+    mustSeeSites: "必見の観光スポット",
+    recommendedRestaurants: "おすすめレストラン",
+    restaurantDescPrefix: "現地で最もおすすめのレストランのひとつ：",
+    restaurantDescSuffix: "本場の雰囲気の中で伝統的なローカル美食をお楽しみいただけます。",
+    roleUser: "ユーザー",
+    roleAdmin: "管理者",
+  },
+  KO: {
+    navDestinos: "여행지", navExperiencias: "특별한 경험", navCultura: "문화", navBlog: "블로그", navContacto: "문의하기",
+    heroTitle: "콜롬비아를 발견하세요", heroSub: "무한한 다양성의 대지 — 카리브해에서 아마존까지, 안데스 산맥에서 태평양까지.",
+    heroBadge: "다시 오신 것을 환영합니다", sectionLabel: "추천 대표 여행지", sectionTitle: "어디로 떠나고 싶으신가요?",
+    sectionBtn: "모든 여행지 보기", cardBtn: "탐험하기", howToGet: "길찾기", reserveBtn: "Airbnb에서 숙소 예약",
+    tabHistoria: "역사", tabCultura: "문화", tabEventos: "축제·이벤트", tabSitios: "관광 명소", tabRestaurantes: "추천 맛집",
+    mapTitle: "콜롬비아 지도", mapExpand: "확대", mapMinimize: "축소", mapGoogle: "Google 지도",
+    cerrarSesion: "로그아웃", miPerfil: "내 프로필", hola: "안녕하세요",
+    departments: "개 주(데파르타멘토)", municipalities: "개 시·자치구", parks: "개 국립자연공원", regions: "대 고유 자연권역",
+    readyToExplore: "지금 떠나볼까요 ·", findAccom: "당신의 완벽한 콜롬비아 모험을 위한 숙소를 찾아보세요",
+    orContinue: "또는 다음으로 계속", noAccount: "계정이 없으신가요?", register: "회원가입",
+    signIn: "로그인", signingIn: "로그인 중...", continueGoogle: "Google 계정으로 계속",
+    welcome: "환영합니다", signInContinue: "계속하려면 로그인하세요", forgotPassword: "비밀번호를 잊으셨나요?",
+    email: "이메일 주소", password: "비밀번호", terms: "이용약관", privacy: "개인정보처리방침",
+    destMarker: "추천 여행지", cityMarker: "도시",
+    supportHelp: "고객지원 및 도움말",
+    viewAll: "전체 보기",
+    placesToExplore: "탐험할 여행지 목록",
+    placesCount: "개 명소",
+    showPlaces: "여행지 목록 펼치기",
+    minimizeList: "목록 접기",
+    openInMaps: "Google 지도에서 열기",
+    historyOf: "역사 이야기 ·",
+    cultureAndTraditions: "문화와 전통",
+    upcomingEvents: "주요 축제 및 이벤트",
+    mustSeeSites: "꼭 가봐야 할 관광 명소",
+    recommendedRestaurants: "추천 로컬 레스토랑",
+    restaurantDescPrefix: "가장 추천하는 대표 레스토랑 ·",
+    restaurantDescSuffix: "진정한 현지 분위기 속에서 콜롬비아 전통 미식을 즐기기에 완벽한 곳입니다.",
+    roleUser: "일반 사용자",
+    roleAdmin: "관리자",
+  },
 };
 
 const LANGUAGES = [
@@ -183,6 +283,9 @@ const LANGUAGES = [
   { code: "PT", label: "Português", flag: "🇧🇷" },
   { code: "FR", label: "Français", flag: "🇫🇷" },
   { code: "DE", label: "Deutsch", flag: "🇩🇪" },
+  { code: "ZH", label: "中文 (Chino)", flag: "🇨🇳" },
+  { code: "JA", label: "日本語 (Japonés)", flag: "🇯🇵" },
+  { code: "KO", label: "한국어 (Coreano)", flag: "🇰🇷" },
 ];
 
 // ─── MAP MARKERS — percentage positions over the real Colombia image ──────────
@@ -943,28 +1046,29 @@ const destinations = [
 
 function localizeDestination(dest: typeof destinations[0], lang: string): typeof destinations[0] {
   if (lang === "ES") return dest;
-  const en = EN_DESTINATIONS[dest.id];
-  if (!en) return dest;
+  const loc = getLocalizedDestinationContent(dest.id, lang);
+  if (!loc) return dest;
   return {
     ...dest,
-    region: en.region,
-    tagline: en.tagline,
-    description: en.description,
-    weather: en.weather,
-    historia: en.historia,
-    cultura: en.cultura,
+    name: getLocalizedPlaceName(dest.name, lang),
+    region: loc.region,
+    tagline: loc.tagline,
+    description: loc.description,
+    weather: loc.weather,
+    historia: loc.historia,
+    cultura: loc.cultura,
     eventos: dest.eventos.map((ev, i) => ({
       ...ev,
-      nombre: en.eventos[i]?.nombre ?? ev.nombre,
-      fecha: en.eventos[i]?.fecha ?? ev.fecha,
+      nombre: loc.eventos[i]?.nombre ?? ev.nombre,
+      fecha: loc.eventos[i]?.fecha ?? ev.fecha,
     })),
     sitios: dest.sitios.map((s, i) => ({
       ...s,
-      nombre: en.sitios[i]?.nombre ?? s.nombre,
+      nombre: loc.sitios[i]?.nombre ?? s.nombre,
     })),
     restaurantes: dest.restaurantes.map((r, i) => ({
       ...r,
-      tipo: en.restaurantes[i]?.tipo ?? r.tipo,
+      tipo: loc.restaurantes[i]?.tipo ?? r.tipo,
     })),
   };
 }
@@ -1271,9 +1375,9 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
 
   const navKeys = ["navDestinos", "navExperiencias", "navCultura", "navBlog", "navContacto"];
   const navSectionKeys = ["Destinos", "Experiencias", "Cultura", "Blog", "Contacto"];
-  const navItemsMap = lang === "ES" ? NAV_ITEMS_MAP : EN_NAV_ITEMS_MAP;
+  const navItemsMap = getLocalizedNavItemsMap(lang, NAV_ITEMS_MAP);
   const localizedDestinations = destinations.map((d) => localizeDestination(d, lang));
-  const activeModalDest = modalDest ? localizeDestination(modalDest, lang) : null;
+  const activeModalDest = modalDest ? localizeDestination(destinations.find((d) => d.id === modalDest.id) ?? modalDest, lang) : null;
   const roleDisplay = user.role === "Administrador" ? t("roleAdmin") : t("roleUser");
 
   return (
@@ -1462,7 +1566,7 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
       </section>
 
       {/* ── FLOATING DESTINATIONS LIST ── */}
-      <FloatingMap onOpenDestination={openModal} onOpenMaps={openMaps} t={t} destinationsList={localizedDestinations} />
+      <FloatingMap onOpenDestination={openModal} onOpenMaps={openMaps} t={t} destinationsList={localizedDestinations} lang={lang} />
 
       {/* ── MODAL ── */}
       {activeModalDest && <DestModal dest={activeModalDest} activeTab={activeTab} setActiveTab={setActiveTab} onClose={closeModal} onOpenMaps={openMaps} t={t} />}
@@ -1496,10 +1600,11 @@ function DestCard({ dest, onClick, cardBtn }: { dest: typeof destinations[0]; on
 }
 
 // ─── FLOATING MAP ─────────────────────────────────────────────────────────────
-function FloatingMap({ onOpenDestination, onOpenMaps, t, destinationsList }: {
+function FloatingMap({ onOpenDestination, onOpenMaps, t, destinationsList, lang }: {
   onOpenDestination: (dest: typeof destinations[0]) => void;
   onOpenMaps: (q: string) => void; t: (k: string) => string;
   destinationsList: typeof destinations;
+  lang: string;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -1522,14 +1627,18 @@ function FloatingMap({ onOpenDestination, onOpenMaps, t, destinationsList }: {
       </div>
       {!collapsed && <div className="overflow-y-auto p-2" style={{ maxHeight: 310 }}>
         {ALL_MARKERS.map((marker) => {
-          const destination = destinationsList.find((item) => item.name === marker.name);
+          const origIdx = destinations.findIndex(
+            (item) => item.name === marker.name || (marker.name === "Quibdó" && item.id === 6) || (marker.name === "Tatacoa" && item.id === 17)
+          );
+          const destination = origIdx >= 0 ? destinationsList[origIdx] : undefined;
+          const localizedMarkerName = getLocalizedPlaceName(marker.name, lang);
           return <div key={marker.name} className="flex items-center gap-2 px-2 py-2 rounded-lg transition-colors hover:bg-gray-50">
             <button onClick={() => destination ? onOpenDestination(destination) : onOpenMaps(`${marker.name.replace(/ /g, "+")}+Colombia`)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: marker.dest ? C.red : C.navy }} />
-              <span className="truncate text-xs font-semibold" style={{ color: C.navy }}>{marker.name}</span>
+              <span className="truncate text-xs font-semibold" style={{ color: C.navy }}>{localizedMarkerName}</span>
               {destination && <span className="truncate text-[10px]" style={{ color: "#8b94ab" }}>{destination.region}</span>}
             </button>
-            <button onClick={() => onOpenMaps(`${marker.name.replace(/ /g, "+")}+Colombia`)} title={`${t("openInMaps")}: ${marker.name}`} className="flex-shrink-0 p-1.5 rounded-md hover:bg-gray-100" style={{ color: C.red }}>
+            <button onClick={() => onOpenMaps(`${marker.name.replace(/ /g, "+")}+Colombia`)} title={`${t("openInMaps")}: ${localizedMarkerName}`} className="flex-shrink-0 p-1.5 rounded-md hover:bg-gray-100" style={{ color: C.red }}>
               <Navigation size={13} />
             </button>
           </div>;

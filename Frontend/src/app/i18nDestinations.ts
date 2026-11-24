@@ -1,3 +1,21 @@
+import {
+  DE_DESTINATIONS,
+  DE_NAV_ITEMS_MAP,
+  FR_DESTINATIONS,
+  FR_NAV_ITEMS_MAP,
+  PT_DESTINATIONS,
+  PT_NAV_ITEMS_MAP,
+  type NavMapType,
+} from "./i18nEuropean";
+import {
+  JA_DESTINATIONS,
+  JA_NAV_ITEMS_MAP,
+  KO_DESTINATIONS,
+  KO_NAV_ITEMS_MAP,
+  ZH_DESTINATIONS,
+  ZH_NAV_ITEMS_MAP,
+} from "./i18nAsian";
+
 export type LocalizedDestinationContent = {
   region: string;
   tagline: string;
@@ -646,3 +664,163 @@ export const EN_DESTINATIONS: Record<number, LocalizedDestinationContent> = {
     ],
   },
 };
+
+export const LOCALIZED_PLACE_NAMES: Record<string, Record<string, string>> = {
+  ZH: {
+    "Cartagena": "卡塔赫纳 (Cartagena)",
+    "Bogotá": "波哥大 (Bogotá)",
+    "Medellín": "麦德林 (Medellín)",
+    "Santa Marta": "圣玛尔塔 (Santa Marta)",
+    "Arauca": "阿劳卡 (Arauca)",
+    "Chocó (Quibdó)": "乔科·基布多 (Quibdó)",
+    "Quibdó": "基布多 (Quibdó)",
+    "Leticia": "莱蒂西亚 (Leticia)",
+    "San Andrés": "圣安德烈斯岛 (San Andrés)",
+    "Villa de Leyva": "莱瓦镇 (Villa de Leyva)",
+    "Guatapé": "瓜塔佩 (Guatapé)",
+    "Salento": "萨伦托 (Salento)",
+    "Popayán": "波帕扬 (Popayán)",
+    "San Agustín": "圣奥古斯丁 (San Agustín)",
+    "Mompox": "蒙波斯 (Mompox)",
+    "Cabo de la Vela": "维拉角 (Cabo de la Vela)",
+    "Caño Cristales": "彩虹河 (Caño Cristales)",
+    "Desierto de la Tatacoa": "塔塔科阿沙漠 (Tatacoa)",
+    "Tatacoa": "塔塔科阿沙漠 (Tatacoa)",
+    "Cali": "卡利 (Cali)",
+    "Barranquilla": "巴兰基亚 (Barranquilla)",
+    "Manizales": "马尼萨莱斯 (Manizales)",
+    "Bucaramanga": "布卡拉曼加 (Bucaramanga)",
+    "Pasto": "帕斯托 (Pasto)",
+    "Valledupar": "巴耶杜帕尔 (Valledupar)",
+    "Pereira": "佩雷拉 (Pereira)",
+    "Puerto Nariño": "纳里尼奥港 (Puerto Nariño)",
+    "Riohacha": "里奥阿查 (Riohacha)",
+    "Montería": "蒙特里亚 (Montería)",
+    "Palomino": "帕洛米诺 (Palomino)",
+    "Nuquí": "努基 (Nuquí)",
+    "Buenaventura": "布埃纳文图拉 (Buenaventura)",
+    "Villavicencio": "比利亚维森西奥 (Villavicencio)",
+    "Florencia": "弗洛伦西亚 (Florencia)",
+  },
+  JA: {
+    "Cartagena": "カルタヘナ (Cartagena)",
+    "Bogotá": "ボゴタ (Bogotá)",
+    "Medellín": "メデジン (Medellín)",
+    "Santa Marta": "サンタ・マルタ (Santa Marta)",
+    "Arauca": "アラウカ (Arauca)",
+    "Chocó (Quibdó)": "チョコ・キブド (Quibdó)",
+    "Quibdó": "キブド (Quibdó)",
+    "Leticia": "レティシア (Leticia)",
+    "San Andrés": "サン・アンドレス島 (San Andrés)",
+    "Villa de Leyva": "ビジャ・デ・レイバ (Villa de Leyva)",
+    "Guatapé": "グアタペ (Guatapé)",
+    "Salento": "サレント (Salento)",
+    "Popayán": "ポパヤン (Popayán)",
+    "San Agustín": "サン・アグスティン (San Agustín)",
+    "Mompox": "モンポス (Mompox)",
+    "Cabo de la Vela": "カボ・デ・ラ・ベラ (Cabo de la Vela)",
+    "Caño Cristales": "キャニョ・クリスタレス (Caño Cristales)",
+    "Desierto de la Tatacoa": "タタコア砂漠 (Tatacoa)",
+    "Tatacoa": "タタコア砂漠 (Tatacoa)",
+    "Cali": "カリ (Cali)",
+    "Barranquilla": "バランキージャ (Barranquilla)",
+    "Manizales": "マニサレス (Manizales)",
+    "Bucaramanga": "ブカラマンガ (Bucaramanga)",
+    "Pasto": "パスト (Pasto)",
+    "Valledupar": "バジェドゥパル (Valledupar)",
+    "Pereira": "ペレイラ (Pereira)",
+    "Puerto Nariño": "プエルト・ナリーニョ (Puerto Nariño)",
+    "Riohacha": "リオアチャ (Riohacha)",
+    "Montería": "モンテリア (Montería)",
+    "Palomino": "パロミノ (Palomino)",
+    "Nuquí": "ヌキ (Nuquí)",
+    "Buenaventura": "ブエナベントゥラ (Buenaventura)",
+    "Villavicencio": "ビジャビセンシオ (Villavicencio)",
+    "Florencia": "フロレンシア (Florencia)",
+  },
+  KO: {
+    "Cartagena": "카르타헤나 (Cartagena)",
+    "Bogotá": "보고타 (Bogotá)",
+    "Medellín": "메데진 (Medellín)",
+    "Santa Marta": "산타마르타 (Santa Marta)",
+    "Arauca": "아라우카 (Arauca)",
+    "Chocó (Quibdó)": "초코 · 키브도 (Quibdó)",
+    "Quibdó": "키브도 (Quibdó)",
+    "Leticia": "레티시아 (Leticia)",
+    "San Andrés": "산안드레스 섬 (San Andrés)",
+    "Villa de Leyva": "비야 데 레이바 (Villa de Leyva)",
+    "Guatapé": "과타페 (Guatapé)",
+    "Salento": "살렌토 (Salento)",
+    "Popayán": "포파얀 (Popayán)",
+    "San Agustín": "산아구스틴 (San Agustín)",
+    "Mompox": "몸폭스 (Mompox)",
+    "Cabo de la Vela": "카보 데 라 벨라 (Cabo de la Vela)",
+    "Caño Cristales": "카뇨 크리스탈레스 (Caño Cristales)",
+    "Desierto de la Tatacoa": "타타코아 사막 (Tatacoa)",
+    "Tatacoa": "타타코아 사막 (Tatacoa)",
+    "Cali": "칼리 (Cali)",
+    "Barranquilla": "바랑키야 (Barranquilla)",
+    "Manizales": "마니살레스 (Manizales)",
+    "Bucaramanga": "부카라망가 (Bucaramanga)",
+    "Pasto": "파스토 (Pasto)",
+    "Valledupar": "바예두파르 (Valledupar)",
+    "Pereira": "페레이라 (Pereira)",
+    "Puerto Nariño": "푸에르토 나리뇨 (Puerto Nariño)",
+    "Riohacha": "리오아차 (Riohacha)",
+    "Montería": "몬테리아 (Montería)",
+    "Palomino": "팔로미노 (Palomino)",
+    "Nuquí": "누키 (Nuquí)",
+    "Buenaventura": "부에나벤투라 (Buenaventura)",
+    "Villavicencio": "비야비센시오 (Villavicencio)",
+    "Florencia": "플로렌시아 (Florencia)",
+  },
+  EN: {
+    "Desierto de la Tatacoa": "Tatacoa Desert",
+  },
+  PT: {
+    "Desierto de la Tatacoa": "Deserto da Tatacoa",
+  },
+  FR: {
+    "Cartagena": "Carthagène",
+    "Desierto de la Tatacoa": "Désert de la Tatacoa",
+  },
+  DE: {
+    "Desierto de la Tatacoa": "Tatacoa-Wüste",
+  },
+};
+
+const NAV_MAPS_BY_LANG: Record<string, NavMapType> = {
+  EN: EN_NAV_ITEMS_MAP,
+  PT: PT_NAV_ITEMS_MAP,
+  FR: FR_NAV_ITEMS_MAP,
+  DE: DE_NAV_ITEMS_MAP,
+  ZH: ZH_NAV_ITEMS_MAP,
+  JA: JA_NAV_ITEMS_MAP,
+  KO: KO_NAV_ITEMS_MAP,
+};
+
+const DESTINATIONS_BY_LANG: Record<string, Record<number, LocalizedDestinationContent>> = {
+  EN: EN_DESTINATIONS,
+  PT: PT_DESTINATIONS,
+  FR: FR_DESTINATIONS,
+  DE: DE_DESTINATIONS,
+  ZH: ZH_DESTINATIONS,
+  JA: JA_DESTINATIONS,
+  KO: KO_DESTINATIONS,
+};
+
+export function getLocalizedNavItemsMap(lang: string, fallback: NavMapType): NavMapType {
+  if (lang === "ES") return fallback;
+  return NAV_MAPS_BY_LANG[lang] ?? EN_NAV_ITEMS_MAP;
+}
+
+export function getLocalizedDestinationContent(id: number, lang: string): LocalizedDestinationContent | undefined {
+  if (lang === "ES") return undefined;
+  const map = DESTINATIONS_BY_LANG[lang] ?? EN_DESTINATIONS;
+  return map[id] ?? EN_DESTINATIONS[id];
+}
+
+export function getLocalizedPlaceName(name: string, lang: string): string {
+  if (lang === "ES") return name;
+  return LOCALIZED_PLACE_NAMES[lang]?.[name] ?? name;
+}
