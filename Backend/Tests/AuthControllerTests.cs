@@ -385,4 +385,53 @@ public class AuthControllerTests
 
         Assert.IsType<NoContentResult>(result);
     }
+
+    [Fact]
+    public async Task ValidarCodigo6Digitos_AcceptsPreviousAndResentCodes_AndHandlesSpaces()
+    {
+        var (userDb, adminDb) = CreateInMemoryDatabases();
+        using var httpClient = new HttpClient();
+        var recaptcha = new RecaptchaVerifier(httpClient, _config, NullLogger<RecaptchaVerifier>.Instance);
+        var emailService = new EmailVerificationService(_config, NullLogger<EmailVerificationService>.Instance);
+        var controller = CreateController(userDb, adminDb, recaptcha, emailService);
+
+        // 1. Primer intento de Login genera el Código #1
+        await controller.Login(new Login
+        {
+            Usuario = "turista@ecoscolombia.com",
+            contraseña = "turista123",
+            Rol = "Usuario"
+        });
+        var firstCode = AuthController.GetPendingVerificationCodeForTesting("Usuario", "turista@ecoscolombia.com");
+        Assert.False(string.IsNullOrWhiteSpace(firstCode));
+
+        // 2. El usuario solicita otro código ("Solicitar otro código" / ReenviarCodigo), lo que genera el Código #2
+        await controller.ReenviarCodigo(new VerifyLoginCodeRequest
+        {
+            Correo = "turista@ecoscolombia.com",
+            Rol = "Usuario"
+        });
+        var secondCode = AuthController.GetPendingVerificationCodeForTesting("Usuario", "turista@ecoscolombia.com");
+        Assert.False(string.IsNullOrWhiteSpace(secondCode));
+
+        // 3. Si el usuario ingresa el PRIMER código (incluso con espacios al copiar del correo), debe ser aceptado
+        var spacedFirstCode = string.Join(" ", firstCode!.ToCharArray());
+        var checkFirst = controller.ValidarCodigo6Digitos(new VerifyLoginCodeRequest
+        {
+            Correo = "turista@ecoscolombia.com",
+            Rol = "Usuario",
+            CodigoVerificacion = spacedFirstCode
+        });
+        Assert.IsType<OkObjectResult>(checkFirst);
+
+        // 4. Y también puede finalizar el login con el primer código tras el reCAPTCHA
+        var verifyWithFirst = await controller.VerificarCodigo(new VerifyLoginCodeRequest
+        {
+            Correo = "turista@ecoscolombia.com",
+            Rol = "Usuario",
+            CodigoVerificacion = spacedFirstCode,
+            CaptchaToken = "ALPHANUMERIC_CONFIRMED:A7b9K2"
+        });
+        Assert.IsType<OkObjectResult>(verifyWithFirst);
+    }
 }

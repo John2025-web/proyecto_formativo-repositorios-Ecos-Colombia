@@ -19,6 +19,13 @@ namespace ApiPrueba.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
+        private const int CodeExpirationMinutes = 30;
+
+        private static readonly string PendingCodesStorePath =
+            Path.Combine(Path.GetTempPath(), "ecos_colombia_pending_codes_v2.json");
+
+        private static readonly object DiskStoreLock = new();
+
         private static readonly Regex RealEmailRegex = new(
             @"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -37,6 +44,312 @@ namespace ApiPrueba.Controllers
 
         private static readonly ConcurrentDictionary<string, RegisteredLocalUser> InMemoryRegisteredUsers =
             new(StringComparer.OrdinalIgnoreCase);
+
+        static AuthController()
+        {
+            LoadPendingStoreFromDisk();
+        }
+
+        public static string NormalizeSixDigitCode(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return string.Empty;
+            }
+            var digits = raw.Where(char.IsAsciiDigit).ToArray();
+            return digits.Length > 0 ? new string(digits) : raw.Trim();
+        }
+
+        private static PendingVerificationEntry UpsertPendingVerification(
+            string cacheKey,
+            string nombre,
+            string correo,
+            string rol,
+            string newCode,
+            DateTimeOffset expiresAt)
+        {
+            LoadPendingStoreFromDisk();
+            var cleanCode = NormalizeSixDigitCode(newCode);
+            var validSet = new HashSet<string>(StringComparer.Ordinal) { cleanCode };
+
+            if (PendingVerifications.TryGetValue(cacheKey, out var existing)
+                && existing.ExpiresAt >= DateTimeOffset.UtcNow)
+            {
+                validSet.Add(NormalizeSixDigitCode(existing.Code));
+                if (existing.ValidCodes != null)
+                {
+                    foreach (var c in existing.ValidCodes)
+                    {
+                        var norm = NormalizeSixDigitCode(c);
+                        if (!string.IsNullOrEmpty(norm)) validSet.Add(norm);
+                    }
+                }
+            }
+
+            foreach (var kvp in PendingVerifications)
+            {
+                if (kvp.Value.ExpiresAt >= DateTimeOffset.UtcNow
+                    && kvp.Value.Correo.Equals(correo, StringComparison.OrdinalIgnoreCase))
+                {
+                    validSet.Add(NormalizeSixDigitCode(kvp.Value.Code));
+                    if (kvp.Value.ValidCodes != null)
+                    {
+                        foreach (var c in kvp.Value.ValidCodes)
+                        {
+                            var norm = NormalizeSixDigitCode(c);
+                            if (!string.IsNullOrEmpty(norm)) validSet.Add(norm);
+                        }
+                    }
+                }
+            }
+
+            var updated = new PendingVerificationEntry(
+                nombre,
+                correo,
+                rol,
+                cleanCode,
+                expiresAt,
+                validSet.ToArray());
+
+            PendingVerifications[cacheKey] = updated;
+            SavePendingStoreToDisk();
+            return updated;
+        }
+
+        private static PendingPasswordResetEntry UpsertPendingPasswordReset(
+            string resetKey,
+            string correo,
+            string rol,
+            string newCode,
+            DateTimeOffset expiresAt)
+        {
+            LoadPendingStoreFromDisk();
+            var cleanCode = NormalizeSixDigitCode(newCode);
+            var validSet = new HashSet<string>(StringComparer.Ordinal) { cleanCode };
+
+            if (PendingPasswordResets.TryGetValue(resetKey, out var existing)
+                && existing.ExpiresAt >= DateTimeOffset.UtcNow)
+            {
+                validSet.Add(NormalizeSixDigitCode(existing.Code));
+                if (existing.ValidCodes != null)
+                {
+                    foreach (var c in existing.ValidCodes)
+                    {
+                        var norm = NormalizeSixDigitCode(c);
+                        if (!string.IsNullOrEmpty(norm)) validSet.Add(norm);
+                    }
+                }
+            }
+
+            var updated = new PendingPasswordResetEntry(
+                correo,
+                rol,
+                cleanCode,
+                expiresAt,
+                validSet.ToArray());
+
+            PendingPasswordResets[resetKey] = updated;
+            SavePendingStoreToDisk();
+            return updated;
+        }
+
+        private static PendingRegistrationEntry UpsertPendingRegistration(
+            string correo,
+            string nombre,
+            string passwordHash,
+            string paisOrigen,
+            string idiomaPreferido,
+            string newCode,
+            DateTimeOffset expiresAt)
+        {
+            LoadPendingStoreFromDisk();
+            var cleanCode = NormalizeSixDigitCode(newCode);
+            var validSet = new HashSet<string>(StringComparer.Ordinal) { cleanCode };
+
+            if (PendingRegistrations.TryGetValue(correo, out var existing)
+                && existing.ExpiresAt >= DateTimeOffset.UtcNow)
+            {
+                validSet.Add(NormalizeSixDigitCode(existing.Code));
+                if (existing.ValidCodes != null)
+                {
+                    foreach (var c in existing.ValidCodes)
+                    {
+                        var norm = NormalizeSixDigitCode(c);
+                        if (!string.IsNullOrEmpty(norm)) validSet.Add(norm);
+                    }
+                }
+            }
+
+            var updated = new PendingRegistrationEntry(
+                nombre,
+                correo,
+                passwordHash,
+                paisOrigen,
+                idiomaPreferido,
+                cleanCode,
+                expiresAt,
+                validSet.ToArray());
+
+            PendingRegistrations[correo] = updated;
+            SavePendingStoreToDisk();
+            return updated;
+        }
+
+        private static bool IsCodeMatch(string primaryCode, string[]? validCodes, string providedRaw)
+        {
+            var cleanProvided = NormalizeSixDigitCode(providedRaw);
+            if (string.IsNullOrEmpty(cleanProvided))
+            {
+                return false;
+            }
+            if (string.Equals(NormalizeSixDigitCode(primaryCode), cleanProvided, StringComparison.Ordinal))
+            {
+                return true;
+            }
+            if (validCodes != null)
+            {
+                foreach (var candidate in validCodes)
+                {
+                    if (string.Equals(NormalizeSixDigitCode(candidate), cleanProvided, StringComparison.Ordinal))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private static bool TryResolvePendingVerification(
+            string primaryCacheKey,
+            string correoOrUser,
+            string providedCode,
+            out string resolvedKey,
+            out PendingVerificationEntry? entry)
+        {
+            LoadPendingStoreFromDisk();
+            var cleanIdentifier = correoOrUser.Trim();
+
+            if (PendingVerifications.TryGetValue(primaryCacheKey, out var directEntry))
+            {
+                if (directEntry.ExpiresAt >= DateTimeOffset.UtcNow
+                    && IsCodeMatch(directEntry.Code, directEntry.ValidCodes, providedCode))
+                {
+                    resolvedKey = primaryCacheKey;
+                    entry = directEntry;
+                    return true;
+                }
+            }
+
+            foreach (var kvp in PendingVerifications)
+            {
+                if (kvp.Value.ExpiresAt >= DateTimeOffset.UtcNow
+                    && (kvp.Value.Correo.Equals(cleanIdentifier, StringComparison.OrdinalIgnoreCase)
+                        || kvp.Value.Nombre.Equals(cleanIdentifier, StringComparison.OrdinalIgnoreCase))
+                    && IsCodeMatch(kvp.Value.Code, kvp.Value.ValidCodes, providedCode))
+                {
+                    resolvedKey = kvp.Key;
+                    entry = kvp.Value;
+                    return true;
+                }
+            }
+
+            if (PendingVerifications.TryGetValue(primaryCacheKey, out var fallbackDirect))
+            {
+                resolvedKey = primaryCacheKey;
+                entry = fallbackDirect;
+                return true;
+            }
+
+            foreach (var kvp in PendingVerifications)
+            {
+                if (kvp.Value.Correo.Equals(cleanIdentifier, StringComparison.OrdinalIgnoreCase)
+                    || kvp.Value.Nombre.Equals(cleanIdentifier, StringComparison.OrdinalIgnoreCase))
+                {
+                    resolvedKey = kvp.Key;
+                    entry = kvp.Value;
+                    return true;
+                }
+            }
+
+            resolvedKey = primaryCacheKey;
+            entry = null;
+            return false;
+        }
+
+        private static void SavePendingStoreToDisk()
+        {
+            try
+            {
+                lock (DiskStoreLock)
+                {
+                    var snapshot = new PersistedPendingStore(
+                        PendingVerifications.ToDictionary(k => k.Key, v => v.Value),
+                        PendingPasswordResets.ToDictionary(k => k.Key, v => v.Value),
+                        PendingRegistrations.ToDictionary(k => k.Key, v => v.Value));
+                    var json = System.Text.Json.JsonSerializer.Serialize(snapshot);
+                    System.IO.File.WriteAllText(PendingCodesStorePath, json);
+                }
+            }
+            catch
+            {
+                // Ignorar errores de escritura en disco temporal
+            }
+        }
+
+        private static void LoadPendingStoreFromDisk()
+        {
+            try
+            {
+                lock (DiskStoreLock)
+                {
+                    if (!System.IO.File.Exists(PendingCodesStorePath))
+                    {
+                        return;
+                    }
+                    var json = System.IO.File.ReadAllText(PendingCodesStorePath);
+                    var snapshot = System.Text.Json.JsonSerializer.Deserialize<PersistedPendingStore>(json);
+                    if (snapshot == null)
+                    {
+                        return;
+                    }
+                    var now = DateTimeOffset.UtcNow;
+                    if (snapshot.Verifications != null)
+                    {
+                        foreach (var kvp in snapshot.Verifications)
+                        {
+                            if (kvp.Value.ExpiresAt >= now && !PendingVerifications.ContainsKey(kvp.Key))
+                            {
+                                PendingVerifications[kvp.Key] = kvp.Value;
+                            }
+                        }
+                    }
+                    if (snapshot.PasswordResets != null)
+                    {
+                        foreach (var kvp in snapshot.PasswordResets)
+                        {
+                            if (kvp.Value.ExpiresAt >= now && !PendingPasswordResets.ContainsKey(kvp.Key))
+                            {
+                                PendingPasswordResets[kvp.Key] = kvp.Value;
+                            }
+                        }
+                    }
+                    if (snapshot.Registrations != null)
+                    {
+                        foreach (var kvp in snapshot.Registrations)
+                        {
+                            if (kvp.Value.ExpiresAt >= now && !PendingRegistrations.ContainsKey(kvp.Key))
+                            {
+                                PendingRegistrations[kvp.Key] = kvp.Value;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Ignorar si el archivo temporal está corrupto o inaccesible
+            }
+        }
 
         private readonly IConfiguration _configuration;
         private readonly UsuarioService _usuarios;
@@ -263,7 +576,7 @@ namespace ApiPrueba.Controllers
 
             if (!string.IsNullOrWhiteSpace(login.CodigoVerificacion))
             {
-                return CompleteVerificationAndIssueToken(cacheKey, login.CodigoVerificacion.Trim());
+                return CompleteVerificationAndIssueToken(cacheKey, resolvedEmail, login.CodigoVerificacion);
             }
 
             if (_emailService == null)
@@ -272,9 +585,10 @@ namespace ApiPrueba.Controllers
             }
 
             var verificationCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(10);
+            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(CodeExpirationMinutes);
 
-            PendingVerifications[cacheKey] = new PendingVerificationEntry(
+            UpsertPendingVerification(
+                cacheKey,
                 resolvedName,
                 resolvedEmail,
                 normalizedRole,
@@ -297,6 +611,82 @@ namespace ApiPrueba.Controllers
                 enviadoPorSmtp = sentBySmtp,
                 expiraCodigoEn = expiresAt,
                 mensaje = $"Hemos enviado un código de verificación de 6 dígitos al correo {resolvedEmail}. Revisa tu bandeja de entrada o spam."
+            });
+        }
+
+        [HttpPost("ReenviarCodigo")]
+        public async Task<IActionResult> ReenviarCodigo([FromBody] VerifyLoginCodeRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Correo))
+            {
+                return BadRequest(new { mensaje = "El correo electrónico es obligatorio para reenviar el código." });
+            }
+
+            LoadPendingStoreFromDisk();
+            var identifier = request.Correo.Trim();
+            var isAdmin = (request.Rol ?? "Usuario").Trim().Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+            var normalizedRole = isAdmin ? "Administrador" : "Usuario";
+
+            string resolvedEmail = identifier.ToLowerInvariant();
+            string resolvedName = identifier.Contains('@') ? identifier.Split('@')[0] : identifier;
+
+            var primaryKey = $"{normalizedRole}:{resolvedEmail}";
+            if (PendingVerifications.TryGetValue(primaryKey, out var existingEntry))
+            {
+                resolvedEmail = existingEntry.Correo;
+                resolvedName = existingEntry.Nombre;
+                normalizedRole = existingEntry.Rol;
+            }
+            else
+            {
+                var byEmailOrName = PendingVerifications.Values.FirstOrDefault(e =>
+                    e.Correo.Equals(identifier, StringComparison.OrdinalIgnoreCase)
+                    || e.Nombre.Equals(identifier, StringComparison.OrdinalIgnoreCase));
+                if (byEmailOrName != null)
+                {
+                    resolvedEmail = byEmailOrName.Correo;
+                    resolvedName = byEmailOrName.Nombre;
+                    normalizedRole = byEmailOrName.Rol;
+                }
+            }
+
+            if (!IsValidRealEmail(resolvedEmail))
+            {
+                return BadRequest(new { mensaje = "No se encontró un correo electrónico válido para reenviar el código." });
+            }
+
+            var cacheKey = $"{normalizedRole}:{resolvedEmail.ToLowerInvariant()}";
+            var verificationCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(CodeExpirationMinutes);
+
+            UpsertPendingVerification(
+                cacheKey,
+                resolvedName,
+                resolvedEmail,
+                normalizedRole,
+                verificationCode,
+                expiresAt);
+
+            var sentBySmtp = false;
+            if (_emailService != null)
+            {
+                (sentBySmtp, _) = await _emailService.SendVerificationCodeAsync(
+                    resolvedEmail,
+                    resolvedName,
+                    verificationCode,
+                    "iniciar sesión",
+                    HttpContext.RequestAborted);
+            }
+
+            return Ok(new
+            {
+                requiereVerificacion = true,
+                correo = resolvedEmail,
+                nombre = resolvedName,
+                rol = normalizedRole,
+                enviadoPorSmtp = sentBySmtp,
+                expiraCodigoEn = expiresAt,
+                mensaje = $"Se envió un nuevo código de 6 dígitos a {resolvedEmail}. Tanto el nuevo código como el anterior son válidos durante 30 minutos."
             });
         }
 
@@ -390,10 +780,11 @@ namespace ApiPrueba.Controllers
             }
 
             var verificationCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(10);
+            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(CodeExpirationMinutes);
             var cacheKey = $"{normalizedRole}:{correo}";
 
-            PendingVerifications[cacheKey] = new PendingVerificationEntry(
+            UpsertPendingVerification(
+                cacheKey,
                 resolvedName,
                 correo,
                 normalizedRole,
@@ -433,11 +824,6 @@ namespace ApiPrueba.Controllers
             }
 
             var correo = request.Correo.Trim();
-            if (!IsValidRealEmail(correo))
-            {
-                return BadRequest(new { mensaje = "El formato del correo electrónico no es válido." });
-            }
-
             if (_recaptcha != null
                 && !string.IsNullOrWhiteSpace(request.CaptchaToken)
                 && !await _recaptcha.VerifyAsync(request.CaptchaToken, HttpContext.RequestAborted))
@@ -449,7 +835,11 @@ namespace ApiPrueba.Controllers
             var normalizedRole = isAdmin ? "Administrador" : "Usuario";
             var cacheKey = $"{normalizedRole}:{correo.ToLowerInvariant()}";
 
-            return CompleteVerificationAndIssueToken(cacheKey, request.CodigoVerificacion.Trim(), consumeCode: !string.IsNullOrWhiteSpace(request.CaptchaToken) || _recaptcha == null);
+            return CompleteVerificationAndIssueToken(
+                cacheKey,
+                correo,
+                request.CodigoVerificacion,
+                consumeCode: !string.IsNullOrWhiteSpace(request.CaptchaToken) || _recaptcha == null);
         }
 
         [HttpPost("ValidarCodigo6Digitos")]
@@ -468,18 +858,19 @@ namespace ApiPrueba.Controllers
             var normalizedRole = isAdmin ? "Administrador" : "Usuario";
             var cacheKey = $"{normalizedRole}:{correo.ToLowerInvariant()}";
 
-            if (!PendingVerifications.TryGetValue(cacheKey, out var entry))
+            if (!TryResolvePendingVerification(cacheKey, correo, request.CodigoVerificacion, out var resolvedKey, out var entry) || entry == null)
             {
                 return BadRequest(new { mensaje = "No hay un código de verificación pendiente para este correo o ya expiró. Solicita uno nuevo." });
             }
 
             if (entry.ExpiresAt < DateTimeOffset.UtcNow)
             {
-                PendingVerifications.TryRemove(cacheKey, out _);
+                PendingVerifications.TryRemove(resolvedKey, out _);
+                SavePendingStoreToDisk();
                 return BadRequest(new { mensaje = "El código de verificación ha expirado. Inicia sesión nuevamente para recibir otro." });
             }
 
-            if (!string.Equals(entry.Code, request.CodigoVerificacion.Trim(), StringComparison.Ordinal))
+            if (!IsCodeMatch(entry.Code, entry.ValidCodes, request.CodigoVerificacion))
             {
                 return BadRequest(new { mensaje = "El código de 6 dígitos ingresado es incorrecto." });
             }
@@ -594,10 +985,11 @@ namespace ApiPrueba.Controllers
             }
 
             var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(10);
+            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(CodeExpirationMinutes);
             var resetKey = $"{normalizedRole}:{targetEmail.ToLowerInvariant()}";
 
-            PendingPasswordResets[resetKey] = new PendingPasswordResetEntry(
+            UpsertPendingPasswordReset(
+                resetKey,
                 targetEmail,
                 normalizedRole,
                 code,
@@ -638,6 +1030,7 @@ namespace ApiPrueba.Controllers
                 return BadRequest(new { mensaje = "La nueva contraseña debe tener al menos 6 caracteres." });
             }
 
+            LoadPendingStoreFromDisk();
             var correo = request.Correo.Trim().ToLowerInvariant();
             var isAdmin = request.Rol.Trim().Equals("Administrador", StringComparison.OrdinalIgnoreCase);
             var normalizedRole = isAdmin ? "Administrador" : "Usuario";
@@ -645,16 +1038,27 @@ namespace ApiPrueba.Controllers
 
             if (!PendingPasswordResets.TryGetValue(resetKey, out var entry))
             {
-                return BadRequest(new { mensaje = "No hay una solicitud de recuperación activa para este correo o ya expiró." });
+                var fallbackPair = PendingPasswordResets.FirstOrDefault(kvp =>
+                    kvp.Value.Correo.Equals(correo, StringComparison.OrdinalIgnoreCase));
+                if (fallbackPair.Value != null)
+                {
+                    resetKey = fallbackPair.Key;
+                    entry = fallbackPair.Value;
+                }
+                else
+                {
+                    return BadRequest(new { mensaje = "No hay una solicitud de recuperación activa para este correo o ya expiró." });
+                }
             }
 
             if (entry.ExpiresAt < DateTimeOffset.UtcNow)
             {
                 PendingPasswordResets.TryRemove(resetKey, out _);
+                SavePendingStoreToDisk();
                 return BadRequest(new { mensaje = "El código de recuperación ha expirado. Solicita uno nuevo." });
             }
 
-            if (!string.Equals(entry.Code, request.CodigoVerificacion.Trim(), StringComparison.Ordinal))
+            if (!IsCodeMatch(entry.Code, entry.ValidCodes, request.CodigoVerificacion))
             {
                 return BadRequest(new { mensaje = "El código de verificación ingresado es incorrecto." });
             }
@@ -715,6 +1119,7 @@ namespace ApiPrueba.Controllers
             }
 
             PendingPasswordResets.TryRemove(resetKey, out _);
+            SavePendingStoreToDisk();
 
             return Ok(new
             {
@@ -722,27 +1127,29 @@ namespace ApiPrueba.Controllers
             });
         }
 
-        private IActionResult CompleteVerificationAndIssueToken(string cacheKey, string providedCode, bool consumeCode = true)
+        private IActionResult CompleteVerificationAndIssueToken(string cacheKey, string correoOrUser, string providedCode, bool consumeCode = true)
         {
-            if (!PendingVerifications.TryGetValue(cacheKey, out var entry))
+            if (!TryResolvePendingVerification(cacheKey, correoOrUser, providedCode, out var resolvedKey, out var entry) || entry == null)
             {
                 return BadRequest(new { mensaje = "No hay un código de verificación pendiente para este correo o ya expiró. Solicita uno nuevo." });
             }
 
             if (entry.ExpiresAt < DateTimeOffset.UtcNow)
             {
-                PendingVerifications.TryRemove(cacheKey, out _);
+                PendingVerifications.TryRemove(resolvedKey, out _);
+                SavePendingStoreToDisk();
                 return BadRequest(new { mensaje = "El código de verificación ha expirado. Inicia sesión nuevamente para recibir otro." });
             }
 
-            if (!string.Equals(entry.Code, providedCode, StringComparison.Ordinal))
+            if (!IsCodeMatch(entry.Code, entry.ValidCodes, providedCode))
             {
                 return BadRequest(new { mensaje = "El código de verificación ingresado es incorrecto." });
             }
 
             if (consumeCode)
             {
-                PendingVerifications.TryRemove(cacheKey, out _);
+                PendingVerifications.TryRemove(resolvedKey, out _);
+                SavePendingStoreToDisk();
             }
             return IssueJwtSession(entry.Nombre, entry.Correo, entry.Rol);
         }
@@ -886,11 +1293,11 @@ namespace ApiPrueba.Controllers
             if (request.RequiereVerificacionCorreo && _emailService != null)
             {
                 var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-                var expiresAt = DateTimeOffset.UtcNow.AddMinutes(10);
+                var expiresAt = DateTimeOffset.UtcNow.AddMinutes(CodeExpirationMinutes);
 
-                PendingRegistrations[correo] = new PendingRegistrationEntry(
-                    request.Nombre.Trim(),
+                UpsertPendingRegistration(
                     correo,
+                    request.Nombre.Trim(),
                     BCrypt.Net.BCrypt.HashPassword(request.Password),
                     request.PaisOrigen?.Trim() ?? "Colombia",
                     request.IdiomaPreferido?.Trim() ?? "ES",
@@ -951,6 +1358,7 @@ namespace ApiPrueba.Controllers
                 return BadRequest(new { mensaje = "El correo y el código de verificación son obligatorios." });
             }
 
+            LoadPendingStoreFromDisk();
             var correo = request.Correo.Trim().ToLowerInvariant();
             if (!PendingRegistrations.TryGetValue(correo, out var pending))
             {
@@ -960,10 +1368,11 @@ namespace ApiPrueba.Controllers
             if (pending.ExpiresAt < DateTimeOffset.UtcNow)
             {
                 PendingRegistrations.TryRemove(correo, out _);
+                SavePendingStoreToDisk();
                 return BadRequest(new { mensaje = "El código de verificación ha expirado. Regístrate nuevamente." });
             }
 
-            if (!string.Equals(pending.Code, request.CodigoVerificacion.Trim(), StringComparison.Ordinal))
+            if (!IsCodeMatch(pending.Code, pending.ValidCodes, request.CodigoVerificacion))
             {
                 return BadRequest(new { mensaje = "El código de verificación ingresado no es válido." });
             }
@@ -994,6 +1403,7 @@ namespace ApiPrueba.Controllers
                 // Usuario guardado en memoria para permitir inicio de sesión inmediato
             }
             PendingRegistrations.TryRemove(correo, out _);
+            SavePendingStoreToDisk();
 
             return StatusCode(StatusCodes.Status201Created, new
             {
@@ -1059,13 +1469,15 @@ namespace ApiPrueba.Controllers
             string Correo,
             string Rol,
             string Code,
-            DateTimeOffset ExpiresAt);
+            DateTimeOffset ExpiresAt,
+            string[]? ValidCodes = null);
 
         private sealed record PendingPasswordResetEntry(
             string Correo,
             string Rol,
             string Code,
-            DateTimeOffset ExpiresAt);
+            DateTimeOffset ExpiresAt,
+            string[]? ValidCodes = null);
 
         private sealed record PendingRegistrationEntry(
             string Nombre,
@@ -1074,7 +1486,13 @@ namespace ApiPrueba.Controllers
             string PaisOrigen,
             string IdiomaPreferido,
             string Code,
-            DateTimeOffset ExpiresAt);
+            DateTimeOffset ExpiresAt,
+            string[]? ValidCodes = null);
+
+        private sealed record PersistedPendingStore(
+            Dictionary<string, PendingVerificationEntry>? Verifications,
+            Dictionary<string, PendingPasswordResetEntry>? PasswordResets,
+            Dictionary<string, PendingRegistrationEntry>? Registrations);
 
         private sealed record RegisteredLocalUser(
             string Nombre,

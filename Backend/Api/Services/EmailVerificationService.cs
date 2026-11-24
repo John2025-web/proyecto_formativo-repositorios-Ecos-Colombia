@@ -135,7 +135,7 @@ public sealed class EmailVerificationService
                   <span style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #243c8f; font-family: monospace;">{WebUtility.HtmlEncode(code)}</span>
                 </div>
                 <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">
-                  Enviado por <strong>{WebUtility.HtmlEncode(fromEmail)}</strong>. Este código es confidencial y expira en 10 minutos. Si no realizaste esta solicitud, ignora este mensaje.
+                  Enviado por <strong>{WebUtility.HtmlEncode(fromEmail)}</strong>. Este código es confidencial y expira en 30 minutos. Si no realizaste esta solicitud, ignora este mensaje.
                 </p>
               </div>
             </div>

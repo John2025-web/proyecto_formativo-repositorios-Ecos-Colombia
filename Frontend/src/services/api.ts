@@ -217,7 +217,29 @@ export async function googleSendVerificationCode(data: { correo: string; nombre?
     return response.json();
 }
 
+export async function resendVerificationCode(correo: string, rol: UserRole): Promise<LoginApiResponse> {
+    const response = await fetch(`${API_URL}/api/Auth/ReenviarCodigo`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            Correo: correo.trim(),
+            Rol: rol
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.mensaje || `No se pudo reenviar el código: ${response.status}`);
+    }
+
+    return response.json();
+}
+
 export async function validateSixDigitCode(correo: string, rol: UserRole, codigoVerificacion: string) {
+    const cleanCode = codigoVerificacion.replace(/\D/g, "");
     const response = await fetch(`${API_URL}/api/Auth/ValidarCodigo6Digitos`, {
         method: "POST",
         credentials: "include",
@@ -227,7 +249,7 @@ export async function validateSixDigitCode(correo: string, rol: UserRole, codigo
         body: JSON.stringify({
             Correo: correo.trim(),
             Rol: rol,
-            CodigoVerificacion: codigoVerificacion.trim()
+            CodigoVerificacion: cleanCode
         })
     });
 
@@ -247,6 +269,7 @@ export async function validateSixDigitCode(correo: string, rol: UserRole, codigo
 }
 
 export async function verifyLoginCode(correo: string, rol: UserRole, codigoVerificacion: string, captchaToken = "") {
+    const cleanCode = codigoVerificacion.replace(/\D/g, "");
     const response = await fetch(`${API_URL}/api/Auth/VerificarCodigo`, {
         method: "POST",
         credentials: "include",
@@ -256,7 +279,7 @@ export async function verifyLoginCode(correo: string, rol: UserRole, codigoVerif
         body: JSON.stringify({
             Correo: correo.trim(),
             Rol: rol,
-            CodigoVerificacion: codigoVerificacion.trim(),
+            CodigoVerificacion: cleanCode,
             CaptchaToken: captchaToken
         })
     });
@@ -299,6 +322,7 @@ export async function requestPasswordRecovery(correo: string, rol: UserRole, cap
 }
 
 export async function resetPasswordWithCode(data: { correo: string; rol: UserRole; codigoVerificacion: string; nuevaPassword: string }) {
+    const cleanCode = data.codigoVerificacion.replace(/\D/g, "");
     const response = await fetch(`${API_URL}/api/Auth/CambiarPasswordConCodigo`, {
         method: "POST",
         credentials: "include",
@@ -308,7 +332,7 @@ export async function resetPasswordWithCode(data: { correo: string; rol: UserRol
         body: JSON.stringify({
             Correo: data.correo.trim(),
             Rol: data.rol,
-            CodigoVerificacion: data.codigoVerificacion.trim(),
+            CodigoVerificacion: cleanCode,
             NuevaPassword: data.nuevaPassword
         })
     });
@@ -377,13 +401,14 @@ export async function registerUser(data: { nombre: string; correo: string; passw
 }
 
 export async function confirmRegistrationCode(correo: string, codigoVerificacion: string) {
+    const cleanCode = codigoVerificacion.replace(/\D/g, "");
     const response = await fetch(`${API_URL}/api/Auth/ConfirmarRegistro`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             Correo: correo.trim().toLowerCase(),
-            CodigoVerificacion: codigoVerificacion.trim()
+            CodigoVerificacion: cleanCode
         })
     });
 

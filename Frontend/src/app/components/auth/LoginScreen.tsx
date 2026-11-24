@@ -23,6 +23,7 @@ import {
   login,
   registerUser,
   requestPasswordRecovery,
+  resendVerificationCode,
   resetPasswordWithCode,
   validateSixDigitCode,
   verifyLoginCode,
@@ -159,16 +160,17 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
   const handleVerifyLoginCode = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
-    const cleaned = verificationCode.trim();
+    const cleaned = verificationCode.replace(/\D/g, "");
     if (cleaned.length !== 6) {
       setError("Ingresa el código de verificación de 6 dígitos enviado a tu correo.");
       return;
     }
 
     if (!codeValidated) {
+      setInfoMessage("");
       setLoading(true);
       try {
-        const res = await validateSixDigitCode(pendingEmail, role, cleaned);
+        const res = await validateSixDigitCode(pendingEmail || usuario.trim(), role, cleaned);
         if (res.codigoValido) {
           setCodeValidated(true);
           setCaptchaToken(null);
@@ -196,7 +198,7 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
 
     setLoading(true);
     try {
-      const verified = await verifyLoginCode(pendingEmail, role, cleaned, captchaToken);
+      const verified = await verifyLoginCode(pendingEmail || usuario.trim(), role, cleaned, captchaToken);
       onLogin({
         name: verified.nombre || pendingName || pendingEmail.split("@")[0],
         email: verified.correo || pendingEmail,
@@ -1457,14 +1459,34 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                     type="button"
                     onClick={async () => {
                       setError("");
+                      setInfoMessage("");
                       setCodeValidated(false);
                       setCaptchaToken(null);
                       setLoading(true);
                       try {
-                        await login(pendingEmail || usuario.trim(), password, role);
+                        const target = pendingEmail || usuario.trim();
+                        const res = await resendVerificationCode(target, role);
+                        if (res.correo) {
+                          setPendingEmail(res.correo);
+                        }
                         setVerificationCode("");
-                        setInfoMessage(`Se envió un nuevo código de 6 dígitos a ${pendingEmail}.`);
+                        setInfoMessage(
+                          res.mensaje ||
+                            `Se envió un nuevo código de 6 dígitos a ${res.correo || target}. Tanto el nuevo código como el anterior son válidos por 30 minutos.`
+                        );
                       } catch (err) {
+                        if (password) {
+                          try {
+                            await login(pendingEmail || usuario.trim(), password, role);
+                            setVerificationCode("");
+                            setInfoMessage(
+                              `Se envió un nuevo código de 6 dígitos a ${pendingEmail}. Tanto el nuevo código como el anterior son válidos por 30 minutos.`
+                            );
+                            return;
+                          } catch {
+                            // fallthrough
+                          }
+                        }
                         setError(err instanceof Error ? err.message : "No se pudo reenviar el código.");
                       } finally {
                         setLoading(false);
