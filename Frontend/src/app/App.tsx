@@ -9,6 +9,7 @@ import LoginScreen from "@/app/components/auth/LoginScreen";
 import SupportQuickAccess from "@/app/components/auth/SupportQuickAccess";
 import type { UserType } from "@/app/components/auth/types";
 import { C } from "@/app/theme";
+import { EN_DESTINATIONS, EN_NAV_ITEMS_MAP } from "@/app/i18nDestinations";
 import colombiaLogo from "@/imports/image-removebg-preview.png";
 import { logout, getSession, getAdminUsers, getAdminReviews, getAdministrators, createAdministrator, setUserStatus, censorReview, deleteReview, type AdminUser, type AdminReview, type AdminAccount } from "@/services/api";
 
@@ -29,6 +30,22 @@ const TR: Record<string, Record<string, string>> = {
     welcome: "Bienvenido", signInContinue: "Inicia sesión para continuar", forgotPassword: "¿Olvidaste tu contraseña?",
     email: "Usuario", password: "Contraseña", terms: "Términos de servicio", privacy: "Política de privacidad",
     destMarker: "Destino", cityMarker: "Ciudad",
+    supportHelp: "Soporte o ayuda",
+    viewAll: "Ver todo",
+    placesToExplore: "Lugares para explorar",
+    placesCount: "lugares",
+    showPlaces: "Mostrar lugares",
+    minimizeList: "Minimizar lista",
+    openInMaps: "Abrir en Google Maps",
+    historyOf: "Historia de",
+    cultureAndTraditions: "Cultura y tradiciones",
+    upcomingEvents: "Próximos eventos",
+    mustSeeSites: "Sitios turísticos imperdibles",
+    recommendedRestaurants: "Restaurantes recomendados",
+    restaurantDescPrefix: "Uno de los restaurantes más recomendados de",
+    restaurantDescSuffix: "Ideal para disfrutar de la gastronomía local en un ambiente auténtico.",
+    roleUser: "Usuario",
+    roleAdmin: "Administrador",
   },
   EN: {
     navDestinos: "Destinations", navExperiencias: "Experiences", navCultura: "Culture", navBlog: "Blog", navContacto: "Contact",
@@ -45,6 +62,22 @@ const TR: Record<string, Record<string, string>> = {
     welcome: "Welcome", signInContinue: "Sign in to continue", forgotPassword: "Forgot your password?",
     email: "Email address", password: "Password", terms: "Terms of service", privacy: "Privacy policy",
     destMarker: "Destination", cityMarker: "City",
+    supportHelp: "Support & Help",
+    viewAll: "View all",
+    placesToExplore: "Places to explore",
+    placesCount: "places",
+    showPlaces: "Show places",
+    minimizeList: "Minimize list",
+    openInMaps: "Open in Google Maps",
+    historyOf: "History of",
+    cultureAndTraditions: "Culture & Traditions",
+    upcomingEvents: "Upcoming events",
+    mustSeeSites: "Must-see tourist sites",
+    recommendedRestaurants: "Recommended restaurants",
+    restaurantDescPrefix: "One of the most recommended restaurants in",
+    restaurantDescSuffix: "Ideal for enjoying local gastronomy in an authentic atmosphere.",
+    roleUser: "User",
+    roleAdmin: "Administrator",
   },
   PT: {
     navDestinos: "Destinos", navExperiencias: "Experiências", navCultura: "Cultura", navBlog: "Blog", navContacto: "Contato",
@@ -61,6 +94,22 @@ const TR: Record<string, Record<string, string>> = {
     welcome: "Bem-vindo", signInContinue: "Entre para continuar", forgotPassword: "Esqueceu sua senha?",
     email: "Endereço de e-mail", password: "Senha", terms: "Termos de serviço", privacy: "Política de privacidade",
     destMarker: "Destino", cityMarker: "Cidade",
+    supportHelp: "Suporte ou ajuda",
+    viewAll: "Ver tudo",
+    placesToExplore: "Lugares para explorar",
+    placesCount: "lugares",
+    showPlaces: "Mostrar lugares",
+    minimizeList: "Minimizar lista",
+    openInMaps: "Abrir no Google Maps",
+    historyOf: "História de",
+    cultureAndTraditions: "Cultura e tradições",
+    upcomingEvents: "Próximos eventos",
+    mustSeeSites: "Pontos turísticos imperdíveis",
+    recommendedRestaurants: "Restaurantes recomendados",
+    restaurantDescPrefix: "Um dos restaurantes mais recomendados de",
+    restaurantDescSuffix: "Ideal para desfrutar da gastronomia local em um ambiente autêntico.",
+    roleUser: "Usuário",
+    roleAdmin: "Administrador",
   },
   FR: {
     navDestinos: "Destinations", navExperiencias: "Expériences", navCultura: "Culture", navBlog: "Blog", navContacto: "Contact",
@@ -77,6 +126,22 @@ const TR: Record<string, Record<string, string>> = {
     welcome: "Bienvenue", signInContinue: "Connectez-vous pour continuer", forgotPassword: "Mot de passe oublié?",
     email: "Adresse e-mail", password: "Mot de passe", terms: "Conditions d'utilisation", privacy: "Politique de confidentialité",
     destMarker: "Destination", cityMarker: "Ville",
+    supportHelp: "Support & Aide",
+    viewAll: "Voir tout",
+    placesToExplore: "Lieux à explorer",
+    placesCount: "lieux",
+    showPlaces: "Afficher les lieux",
+    minimizeList: "Réduire la liste",
+    openInMaps: "Ouvrir dans Google Maps",
+    historyOf: "Histoire de",
+    cultureAndTraditions: "Culture et traditions",
+    upcomingEvents: "Événements à venir",
+    mustSeeSites: "Sites touristiques incontournables",
+    recommendedRestaurants: "Restaurants recommandados",
+    restaurantDescPrefix: "L'un des restaurants les plus recommandés de",
+    restaurantDescSuffix: "Idéal pour savourer la gastronomie locale dans une ambiance authentique.",
+    roleUser: "Utilisateur",
+    roleAdmin: "Administrateur",
   },
   DE: {
     navDestinos: "Reiseziele", navExperiencias: "Erlebnisse", navCultura: "Kultur", navBlog: "Blog", navContacto: "Kontakt",
@@ -93,6 +158,22 @@ const TR: Record<string, Record<string, string>> = {
     welcome: "Willkommen", signInContinue: "Melde dich an, um fortzufahren", forgotPassword: "Passwort vergessen?",
     email: "E-Mail-Adresse", password: "Passwort", terms: "Nutzungsbedingungen", privacy: "Datenschutzrichtlinie",
     destMarker: "Ziel", cityMarker: "Stadt",
+    supportHelp: "Support & Hilfe",
+    viewAll: "Alle anzeigen",
+    placesToExplore: "Orte zum Entdecken",
+    placesCount: "Orte",
+    showPlaces: "Orte anzeigen",
+    minimizeList: "Liste minimieren",
+    openInMaps: "In Google Maps öffnen",
+    historyOf: "Geschichte von",
+    cultureAndTraditions: "Kultur & Traditionen",
+    upcomingEvents: "Kommende Veranstaltungen",
+    mustSeeSites: "Sehenswürdigkeiten",
+    recommendedRestaurants: "Empfohlene Restaurants",
+    restaurantDescPrefix: "Eines der am meisten empfohlenen Restaurants in",
+    restaurantDescSuffix: "Ideal, um die lokale Gastronomie in authentischer Atmosphäre zu genießen.",
+    roleUser: "Benutzer",
+    roleAdmin: "Administrator",
   },
 };
 
@@ -860,6 +941,34 @@ const destinations = [
   },
 ];
 
+function localizeDestination(dest: typeof destinations[0], lang: string): typeof destinations[0] {
+  if (lang === "ES") return dest;
+  const en = EN_DESTINATIONS[dest.id];
+  if (!en) return dest;
+  return {
+    ...dest,
+    region: en.region,
+    tagline: en.tagline,
+    description: en.description,
+    weather: en.weather,
+    historia: en.historia,
+    cultura: en.cultura,
+    eventos: dest.eventos.map((ev, i) => ({
+      ...ev,
+      nombre: en.eventos[i]?.nombre ?? ev.nombre,
+      fecha: en.eventos[i]?.fecha ?? ev.fecha,
+    })),
+    sitios: dest.sitios.map((s, i) => ({
+      ...s,
+      nombre: en.sitios[i]?.nombre ?? s.nombre,
+    })),
+    restaurantes: dest.restaurantes.map((r, i) => ({
+      ...r,
+      tipo: en.restaurantes[i]?.tipo ?? r.tipo,
+    })),
+  };
+}
+
 type TabKey = "historia" | "cultura" | "eventos" | "sitios" | "restaurantes";
 type Screen = "checking" | "splash" | "login" | "main";
 
@@ -1162,6 +1271,10 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
 
   const navKeys = ["navDestinos", "navExperiencias", "navCultura", "navBlog", "navContacto"];
   const navSectionKeys = ["Destinos", "Experiencias", "Cultura", "Blog", "Contacto"];
+  const navItemsMap = lang === "ES" ? NAV_ITEMS_MAP : EN_NAV_ITEMS_MAP;
+  const localizedDestinations = destinations.map((d) => localizeDestination(d, lang));
+  const activeModalDest = modalDest ? localizeDestination(modalDest, lang) : null;
+  const roleDisplay = user.role === "Administrador" ? t("roleAdmin") : t("roleUser");
 
   return (
     <div className="min-h-screen" style={{ background: C.bg, fontFamily: "'Poppins', sans-serif" }}>
@@ -1189,7 +1302,7 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            <SupportQuickAccess defaultEmail={user.email} defaultName={user.name} roleLabel={user.role} label="Soporte o ayuda" textColor="#5a5a72" />
+            <SupportQuickAccess defaultEmail={user.email} defaultName={user.name} roleLabel={roleDisplay} label={t("supportHelp")} textColor="#5a5a72" lang={lang} />
             {/* Language */}
             <div className="relative">
               <button onClick={() => { setLangOpen(!langOpen); setActiveNav(null); setUserMenuOpen(false); }}
@@ -1224,12 +1337,12 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
                     <p className="text-sm font-semibold" style={{ color: C.navy }}>{user.name}</p>
                     <p className="text-xs truncate" style={{ color: "#9b9baf" }}>{user.email}</p>
                     <span className="inline-flex items-center gap-1 mt-2 px-2 py-1 rounded-md text-[10px] font-semibold" style={{ color: user.role === "Administrador" ? C.red : C.navy, background: user.role === "Administrador" ? "rgba(238,66,102,0.08)" : "rgba(36,60,143,0.08)" }}>
-                      {user.role === "Administrador" ? <ShieldCheck size={11} /> : <UserRound size={11} />} {user.role}
+                      {user.role === "Administrador" ? <ShieldCheck size={11} /> : <UserRound size={11} />} {roleDisplay}
                     </span>
                   </div>
                   <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: "#5a5a72" }}><User size={14} /> {t("miPerfil")}</button>
                   <div className="px-4 py-2 hover:bg-gray-50 transition-colors">
-                    <SupportQuickAccess defaultEmail={user.email} defaultName={user.name} roleLabel={user.role} label="Soporte o ayuda" textColor="#5a5a72" />
+                    <SupportQuickAccess defaultEmail={user.email} defaultName={user.name} roleLabel={roleDisplay} label={t("supportHelp")} textColor="#5a5a72" lang={lang} />
                   </div>
                   <button onClick={() => { setUserMenuOpen(false); onLogout(); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-red-50 transition-colors" style={{ color: C.red }}><LogOut size={14} /> {t("cerrarSesion")}</button>
                 </div>
@@ -1245,20 +1358,20 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
           <div className="border-t hidden md:block" style={{ borderColor: "rgba(36,60,143,0.08)", background: C.white }}>
             <div className="max-w-5xl mx-auto px-8 py-6 grid grid-cols-3 gap-8">
               <div className="col-span-1 pr-6 border-r" style={{ borderColor: "rgba(36,60,143,0.08)" }}>
-                <h3 className="font-bold text-base mb-2" style={{ color: C.navy }}>{NAV_ITEMS_MAP[activeNav].title}</h3>
-                <p className="text-xs leading-relaxed mb-4" style={{ color: "#9b9baf", fontWeight: 300 }}>{NAV_ITEMS_MAP[activeNav].desc}</p>
+                <h3 className="font-bold text-base mb-2" style={{ color: C.navy }}>{navItemsMap[activeNav].title}</h3>
+                <p className="text-xs leading-relaxed mb-4" style={{ color: "#9b9baf", fontWeight: 300 }}>{navItemsMap[activeNav].desc}</p>
                 <button onClick={() => setActiveNav(null)} className="flex items-center gap-1 text-xs font-semibold px-4 py-2 rounded-lg text-white" style={{ background: C.red }}>
-                  Ver todo <ChevronRight size={12} />
+                  {t("viewAll")} <ChevronRight size={12} />
                 </button>
               </div>
               <div className="col-span-2 grid grid-cols-2 gap-1">
-                {NAV_ITEMS_MAP[activeNav].items.map((item) => (
+                {navItemsMap[activeNav].items.map((item) => (
                   <button key={item.label}
                     onClick={() => {
                       setActiveNav(null);
                       setSelectedNavItem(item.label);
                       if (item.destId) {
-                        const dest = destinations.find(d => d.id === item.destId);
+                        const dest = localizedDestinations.find(d => d.id === item.destId);
                         if (dest) openModal(dest);
                       }
                     }}
@@ -1280,8 +1393,24 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
               {navKeys.map((key, i) => (
                 <button key={key} onClick={() => { setMenuOpen(false); setActiveNav(navSectionKeys[i]); }} className="py-2.5 text-sm font-medium border-b text-left" style={{ color: C.navy, borderColor: "rgba(36,60,143,0.08)" }}>{t(key)}</button>
               ))}
+              <div className="py-2 border-b flex items-center gap-2 flex-wrap" style={{ borderColor: "rgba(36,60,143,0.08)" }}>
+                {LANGUAGES.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => { setLang(l.code); setMenuOpen(false); }}
+                    className="px-2.5 py-1 rounded-lg text-xs"
+                    style={{
+                      color: lang === l.code ? C.white : C.navy,
+                      background: lang === l.code ? C.navy : "rgba(36,60,143,0.08)",
+                      fontWeight: lang === l.code ? 600 : 400,
+                    }}
+                  >
+                    {l.flag} {l.code}
+                  </button>
+                ))}
+              </div>
               <div className="py-2 border-b" style={{ borderColor: "rgba(36,60,143,0.08)" }}>
-                <SupportQuickAccess defaultEmail={user.email} defaultName={user.name} roleLabel={user.role} label="Soporte o ayuda" textColor={C.navy} />
+                <SupportQuickAccess defaultEmail={user.email} defaultName={user.name} roleLabel={roleDisplay} label={t("supportHelp")} textColor={C.navy} lang={lang} />
               </div>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm font-medium" style={{ color: C.navy }}>{user.name}</span>
@@ -1326,17 +1455,17 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
           </button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 25 }}>
-          {destinations.map((dest) => (
+          {localizedDestinations.map((dest) => (
             <DestCard key={dest.id} dest={dest} onClick={() => openModal(dest)} cardBtn={t("cardBtn")} />
           ))}
         </div>
       </section>
 
       {/* ── FLOATING DESTINATIONS LIST ── */}
-      <FloatingMap onOpenDestination={openModal} onOpenMaps={openMaps} t={t} />
+      <FloatingMap onOpenDestination={openModal} onOpenMaps={openMaps} t={t} destinationsList={localizedDestinations} />
 
       {/* ── MODAL ── */}
-      {modalDest && <DestModal dest={modalDest} activeTab={activeTab} setActiveTab={setActiveTab} onClose={closeModal} onOpenMaps={openMaps} t={t} />}
+      {activeModalDest && <DestModal dest={activeModalDest} activeTab={activeTab} setActiveTab={setActiveTab} onClose={closeModal} onOpenMaps={openMaps} t={t} />}
     </div>
   );
 }
@@ -1367,9 +1496,10 @@ function DestCard({ dest, onClick, cardBtn }: { dest: typeof destinations[0]; on
 }
 
 // ─── FLOATING MAP ─────────────────────────────────────────────────────────────
-function FloatingMap({ onOpenDestination, onOpenMaps, t }: {
+function FloatingMap({ onOpenDestination, onOpenMaps, t, destinationsList }: {
   onOpenDestination: (dest: typeof destinations[0]) => void;
   onOpenMaps: (q: string) => void; t: (k: string) => string;
+  destinationsList: typeof destinations;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -1381,25 +1511,25 @@ function FloatingMap({ onOpenDestination, onOpenMaps, t }: {
       <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ background: C.navy }}>
         <div className="flex items-center gap-2">
           <MapPin size={14} className="text-white" />
-          <span className="text-xs font-semibold text-white tracking-wide">Lugares para explorar</span>
+          <span className="text-xs font-semibold text-white tracking-wide">{t("placesToExplore")}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs" style={{ color: C.yellow, fontWeight: 500 }}>{ALL_MARKERS.length} lugares</span>
-          <button onClick={() => setCollapsed(!collapsed)} className="w-6 h-6 rounded flex items-center justify-center transition-all hover:bg-white/20" title={collapsed ? "Mostrar lugares" : "Minimizar lista"} aria-label={collapsed ? "Mostrar lugares" : "Minimizar lista"}>
+          <span className="text-xs" style={{ color: C.yellow, fontWeight: 500 }}>{ALL_MARKERS.length} {t("placesCount")}</span>
+          <button onClick={() => setCollapsed(!collapsed)} className="w-6 h-6 rounded flex items-center justify-center transition-all hover:bg-white/20" title={collapsed ? t("showPlaces") : t("minimizeList")} aria-label={collapsed ? t("showPlaces") : t("minimizeList")}>
             {collapsed ? <ChevronUp size={14} className="text-white" /> : <ChevronDown size={14} className="text-white" />}
           </button>
         </div>
       </div>
       {!collapsed && <div className="overflow-y-auto p-2" style={{ maxHeight: 310 }}>
         {ALL_MARKERS.map((marker) => {
-          const destination = destinations.find((item) => item.name === marker.name);
+          const destination = destinationsList.find((item) => item.name === marker.name);
           return <div key={marker.name} className="flex items-center gap-2 px-2 py-2 rounded-lg transition-colors hover:bg-gray-50">
             <button onClick={() => destination ? onOpenDestination(destination) : onOpenMaps(`${marker.name.replace(/ /g, "+")}+Colombia`)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: marker.dest ? C.red : C.navy }} />
               <span className="truncate text-xs font-semibold" style={{ color: C.navy }}>{marker.name}</span>
               {destination && <span className="truncate text-[10px]" style={{ color: "#8b94ab" }}>{destination.region}</span>}
             </button>
-            <button onClick={() => onOpenMaps(`${marker.name.replace(/ /g, "+")}+Colombia`)} title={`Abrir ${marker.name} en Google Maps`} className="flex-shrink-0 p-1.5 rounded-md hover:bg-gray-100" style={{ color: C.red }}>
+            <button onClick={() => onOpenMaps(`${marker.name.replace(/ /g, "+")}+Colombia`)} title={`${t("openInMaps")}: ${marker.name}`} className="flex-shrink-0 p-1.5 rounded-md hover:bg-gray-100" style={{ color: C.red }}>
               <Navigation size={13} />
             </button>
           </div>;
@@ -1451,7 +1581,7 @@ function DestModal({ dest, activeTab, setActiveTab, onClose, onOpenMaps, t }: {
         <div className="flex-1 overflow-y-auto p-8" style={{ scrollbarWidth: "none" }}>
           {activeTab === "historia" && (
             <div>
-              <h3 className="text-lg font-bold mb-4" style={{ color: C.navy }}>{t("tabHistoria")} de {dest.name}</h3>
+              <h3 className="text-lg font-bold mb-4" style={{ color: C.navy }}>{t("historyOf")} {dest.name}</h3>
               {dest.historia.split("\n\n").map((para, i) => (
                 <p key={i} className="text-sm leading-relaxed mb-4" style={{ color: "#5a5a72", fontWeight: 300 }}>{para}</p>
               ))}
@@ -1459,7 +1589,7 @@ function DestModal({ dest, activeTab, setActiveTab, onClose, onOpenMaps, t }: {
           )}
           {activeTab === "cultura" && (
             <div>
-              <h3 className="text-lg font-bold mb-4" style={{ color: C.navy }}>{t("tabCultura")} y tradiciones</h3>
+              <h3 className="text-lg font-bold mb-4" style={{ color: C.navy }}>{t("cultureAndTraditions")}</h3>
               {dest.cultura.split("\n\n").map((para, i) => (
                 <p key={i} className="text-sm leading-relaxed mb-4" style={{ color: "#5a5a72", fontWeight: 300 }}>{para}</p>
               ))}
@@ -1467,7 +1597,7 @@ function DestModal({ dest, activeTab, setActiveTab, onClose, onOpenMaps, t }: {
           )}
           {activeTab === "eventos" && (
             <div>
-              <h3 className="text-lg font-bold mb-5" style={{ color: C.navy }}>Próximos {t("tabEventos").toLowerCase()}</h3>
+              <h3 className="text-lg font-bold mb-5" style={{ color: C.navy }}>{t("upcomingEvents")}</h3>
               <div className="flex flex-col gap-3">
                 {dest.eventos.map((ev, i) => (
                   <div key={i} className="flex items-center gap-4 p-4 rounded-xl" style={{ background: "#F7F7F7" }}>
@@ -1481,7 +1611,7 @@ function DestModal({ dest, activeTab, setActiveTab, onClose, onOpenMaps, t }: {
           )}
           {activeTab === "sitios" && (
             <div>
-              <h3 className="text-lg font-bold mb-5" style={{ color: C.navy }}>{t("tabSitios")} imperdibles</h3>
+              <h3 className="text-lg font-bold mb-5" style={{ color: C.navy }}>{t("mustSeeSites")}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {dest.sitios.map((s, i) => (
                   <div key={i} className="rounded-xl overflow-hidden bg-white" style={{ boxShadow: "0 2px 12px rgba(36,60,143,0.09)" }}>
@@ -1499,7 +1629,7 @@ function DestModal({ dest, activeTab, setActiveTab, onClose, onOpenMaps, t }: {
           )}
           {activeTab === "restaurantes" && (
             <div>
-              <h3 className="text-lg font-bold mb-5" style={{ color: C.navy }}>{t("tabRestaurantes")} recomendados</h3>
+              <h3 className="text-lg font-bold mb-5" style={{ color: C.navy }}>{t("recommendedRestaurants")}</h3>
               <div className="flex flex-col gap-4">
                 {dest.restaurantes.map((r, i) => (
                   <div key={i} className="rounded-xl overflow-hidden bg-white flex flex-row" style={{ boxShadow: "0 2px 12px rgba(36,60,143,0.09)", minHeight: 130 }}>
@@ -1513,7 +1643,7 @@ function DestModal({ dest, activeTab, setActiveTab, onClose, onOpenMaps, t }: {
                         <p className="text-sm font-bold mb-1" style={{ color: C.navy }}>{r.nombre}</p>
                         <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-3" style={{ background: "rgba(36,60,143,0.08)", color: C.navy }}>{r.tipo}</span>
                         <p className="text-xs leading-relaxed" style={{ color: "#717182", fontWeight: 300 }}>
-                          Uno de los restaurantes más recomendados de {dest.name}. Ideal para disfrutar de la gastronomía local en un ambiente auténtico.
+                          {t("restaurantDescPrefix")} {dest.name}. {t("restaurantDescSuffix")}
                         </p>
                       </div>
                       <button

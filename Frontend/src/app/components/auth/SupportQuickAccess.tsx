@@ -10,6 +10,7 @@ type SupportQuickAccessProps = {
   label?: string;
   className?: string;
   textColor?: string;
+  lang?: string;
 };
 
 export default function SupportQuickAccess({
@@ -19,7 +20,9 @@ export default function SupportQuickAccess({
   label = "Soporte o ayuda",
   className = "",
   textColor,
+  lang = "ES",
 }: SupportQuickAccessProps) {
+  const isEn = lang !== "ES";
   const [open, setOpen] = useState(false);
   const [senderEmail, setSenderEmail] = useState(defaultEmail);
   const [senderName, setSenderName] = useState(defaultName);
@@ -47,11 +50,19 @@ export default function SupportQuickAccess({
 
     const cleanEmail = senderEmail.trim().toLowerCase();
     if (!isValidRealEmail(cleanEmail)) {
-      setError("Ingresa un correo electrónico válido para que podamos ver quién escribe y responderte.");
+      setError(
+        isEn
+          ? "Please enter a valid email address so we can see who is writing and reply to you."
+          : "Ingresa un correo electrónico válido para que podamos ver quién escribe y responderte."
+      );
       return;
     }
     if (!subject.trim() || !message.trim()) {
-      setError("Por favor completa el asunto y el mensaje.");
+      setError(
+        isEn
+          ? "Please complete both the subject and the message."
+          : "Por favor completa el asunto y el mensaje."
+      );
       return;
     }
 
@@ -75,7 +86,9 @@ export default function SupportQuickAccess({
       setError(
         err instanceof Error
           ? err.message
-          : "No fue posible enviar el correo de soporte."
+          : isEn
+            ? "Could not send the support email."
+            : "No fue posible enviar el correo de soporte."
       );
     } finally {
       setLoading(false);
@@ -118,19 +131,19 @@ export default function SupportQuickAccess({
                     color: C.navy,
                   }}
                 >
-                  <Mail size={12} /> Acceso rápido · Soporte o ayuda
+                  <Mail size={12} /> {isEn ? "Quick Access · Support & Help" : "Acceso rápido · Soporte o ayuda"}
                 </span>
                 <h3
                   className="text-lg font-bold"
                   style={{ color: C.navy, fontWeight: 700 }}
                 >
-                  Contactar a Ecos Colombia
+                  {isEn ? "Contact Ecos Colombia" : "Contactar a Ecos Colombia"}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Cerrar soporte"
+                aria-label={isEn ? "Close support" : "Cerrar soporte"}
                 className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
                 style={{ color: "#64748b" }}
               >
@@ -147,18 +160,18 @@ export default function SupportQuickAccess({
               }}
             >
               <div className="flex items-center justify-between gap-2">
-                <span style={{ color: "#64748b" }}>Enviar directamente a:</span>
+                <span style={{ color: "#64748b" }}>{isEn ? "Send directly to:" : "Enviar directamente a:"}</span>
                 <span className="font-semibold" style={{ color: C.navy }}>
                   ecos.colombia1@gmail.com
                 </span>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <span style={{ color: "#64748b" }}>Correo de quien escribe:</span>
+                <span style={{ color: "#64748b" }}>{isEn ? "Sender's email:" : "Correo de quien escribe:"}</span>
                 <span
                   className="font-semibold truncate max-w-[210px]"
                   style={{ color: C.red }}
                 >
-                  {senderEmail.trim() || "Ingresa tu correo abajo"}
+                  {senderEmail.trim() || (isEn ? "Enter your email below" : "Ingresa tu correo abajo")}
                 </span>
               </div>
             </div>
@@ -187,16 +200,17 @@ export default function SupportQuickAccess({
                   }}
                 >
                   <div className="flex items-center gap-2 font-bold text-sm">
-                    <CheckCircle2 size={18} /> Correo enviado correctamente
+                    <CheckCircle2 size={18} /> {isEn ? "Email sent successfully" : "Correo enviado correctamente"}
                   </div>
                   <p>
-                    Se envió tu solicitud a{" "}
+                    {isEn ? "Your request was sent to " : "Se envió tu solicitud a "}
                     <strong>{sentConfirmation.destinatario}</strong>.
                   </p>
                   <p>
-                    En el correo recibido por Ecos Colombia aparece registrado
-                    que escribió: <strong>{sentConfirmation.remitente}</strong>{" "}
-                    ({roleLabel}).
+                    {isEn
+                      ? "In the email received by Ecos Colombia it is registered that it was sent by: "
+                      : "En el correo recibido por Ecos Colombia aparece registrado que escribió: "}
+                    <strong>{sentConfirmation.remitente}</strong> ({roleLabel}).
                   </p>
                 </div>
 
@@ -210,7 +224,7 @@ export default function SupportQuickAccess({
                       background: "rgba(36, 60, 143, 0.08)",
                     }}
                   >
-                    Enviar otro mensaje
+                    {isEn ? "Send another message" : "Enviar otro mensaje"}
                   </button>
                   <button
                     type="button"
@@ -218,7 +232,7 @@ export default function SupportQuickAccess({
                     className="px-4 py-2 rounded-xl text-xs font-semibold text-white"
                     style={{ background: C.navy }}
                   >
-                    Cerrar
+                    {isEn ? "Close" : "Cerrar"}
                   </button>
                 </div>
               </div>
@@ -229,14 +243,14 @@ export default function SupportQuickAccess({
                     className="block text-xs font-semibold mb-1"
                     style={{ color: C.navy }}
                   >
-                    Tu correo electrónico (quien escribe)
+                    {isEn ? "Your email address (sender)" : "Tu correo electrónico (quien escribe)"}
                   </label>
                   <input
                     type="email"
                     required
                     value={senderEmail}
                     onChange={(e) => setSenderEmail(e.target.value)}
-                    placeholder="tucorreo@ejemplo.com"
+                    placeholder={isEn ? "youremail@example.com" : "tucorreo@ejemplo.com"}
                     className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none"
                     style={{
                       border: "1.5px solid rgba(36, 60, 143, 0.18)",
@@ -251,13 +265,13 @@ export default function SupportQuickAccess({
                     className="block text-xs font-semibold mb-1"
                     style={{ color: C.navy }}
                   >
-                    Tu nombre (opcional)
+                    {isEn ? "Your name (optional)" : "Tu nombre (opcional)"}
                   </label>
                   <input
                     type="text"
                     value={senderName}
                     onChange={(e) => setSenderName(e.target.value)}
-                    placeholder="Nombre completo"
+                    placeholder={isEn ? "Full name" : "Nombre completo"}
                     className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none"
                     style={{
                       border: "1.5px solid rgba(36, 60, 143, 0.18)",
@@ -272,14 +286,14 @@ export default function SupportQuickAccess({
                     className="block text-xs font-semibold mb-1"
                     style={{ color: C.navy }}
                   >
-                    Asunto de soporte o ayuda
+                    {isEn ? "Support or help subject" : "Asunto de soporte o ayuda"}
                   </label>
                   <input
                     type="text"
                     required
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    placeholder="Ej. Problema con mi acceso o consulta"
+                    placeholder={isEn ? "E.g. Access issue or inquiry" : "Ej. Problema con mi acceso o consulta"}
                     className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none"
                     style={{
                       border: "1.5px solid rgba(36, 60, 143, 0.18)",
@@ -294,14 +308,14 @@ export default function SupportQuickAccess({
                     className="block text-xs font-semibold mb-1"
                     style={{ color: C.navy }}
                   >
-                    Mensaje para ecos.colombia1@gmail.com
+                    {isEn ? "Message for ecos.colombia1@gmail.com" : "Mensaje para ecos.colombia1@gmail.com"}
                   </label>
                   <textarea
                     required
                     rows={4}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Describe en qué podemos ayudarte..."
+                    placeholder={isEn ? "Describe how we can help you..." : "Describe en qué podemos ayudarte..."}
                     className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none resize-y"
                     style={{
                       border: "1.5px solid rgba(36, 60, 143, 0.18)",
@@ -322,8 +336,12 @@ export default function SupportQuickAccess({
                 >
                   <Send size={14} />
                   {loading
-                    ? "Enviando correo a ecos.colombia1@gmail.com..."
-                    : "Enviar correo a ecos.colombia1@gmail.com"}
+                    ? isEn
+                      ? "Sending email to ecos.colombia1@gmail.com..."
+                      : "Enviando correo a ecos.colombia1@gmail.com..."
+                    : isEn
+                      ? "Send email to ecos.colombia1@gmail.com"
+                      : "Enviar correo a ecos.colombia1@gmail.com"}
                 </button>
               </form>
             )}
