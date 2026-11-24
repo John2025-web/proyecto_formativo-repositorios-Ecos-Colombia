@@ -28,8 +28,8 @@ public class AuthControllerTests
             { "Email:SmtpHost", "smtp.gmail.com" },
             { "Email:SmtpPort", "587" },
             { "Email:SmtpUser", "ecos.colombia1@gmail.com" },
-            { "Email:SmtpPass", "Aa123456*" },
-            { "Email:SmtpSecretToken", "NTU3NzI3MjQyNTIyMjAzYw==" },
+            { "Email:SmtpPass", "" },
+            { "Email:SmtpSecretToken", "NzM3NDZjNjU3NTc1NzE2NDc0NjY2Njc5NmU3NzYydw==" },
             { "Email:FromEmail", "ecos.colombia1@gmail.com" }
         };
 
@@ -244,6 +244,7 @@ public class AuthControllerTests
         var loginJson = System.Text.Json.JsonSerializer.Serialize(loginOk.Value);
         using var doc = System.Text.Json.JsonDocument.Parse(loginJson);
         Assert.True(doc.RootElement.GetProperty("requiereVerificacion").GetBoolean());
+        Assert.True(doc.RootElement.GetProperty("enviadoPorSmtp").GetBoolean());
         Assert.Equal("ecos.colombia1@gmail.com", doc.RootElement.GetProperty("correo").GetString());
 
         var recoveryResult = await controller.SolicitarRecuperacion(new ForgotPasswordRequest
