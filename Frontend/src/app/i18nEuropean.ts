@@ -1,6 +1,12 @@
 import type { LocalizedDestinationContent } from "./i18nDestinations";
 
-export type NavMapType = Record<string, { title: string; desc: string; items: { label: string; destId?: number }[] }>;
+export type NavItemEntry = {
+  label: string;
+  destId?: number;
+  contactAction?: "email" | "whatsapp" | "faq";
+};
+
+export type NavMapType = Record<string, { title: string; desc: string; items: NavItemEntry[] }>;
 
 // ─── PORTUGUÊS (PT) ──────────────────────────────────────────────────────────
 export const PT_NAV_ITEMS_MAP: NavMapType = {
@@ -72,14 +78,9 @@ export const PT_NAV_ITEMS_MAP: NavMapType = {
     title: "Fale Conosco",
     desc: "Estamos aqui para ajudar você a planejar a viagem da sua vida.",
     items: [
-      { label: "Suporte 24/7" },
-      { label: "WhatsApp" },
-      { label: "E-mail" },
-      { label: "Escritórios na Colômbia" },
-      { label: "Parceiros turísticos" },
-      { label: "Imprensa e mídia" },
-      { label: "Trabalhe conosco" },
-      { label: "Perguntas frequentes" },
+      { label: "E-mail", contactAction: "email" },
+      { label: "WhatsApp", contactAction: "whatsapp" },
+      { label: "Perguntas frequentes", contactAction: "faq" },
     ],
   },
 };
@@ -710,14 +711,9 @@ export const FR_NAV_ITEMS_MAP: NavMapType = {
     title: "Contactez-nous",
     desc: "Nous sommes là pour vous aider à planifier le voyage de votre vie.",
     items: [
-      { label: "Assistance 24h/24 et 7j/7" },
-      { label: "WhatsApp" },
-      { label: "Courrier électronique" },
-      { label: "Bureaux en Colombie" },
-      { label: "Partenaires touristiques" },
-      { label: "Presse et médias" },
-      { label: "Rejoignez notre équipe" },
-      { label: "Foire aux questions" },
+      { label: "Courrier électronique", contactAction: "email" },
+      { label: "WhatsApp", contactAction: "whatsapp" },
+      { label: "Foire aux questions", contactAction: "faq" },
     ],
   },
 };
@@ -1348,14 +1344,9 @@ export const DE_NAV_ITEMS_MAP: NavMapType = {
     title: "Kontakt",
     desc: "Wir helfen Ihnen gerne, die Reise Ihres Lebens zu planen.",
     items: [
-      { label: "24/7 Kundensupport" },
-      { label: "WhatsApp" },
-      { label: "E-Mail" },
-      { label: "Büros in Kolumbien" },
-      { label: "Tourismuspartner" },
-      { label: "Presse & Medien" },
-      { label: "Karriere bei uns" },
-      { label: "Häufig gestellte Fragen (FAQ)" },
+      { label: "E-Mail", contactAction: "email" },
+      { label: "WhatsApp", contactAction: "whatsapp" },
+      { label: "Häufig gestellte Fragen (FAQ)", contactAction: "faq" },
     ],
   },
 };

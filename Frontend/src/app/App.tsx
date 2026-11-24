@@ -10,10 +10,12 @@ import SupportQuickAccess from "@/app/components/auth/SupportQuickAccess";
 import type { UserType } from "@/app/components/auth/types";
 import { C } from "@/app/theme";
 import {
+  CONTACT_SECTION_TR,
   getLocalizedDestinationContent,
   getLocalizedNavItemsMap,
   getLocalizedPlaceName,
 } from "@/app/i18nDestinations";
+import type { NavMapType } from "@/app/i18nEuropean";
 import colombiaLogo from "@/imports/image-removebg-preview.png";
 import { logout, getSession, getAdminUsers, getAdminReviews, getAdministrators, createAdministrator, setUserStatus, censorReview, deleteReview, type AdminUser, type AdminReview, type AdminAccount } from "@/services/api";
 
@@ -331,7 +333,7 @@ const ALL_MARKERS = [
 ];
 
 // ─── NAV SECTIONS ─────────────────────────────────────────────────────────────
-const NAV_ITEMS_MAP: Record<string, { title: string; desc: string; items: { label: string; destId?: number }[] }> = {
+const NAV_ITEMS_MAP: NavMapType = {
   Destinos: {
     title: "Destinos de Colombia",
     desc: "Explora destinos increíbles del Caribe, Andes, Pacífico, Orinoquía y Amazonía.",
@@ -400,14 +402,9 @@ const NAV_ITEMS_MAP: Record<string, { title: string; desc: string; items: { labe
     title: "Contáctanos",
     desc: "Estamos aquí para ayudarte a planear el viaje de tu vida.",
     items: [
-      { label: "Soporte 24/7" },
-      { label: "WhatsApp" },
-      { label: "Correo electrónico" },
-      { label: "Oficinas en Colombia" },
-      { label: "Partners turísticos" },
-      { label: "Prensa y medios" },
-      { label: "Trabaja con nosotros" },
-      { label: "Preguntas frecuentes" },
+      { label: "Correo electrónico", contactAction: "email" },
+      { label: "WhatsApp", contactAction: "whatsapp" },
+      { label: "Preguntas frecuentes", contactAction: "faq" },
     ],
   },
 };
@@ -1358,7 +1355,11 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
   const [activeNav, setActiveNav] = useState<string | null>(null);
   const [langOpen, setLangOpen] = useState(false);
   const [selectedNavItem, setSelectedNavItem] = useState<string | null>(null);
+  const [activeContactAction, setActiveContactAction] = useState<"email" | "whatsapp" | "faq">("email");
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [emailCopied, setEmailCopied] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
+  const contactTr = CONTACT_SECTION_TR[lang] ?? CONTACT_SECTION_TR.EN;
 
   const openModal = (dest: typeof destinations[0]) => { setModalDest(dest); setActiveTab("historia"); document.body.style.overflow = "hidden"; };
   const closeModal = () => { setModalDest(null); document.body.style.overflow = ""; };
@@ -1475,24 +1476,161 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
                   {t("viewAll")} <ChevronRight size={12} />
                 </button>
               </div>
-              <div className="col-span-2 grid grid-cols-2 gap-1">
-                {navItemsMap[activeNav].items.map((item) => (
-                  <button key={item.label}
-                    onClick={() => {
-                      setActiveNav(null);
-                      setSelectedNavItem(item.label);
-                      if (item.destId) {
-                        const dest = localizedDestinations.find(d => d.id === item.destId);
-                        if (dest) openModal(dest);
-                      }
-                    }}
-                    className="text-left py-2.5 px-3 text-sm rounded-lg transition-all duration-150 flex items-center gap-2 hover:bg-gray-50"
-                    style={{ color: selectedNavItem === item.label ? C.navy : "#3a3a52", fontWeight: selectedNavItem === item.label ? 600 : 400, background: selectedNavItem === item.label ? "rgba(36,60,143,0.06)" : "transparent" }}>
-                    <MapPin size={11} style={{ color: item.destId ? C.red : "#b0b0c4", flexShrink: 0 }} />
-                    {item.label}
-                  </button>
-                ))}
-              </div>
+              {activeNav === "Contacto" ? (
+                <div className="col-span-2 flex flex-col gap-4">
+                  <div className="grid grid-cols-3 gap-2">
+                    {navItemsMap[activeNav].items.map((item) => {
+                      const actionKey = item.contactAction ?? "email";
+                      const isSelected = activeContactAction === actionKey;
+                      return (
+                        <button
+                          key={item.label}
+                          onClick={() => {
+                            setActiveContactAction(actionKey);
+                            setSelectedNavItem(item.label);
+                          }}
+                          className="text-left py-2.5 px-3.5 text-sm rounded-xl transition-all duration-150 flex items-center gap-2 hover:bg-gray-50"
+                          style={{
+                            color: isSelected ? C.navy : "#3a3a52",
+                            fontWeight: isSelected ? 600 : 500,
+                            background: isSelected ? "rgba(36,60,143,0.08)" : "transparent",
+                            border: `1px solid ${isSelected ? "rgba(36,60,143,0.18)" : "rgba(36,60,143,0.06)"}`,
+                          }}
+                        >
+                          {actionKey === "email" ? (
+                            <Mail size={14} style={{ color: C.red, flexShrink: 0 }} />
+                          ) : actionKey === "whatsapp" ? (
+                            <MessageSquare size={14} style={{ color: "#10b981", flexShrink: 0 }} />
+                          ) : (
+                            <BookOpen size={14} style={{ color: C.navy, flexShrink: 0 }} />
+                          )}
+                          <span className="truncate">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {activeContactAction === "email" && (
+                    <div
+                      className="rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      style={{
+                        background: "#f8fafc",
+                        border: "1.5px solid rgba(36,60,143,0.14)",
+                      }}
+                    >
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>
+                          {contactTr.emailLabel}
+                        </p>
+                        <p className="text-base font-bold flex items-center gap-2" style={{ color: C.navy }}>
+                          <Mail size={16} style={{ color: C.red }} />
+                          ecos.colombia1@gmail.com
+                        </p>
+                        <p className="text-xs" style={{ color: "#64748b", fontWeight: 300 }}>
+                          {contactTr.emailHelper}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void navigator.clipboard?.writeText("ecos.colombia1@gmail.com");
+                          setEmailCopied(true);
+                          window.setTimeout(() => setEmailCopied(false), 2000);
+                        }}
+                        className="px-4 py-2 rounded-xl text-xs font-semibold text-white whitespace-nowrap transition-all active:scale-95"
+                        style={{ background: emailCopied ? "#10b981" : C.navy }}
+                      >
+                        {emailCopied ? contactTr.copiedEmail : contactTr.copyEmail}
+                      </button>
+                    </div>
+                  )}
+
+                  {activeContactAction === "whatsapp" && (
+                    <div
+                      className="rounded-2xl p-4 space-y-2"
+                      style={{
+                        background: "rgba(16, 185, 129, 0.06)",
+                        border: "1.5px solid rgba(16, 185, 129, 0.25)",
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold" style={{ color: C.navy }}>
+                          {contactTr.whatsappTitle}
+                        </span>
+                        <span
+                          className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+                          style={{ background: "rgba(16, 185, 129, 0.16)", color: "#065f46" }}
+                        >
+                          {contactTr.whatsappBadge}
+                        </span>
+                      </div>
+                      <p className="text-xs leading-relaxed" style={{ color: "#334155" }}>
+                        {contactTr.whatsappNotice}
+                      </p>
+                    </div>
+                  )}
+
+                  {activeContactAction === "faq" && (
+                    <div
+                      className="rounded-2xl p-4 space-y-2.5"
+                      style={{
+                        background: "#f8fafc",
+                        border: "1.5px solid rgba(36,60,143,0.12)",
+                      }}
+                    >
+                      <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: C.navy }}>
+                        {contactTr.faqTitle}
+                      </p>
+                      <div className="space-y-2">
+                        {contactTr.faqs.map((faq, idx) => {
+                          const isOpen = openFaqIndex === idx;
+                          return (
+                            <div
+                              key={idx}
+                              className="rounded-xl bg-white overflow-hidden transition-all"
+                              style={{ border: "1px solid rgba(36,60,143,0.10)" }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                                className="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 text-left text-xs font-semibold hover:bg-gray-50"
+                                style={{ color: C.navy }}
+                              >
+                                <span>{faq.q}</span>
+                                {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                              </button>
+                              {isOpen && (
+                                <div className="px-3.5 pb-3 pt-1 text-xs leading-relaxed" style={{ color: "#5a5a72", fontWeight: 300 }}>
+                                  {faq.a}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="col-span-2 grid grid-cols-2 gap-1">
+                  {navItemsMap[activeNav].items.map((item) => (
+                    <button key={item.label}
+                      onClick={() => {
+                        setActiveNav(null);
+                        setSelectedNavItem(item.label);
+                        if (item.destId) {
+                          const dest = localizedDestinations.find(d => d.id === item.destId);
+                          if (dest) openModal(dest);
+                        }
+                      }}
+                      className="text-left py-2.5 px-3 text-sm rounded-lg transition-all duration-150 flex items-center gap-2 hover:bg-gray-50"
+                      style={{ color: selectedNavItem === item.label ? C.navy : "#3a3a52", fontWeight: selectedNavItem === item.label ? 600 : 400, background: selectedNavItem === item.label ? "rgba(36,60,143,0.06)" : "transparent" }}>
+                      <MapPin size={11} style={{ color: item.destId ? C.red : "#b0b0c4", flexShrink: 0 }} />
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

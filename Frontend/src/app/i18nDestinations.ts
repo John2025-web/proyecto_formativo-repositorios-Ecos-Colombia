@@ -28,7 +28,7 @@ export type LocalizedDestinationContent = {
   restaurantes: { tipo: string }[];
 };
 
-export const EN_NAV_ITEMS_MAP: Record<string, { title: string; desc: string; items: { label: string; destId?: number }[] }> = {
+export const EN_NAV_ITEMS_MAP: NavMapType = {
   Destinos: {
     title: "Colombian Destinations",
     desc: "Explore incredible destinations across the Caribbean, Andes, Pacific, Orinoquía, and Amazonia.",
@@ -97,14 +97,9 @@ export const EN_NAV_ITEMS_MAP: Record<string, { title: string; desc: string; ite
     title: "Contact Us",
     desc: "We are here to help you plan the trip of a lifetime.",
     items: [
-      { label: "24/7 Support" },
-      { label: "WhatsApp" },
-      { label: "Email support" },
-      { label: "Offices in Colombia" },
-      { label: "Tourism partners" },
-      { label: "Press & media" },
-      { label: "Work with us" },
-      { label: "Frequently asked questions" },
+      { label: "Email", contactAction: "email" },
+      { label: "WhatsApp", contactAction: "whatsapp" },
+      { label: "Frequently asked questions", contactAction: "faq" },
     ],
   },
 };
@@ -824,3 +819,242 @@ export function getLocalizedPlaceName(name: string, lang: string): string {
   if (lang === "ES") return name;
   return LOCALIZED_PLACE_NAMES[lang]?.[name] ?? name;
 }
+
+export type ContactPanelTranslation = {
+  emailLabel: string;
+  emailHelper: string;
+  copyEmail: string;
+  copiedEmail: string;
+  whatsappTitle: string;
+  whatsappBadge: string;
+  whatsappNotice: string;
+  faqTitle: string;
+  faqs: { q: string; a: string }[];
+};
+
+export const CONTACT_SECTION_TR: Record<string, ContactPanelTranslation> = {
+  ES: {
+    emailLabel: "Correo electrónico oficial de Ecos Colombia",
+    emailHelper: "Escríbenos directamente a nuestro correo oficial o utiliza el botón de Soporte o ayuda.",
+    copyEmail: "Copiar correo",
+    copiedEmail: "¡Copiado!",
+    whatsappTitle: "Canal de WhatsApp",
+    whatsappBadge: "Próxima versión",
+    whatsappNotice: "Aviso: la atención directa por WhatsApp se implementará en una próxima versión del proyecto.",
+    faqTitle: "Preguntas frecuentes sobre Ecos Colombia",
+    faqs: [
+      {
+        q: "¿Cómo explorar los 25 destinos y ver cómo llegar?",
+        a: "Selecciona cualquier tarjeta de destino o usa la lista flotante de 32 lugares para ver su historia, cultura, eventos, sitios turísticos, restaurantes y abrir la ruta directa en Google Maps.",
+      },
+      {
+        q: "¿Cómo funciona el código de verificación de 6 dígitos?",
+        a: "Al iniciar sesión o recuperar tu contraseña, enviamos un código de 6 dígitos desde ecos.colombia1@gmail.com (válido por 30 minutos). Tras validar el código, confirmas el reCAPTCHA alfanumérico.",
+      },
+      {
+        q: "¿Cómo reservar alojamiento en un destino turístico?",
+        a: "Dentro de la ventana de cada destino encontrarás el botón «Reservar en Airbnb», que te lleva directamente a los hospedajes disponibles en esa ciudad o región.",
+      },
+      {
+        q: "¿Cómo cambiar el idioma de la plataforma?",
+        a: "Usa el selector en la barra superior para cambiar toda la información de la página entre Español, Inglés, Portugués, Francés, Alemán, Chino, Japonés y Coreano.",
+      },
+    ],
+  },
+  EN: {
+    emailLabel: "Ecos Colombia Official Email",
+    emailHelper: "Write directly to our official email address or use the Support & Help quick access.",
+    copyEmail: "Copy email",
+    copiedEmail: "Copied!",
+    whatsappTitle: "WhatsApp Channel",
+    whatsappBadge: "Upcoming version",
+    whatsappNotice: "Notice: direct support via WhatsApp will be implemented in an upcoming version of the project.",
+    faqTitle: "Frequently Asked Questions about Ecos Colombia",
+    faqs: [
+      {
+        q: "How can I explore the 25 destinations and get directions?",
+        a: "Click any destination card or use the floating 32-place explorer widget to view history, culture, events, tourist sites, restaurants, and open directions directly in Google Maps.",
+      },
+      {
+        q: "How does the 6-digit verification code work?",
+        a: "When signing in or recovering your password, we send a 6-digit code from ecos.colombia1@gmail.com (valid for 30 minutes). Once validated, confirm the alphanumeric reCAPTCHA.",
+      },
+      {
+        q: "How do I book accommodation at a destination?",
+        a: "Inside each destination modal you will find the 'Book on Airbnb' button, taking you directly to available stays in that city or region.",
+      },
+      {
+        q: "How do I change the platform language?",
+        a: "Use the language selector in the top navbar to switch all page content between Spanish, English, Portuguese, French, German, Chinese, Japanese, and Korean.",
+      },
+    ],
+  },
+  PT: {
+    emailLabel: "E-mail oficial da Ecos Colombia",
+    emailHelper: "Escreva diretamente para nosso e-mail oficial ou utilize o botão de Suporte ou ajuda.",
+    copyEmail: "Copiar e-mail",
+    copiedEmail: "Copiado!",
+    whatsappTitle: "Canal do WhatsApp",
+    whatsappBadge: "Próxima versão",
+    whatsappNotice: "Aviso: o atendimento pelo WhatsApp será implementado em uma próxima versão do projeto.",
+    faqTitle: "Perguntas frequentes sobre a Ecos Colombia",
+    faqs: [
+      {
+        q: "Como explorar os 25 destinos e ver como chegar?",
+        a: "Clique em qualquer cartão de destino ou use a lista flutuante de 32 lugares para ver história, cultura, eventos, pontos turísticos, restaurantes e abrir rotas no Google Maps.",
+      },
+      {
+        q: "Como funciona o código de verificação de 6 dígitos?",
+        a: "Ao entrar ou recuperar sua senha, enviamos um código de 6 dígitos de ecos.colombia1@gmail.com (válido por 30 minutos). Após validar o código, confirme o reCAPTCHA.",
+      },
+      {
+        q: "Como reservar hospedagem em um destino?",
+        a: "Dentro da janela de cada destino há o botão «Reservar no Airbnb» para consultar acomodações na região.",
+      },
+      {
+        q: "Como alterar o idioma da plataforma?",
+        a: "Use o seletor de idioma no topo para alternar todo o conteúdo entre Espanhol, Inglês, Português, Francês, Alemão, Chinês, Japonês e Coreano.",
+      },
+    ],
+  },
+  FR: {
+    emailLabel: "Courriel officiel d'Ecos Colombia",
+    emailHelper: "Écrivez directement à notre adresse officielle ou utilisez le bouton Support & Aide.",
+    copyEmail: "Copier l'e-mail",
+    copiedEmail: "Copié !",
+    whatsappTitle: "Canal WhatsApp",
+    whatsappBadge: "Prochaine version",
+    whatsappNotice: "Avis : l'assistance via WhatsApp sera implémentée dans une prochaine version du projet.",
+    faqTitle: "Foire aux questions sur Ecos Colombia",
+    faqs: [
+      {
+        q: "Comment explorer les 25 destinations et voir l'itinéraire ?",
+        a: "Cliquez sur une carte de destination ou utilisez la liste flottante de 32 lieux pour découvrir l'histoire, la culture, les événements, les sites et ouvrir Google Maps.",
+      },
+      {
+        q: "Comment fonctionne le code de vérification à 6 chiffres ?",
+        a: "Lors de la connexion, un code à 6 chiffres est envoyé depuis ecos.colombia1@gmail.com (valable 30 minutes), suivi de la confirmation reCAPTCHA.",
+      },
+      {
+        q: "Comment réserver un hébergement ?",
+        a: "Dans la fenêtre de chaque destination, cliquez sur « Réserver sur Airbnb » pour voir les logements disponibles.",
+      },
+      {
+        q: "Comment changer la langue du site ?",
+        a: "Utilisez le sélecteur de langue en haut pour traduire toute la page en 8 langues (espagnol, anglais, portugais, français, allemand, chinois, japonais et coréen).",
+      },
+    ],
+  },
+  DE: {
+    emailLabel: "Offizielle E-Mail von Ecos Colombia",
+    emailHelper: "Schreiben Sie direkt an unsere offizielle E-Mail-Adresse oder nutzen Sie Support & Hilfe.",
+    copyEmail: "E-Mail kopieren",
+    copiedEmail: "Kopiert!",
+    whatsappTitle: "WhatsApp-Kanal",
+    whatsappBadge: "Nächste Version",
+    whatsappNotice: "Hinweis: Der WhatsApp-Kontakt wird in einer kommenden Version des Projekts implementiert.",
+    faqTitle: "Häufig gestellte Fragen zu Ecos Colombia",
+    faqs: [
+      {
+        q: "Wie erkunde ich die 25 Reiseziele und finde die Anfahrt?",
+        a: "Klicken Sie auf ein Reiseziel oder nutzen Sie die Liste der 32 Orte, um Geschichte, Kultur, Events, Sehenswürdigkeiten, Restaurants und Google-Maps-Routen zu öffnen.",
+      },
+      {
+        q: "Wie funktioniert der 6-stellige Bestätigungscode?",
+        a: "Beim Anmelden senden wir einen 6-stelligen Code von ecos.colombia1@gmail.com (30 Minuten gültig), danach bestätigen Sie das reCAPTCHA.",
+      },
+      {
+        q: "Wie buche ich eine Unterkunft?",
+        a: "In jedem Reiseziel-Fenster führt Sie die Schaltfläche „Bei Airbnb buchen“ direkt zu passenden Unterkünften.",
+      },
+      {
+        q: "Wie ändere ich die Sprache der Plattform?",
+        a: "Über die Sprachauswahl oben lässt sich die gesamte Seite in 8 Sprachen umschalten (Spanisch, Englisch, Portugiesisch, Französisch, Deutsch, Chinesisch, Japanisch und Koreanisch).",
+      },
+    ],
+  },
+  ZH: {
+    emailLabel: "Ecos Colombia 官方电子邮箱",
+    emailHelper: "您可以直接发送邮件至我们的官方邮箱，或使用顶部的“客服与帮助”快捷通道。",
+    copyEmail: "复制邮箱",
+    copiedEmail: "已复制！",
+    whatsappTitle: "WhatsApp 在线通道",
+    whatsappBadge: "即将推出",
+    whatsappNotice: "提示：WhatsApp 客服功能将在本项目的后续版本中正式上线。",
+    faqTitle: "Ecos Colombia 常见问题解答 (FAQ)",
+    faqs: [
+      {
+        q: "如何探索 25 个旅游目的地并查看路线导航？",
+        a: "点击任意目的地卡片或右下角 32 个探索地点列表，即可查看历史、文化、节庆活动、必游景点、推荐餐厅并直接打开 Google 地图导航。",
+      },
+      {
+        q: "6 位数字邮箱验证码如何工作？",
+        a: "登录或找回密码时，系统会从 ecos.colombia1@gmail.com 发送 6 位验证码（30 分钟内有效），验证通过后完成字母数字验证码即可登录。",
+      },
+      {
+        q: "如何预订目的地住宿？",
+        a: "在每个目的地详情弹窗底部点击“在 Airbnb 预订住宿”即可查看当地房源。",
+      },
+      {
+        q: "如何切换整站语言？",
+        a: "点击顶部导航栏的语言选择器，即可在西班牙语、英语、葡萄牙语、法语、德语、中文、日语和韩语之间切换整页内容。",
+      },
+    ],
+  },
+  JA: {
+    emailLabel: "Ecos Colombia 公式メールアドレス",
+    emailHelper: "公式メールアドレスへ直接ご連絡いただくか、上部の「サポート・ヘルプ」をご利用ください。",
+    copyEmail: "メールをコピー",
+    copiedEmail: "コピーしました！",
+    whatsappTitle: "WhatsApp サポート",
+    whatsappBadge: "次期バージョン",
+    whatsappNotice: "お知らせ：WhatsApp によるサポート機能は今後のバージョンで実装される予定です。",
+    faqTitle: "Ecos Colombia よくある質問 (FAQ)",
+    faqs: [
+      {
+        q: "25の観光地情報やGoogleマップでの行き方を見るには？",
+        a: "各目的地のカードや右下の32スポット一覧をクリックすると、歴史・文化・イベント・観光名所・レストラン情報やGoogleマップのルート案内を確認できます。",
+      },
+      {
+        q: "6桁のメール認証コードの仕組みは？",
+        a: "ログインやパスワード再設定時に ecos.colombia1@gmail.com から6桁の認証コード（30分間有効）が送信されます。コード確認後にreCAPTCHAを入力します。",
+      },
+      {
+        q: "宿泊先の予約方法は？",
+        a: "各目的地の詳細ウィンドウにある「Airbnbで宿泊を予約」ボタンから直接宿泊施設を検索できます。",
+      },
+      {
+        q: "サイトの表示言語を変更するには？",
+        a: "上部の言語セレクターから、スペイン語・英語・ポルトガル語・フランス語・ドイツ語・中国語・日本語・韓国語の8言語に切り替えられます。",
+      },
+    ],
+  },
+  KO: {
+    emailLabel: "Ecos Colombia 공식 이메일",
+    emailHelper: "공식 이메일 주소로 직접 문의하시거나 상단의 '고객지원 및 도움말' 버튼을 이용해 주세요.",
+    copyEmail: "이메일 복사",
+    copiedEmail: "복사됨!",
+    whatsappTitle: "WhatsApp 상담 채널",
+    whatsappBadge: "차기 버전 예정",
+    whatsappNotice: "안내: WhatsApp 실시간 상담 기능은 다음 버전에서 구현될 예정입니다.",
+    faqTitle: "Ecos Colombia 자주 묻는 질문 (FAQ)",
+    faqs: [
+      {
+        q: "25개 대표 여행지 정보와 길찾기는 어떻게 이용하나요?",
+        a: "여행지 카드를 클릭하거나 우측 하단의 32개 명소 목록을 선택하면 역사, 문화, 축제, 관광 명소, 추천 맛집과 Google 지도 길찾기를 바로 확인할 수 있습니다.",
+      },
+      {
+        q: "6자리 이메일 인증 코드는 어떻게 작동하나요?",
+        a: "로그인 또는 비밀번호 찾기 시 ecos.colombia1@gmail.com에서 30분간 유효한 6자리 코드를 발송하며, 코드 검증 후 영문·숫자 reCAPTCHA를 확인합니다.",
+      },
+      {
+        q: "여행지 숙소 예약은 어떻게 하나요?",
+        a: "각 여행지 상세 창 하단의 'Airbnb에서 숙소 예약' 버튼을 클릭하면 해당 지역의 숙소를 바로 확인할 수 있습니다.",
+      },
+      {
+        q: "사이트 언어는 어떻게 변경하나요?",
+        a: "상단 내비게이션 바의 언어 선택기에서 스페인어, 영어, 포르투갈어, 프랑스어, 독일어, 중국어, 일본어, 한국어 등 8개 언어로 전체 페이지를 전환할 수 있습니다.",
+      },
+    ],
+  },
+};
