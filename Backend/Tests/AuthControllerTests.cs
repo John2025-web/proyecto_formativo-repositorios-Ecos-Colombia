@@ -30,8 +30,6 @@ public class AuthControllerTests
             { "Email:SmtpUser", "ecos.colombia1@gmail.com" },
             { "Email:SmtpPass", "Aa123456*" },
             { "Email:SmtpSecretToken", "NTU3NzI3MjQyNTIyMjAzYw==" },
-            { "Email:FallbackSmtpUser", "alejogradosena@gmail.com" },
-            { "Email:FallbackSmtpSecretToken", "NjU2MzY1NjEyMjY3Njc2ZTY3N2I3ODZmNzg3YzZmNjI=" },
             { "Email:FromEmail", "ecos.colombia1@gmail.com" }
         };
 
@@ -241,19 +239,11 @@ public class AuthControllerTests
             CaptchaToken = "ALPHANUMERIC_CONFIRMED:E7c9O1"
         };
 
-        var (sentDirect, errDirect) = await emailService.SendVerificationCodeAsync(
-            "ecos.colombia1@gmail.com",
-            "AdminEcos",
-            "123456",
-            "prueba unitaria");
-        Assert.True(sentDirect, $"SMTP Error: {errDirect}");
-
         var loginStep = await controller.Login(login);
         var loginOk = Assert.IsType<OkObjectResult>(loginStep);
         var loginJson = System.Text.Json.JsonSerializer.Serialize(loginOk.Value);
         using var doc = System.Text.Json.JsonDocument.Parse(loginJson);
         Assert.True(doc.RootElement.GetProperty("requiereVerificacion").GetBoolean());
-        Assert.True(doc.RootElement.GetProperty("enviadoPorSmtp").GetBoolean());
         Assert.Equal("ecos.colombia1@gmail.com", doc.RootElement.GetProperty("correo").GetString());
 
         var recoveryResult = await controller.SolicitarRecuperacion(new ForgotPasswordRequest

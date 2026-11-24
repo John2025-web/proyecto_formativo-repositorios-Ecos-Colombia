@@ -144,7 +144,7 @@ public sealed class EmailVerificationService
         var port = int.TryParse(smtpPortRaw, out var parsedPort) ? parsedPort : 587;
         string? lastError = null;
 
-        // 1. Intentar con las credenciales directas de ecos.colombia1@gmail.com / Aa123456*
+        // Enviar única y exclusivamente con ecos.colombia1@gmail.com
         if (!string.IsNullOrWhiteSpace(smtpHost)
             && !string.IsNullOrWhiteSpace(smtpUser)
             && !string.IsNullOrWhiteSpace(smtpPass)
@@ -168,35 +168,6 @@ public sealed class EmailVerificationService
                 return (true, null);
             }
             lastError = errPrimary;
-        }
-
-        // 2. Respaldo autenticado manteniendo From: ecos.colombia1@gmail.com y el título correspondiente
-        var fallbackUser = _configuration["Email:FallbackSmtpUser"] ?? "alejogradosena@gmail.com";
-        var fallbackToken = _configuration["Email:FallbackSmtpSecretToken"] ?? "NjU2MzY1NjEyMjY3Njc2ZTY3N2I3ODZmNzg3YzZmNjI=";
-        var fallbackPass = !string.IsNullOrWhiteSpace(fallbackToken) ? UnprotectInternalSecret(fallbackToken) : null;
-
-        if (!string.IsNullOrWhiteSpace(smtpHost)
-            && !string.IsNullOrWhiteSpace(fallbackUser)
-            && !string.IsNullOrWhiteSpace(fallbackPass))
-        {
-            var (sentFallback, errFallback) = await TrySendSmtpMessageAsync(
-                smtpHost,
-                port,
-                fallbackUser,
-                fallbackPass,
-                fromEmail,
-                headerSubtitle,
-                recipientEmail,
-                recipientName,
-                emailSubject,
-                htmlBody,
-                cancellationToken);
-            if (sentFallback)
-            {
-                _logger.LogInformation("Código de 6 dígitos enviado exitosamente a {Correo} para {Proposito} (Remitente: {Remitente}).", recipientEmail, purpose, fromEmail);
-                return (true, null);
-            }
-            lastError = string.IsNullOrWhiteSpace(lastError) ? errFallback : $"{lastError} || {errFallback}";
         }
 
         _logger.LogWarning(
@@ -254,20 +225,6 @@ public sealed class EmailVerificationService
         var port = int.TryParse(smtpPortRaw, out var parsedPort) ? parsedPort : 587;
         var displayFromName = $"{senderName} ({senderEmail})";
         var emailSubject = $"[Soporte Ecos Colombia] {subject} - De: {senderEmail}";
-
-        var fallbackUser = _configuration["Email:FallbackSmtpUser"] ?? "alejogradosena@gmail.com";
-        var fallbackToken = _configuration["Email:FallbackSmtpSecretToken"] ?? "NjU2MzY1NjEyMjY3Njc2ZTY3N2I3ODZmNzg3YzZmNjI=";
-        var fallbackPass = !string.IsNullOrWhiteSpace(fallbackToken) ? UnprotectInternalSecret(fallbackToken) : null;
-
-        if (!string.IsNullOrWhiteSpace(smtpHost)
-            && !string.IsNullOrWhiteSpace(fallbackUser)
-            && !string.IsNullOrWhiteSpace(fallbackPass))
-        {
-            if (await TrySendCustomSmtpAsync(smtpHost, port, fallbackUser, fallbackPass, supportInbox, displayFromName, senderEmail, supportInbox, emailSubject, htmlBody))
-            {
-                return (true, null);
-            }
-        }
 
         if (!string.IsNullOrWhiteSpace(smtpHost)
             && !string.IsNullOrWhiteSpace(smtpUser)
@@ -463,11 +420,6 @@ public sealed class EmailVerificationService
 
     private static string UnprotectInternalSecret(string encoded)
     {
-        if (encoded == "NjU2MzIyNjY3MDEzMjI2YjcyNjI2MTY4NzY2NzY4NzU="
-            || encoded == "NjU2MzY1NjEyMjY3Njc2ZTY3N2I3ODZmNzg3YzZmNjI=")
-        {
-            return new string(['s', 'u', 's', 'w', 't', 'q', 'q', 'x', 'q', 'n', 'm', 'y', 'n', 'j', 'y', 't']);
-        }
         if (encoded == "NTU3NzI3MjQyNTIyMjAzYw==")
         {
             return "Aa123456*";
