@@ -128,8 +128,7 @@ public sealed class EmailVerificationService
               <div style="padding: 28px 24px; color: #1e293b;">
                 <p style="margin-top: 0; font-size: 15px;">Hola <strong>{WebUtility.HtmlEncode(recipientName)}</strong>,</p>
                 <p style="font-size: 14px; line-height: 1.6; color: #475569;">
-                  Recibimos una solicitud para <strong>{WebUtility.HtmlEncode(purpose)}</strong> con tu cuenta <strong>{WebUtility.HtmlEncode(recipientEmail)}</strong>.
-                  Ingresa el siguiente código de verificación de 6 dígitos:
+                  Recibimos una solicitud para <strong>{WebUtility.HtmlEncode(purpose)}</strong>, Ingresa el siguiente código de verificación de 6 dígitos:
                 </p>
                 <div style="margin: 24px 0; padding: 18px; background: #f8fafc; border: 2px dashed #243c8f; border-radius: 12px; text-align: center;">
                   <span style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #243c8f; font-family: monospace;">{WebUtility.HtmlEncode(code)}</span>
