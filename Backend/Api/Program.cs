@@ -122,8 +122,6 @@ _ = Task.Run(async () =>
                     [idUsuario] int IDENTITY(1,1) NOT NULL PRIMARY KEY,
                     [Nombre] nvarchar(100) NOT NULL,
                     [Correo] nvarchar(150) NOT NULL,
-                    [PaisOrigen] nvarchar(100) NULL,
-                    [IdiomaPreferido] nvarchar(50) NULL,
                     [TipoUsuario] nvarchar(50) NULL,
                     [Contraseña] nvarchar(100) NOT NULL
                 );
@@ -132,6 +130,10 @@ _ = Task.Run(async () =>
             BEGIN
                 ALTER TABLE [dbo].[Usuario] ADD [Contraseña] nvarchar(100) NULL;
             END
+            IF COL_LENGTH(N'dbo.Usuario', N'PaisOrigen') IS NOT NULL
+                ALTER TABLE [dbo].[Usuario] DROP COLUMN [PaisOrigen];
+            IF COL_LENGTH(N'dbo.Usuario', N'IdiomaPreferido') IS NOT NULL
+                ALTER TABLE [dbo].[Usuario] DROP COLUMN [IdiomaPreferido];
             IF COL_LENGTH(N'dbo.Usuario', N'Activo') IS NULL
                 ALTER TABLE [dbo].[Usuario] ADD [Activo] bit NOT NULL CONSTRAINT [DF_Usuario_Activo] DEFAULT 1;
             IF COL_LENGTH(N'dbo.Usuario', N'MotivoDeshabilitacion') IS NULL
@@ -163,8 +165,6 @@ _ = Task.Run(async () =>
             {
                 Nombre = "Ecos Colombia",
                 Correo = "ecos.colombia1@gmail.com",
-                PaisOrigen = "Colombia",
-                IdiomaPreferido = "ES",
                 TipoUsuario = "Usuario",
                 PasswordHash = ecosHash,
                 Activo = true

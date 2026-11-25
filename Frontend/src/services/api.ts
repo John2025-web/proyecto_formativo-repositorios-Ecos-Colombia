@@ -612,7 +612,6 @@ export async function registerUser(data: { nombre: string; correo: string; passw
             Correo: data.correo.trim().toLowerCase(),
             Password: data.password,
             CaptchaToken: data.captchaToken,
-            IdiomaPreferido: "ES",
             TipoUsuario: "Usuario",
             RequiereVerificacionCorreo: data.requiereVerificacionCorreo ?? true
         })

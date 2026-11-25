@@ -48,8 +48,6 @@ namespace ApiPrueba.Controllers
                         usuario.idUsuario,
                         usuario.Nombre,
                         usuario.Correo,
-                        usuario.PaisOrigen,
-                        usuario.IdiomaPreferido,
                         usuario.TipoUsuario,
                         usuario.Activo,
                         usuario.MotivoDeshabilitacion

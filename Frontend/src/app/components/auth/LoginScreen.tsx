@@ -1,11 +1,13 @@
 import { useRef, useState } from "react";
 import {
   ArrowLeft,
+  Check,
   CheckCircle2,
   ChevronRight,
   Clock,
   Eye,
   EyeOff,
+  Globe,
   KeyRound,
   Lock,
   Mail,
@@ -40,7 +42,20 @@ import "./auth.css";
 type LoginScreenProps = {
   onLogin: (user: UserType) => void;
   t: (key: string) => string;
+  lang?: string;
+  setLang?: (lang: string) => void;
 };
+
+const LOGIN_LANGUAGES = [
+  { code: "ES", label: "Español", flag: "🇨🇴" },
+  { code: "EN", label: "English", flag: "🇺🇸" },
+  { code: "PT", label: "Português", flag: "🇧🇷" },
+  { code: "FR", label: "Français", flag: "🇫🇷" },
+  { code: "DE", label: "Deutsch", flag: "🇩🇪" },
+  { code: "ZH", label: "中文 (Chino)", flag: "🇨🇳" },
+  { code: "JA", label: "日本語 (Japonés)", flag: "🇯🇵" },
+  { code: "KO", label: "한국어 (Coreano)", flag: "🇰🇷" },
+];
 
 type AuthViewMode =
   | "login"
@@ -51,8 +66,9 @@ type AuthViewMode =
   | "reset-password"
   | "google-auth";
 
-export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
+export default function LoginScreen({ onLogin, t, lang = "ES", setLang }: LoginScreenProps) {
   const [viewMode, setViewMode] = useState<AuthViewMode>("login");
+  const [langOpen, setLangOpen] = useState(false);
 
   // Estados de Login
   const [usuario, setUsuario] = useState("");
@@ -635,15 +651,80 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
 
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12 relative">
         <div className="w-full max-w-md relative z-10">
-          <div className="flex items-center gap-2 mb-10 lg:hidden">
-            <ImageWithFallback
-              src={colombiaLogo}
-              alt="Logo"
-              style={{ width: 32, height: 32, objectFit: "contain" }}
-            />
-            <span className="font-bold text-xl" style={{ color: C.navy }}>
-              Ecos <span style={{ color: C.red }}>Colombia</span>
-            </span>
+          <div className="flex items-center justify-between gap-2 mb-6">
+            <div className="flex items-center gap-2 lg:invisible">
+              <ImageWithFallback
+                src={colombiaLogo}
+                alt="Logo"
+                style={{ width: 32, height: 32, objectFit: "contain" }}
+              />
+              <span className="font-bold text-xl" style={{ color: C.navy }}>
+                Ecos <span style={{ color: C.red }}>Colombia</span>
+              </span>
+            </div>
+
+            {setLang && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setLangOpen((prev) => !prev)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all hover:bg-white"
+                  style={{
+                    color: C.navy,
+                    background: C.white,
+                    border: "1.5px solid rgba(36,60,143,0.16)",
+                    fontWeight: 600,
+                    boxShadow: "0 2px 10px rgba(36,60,143,0.06)",
+                  }}
+                >
+                  <Globe size={13} /> {lang}
+                </button>
+                {langOpen && (
+                  <div
+                    className="absolute right-0 top-full mt-2 rounded-xl overflow-hidden py-1.5"
+                    style={{
+                      background: C.white,
+                      boxShadow: "0 10px 36px rgba(36,60,143,0.18)",
+                      border: "1px solid rgba(36,60,143,0.08)",
+                      minWidth: "235px",
+                      zIndex: 60,
+                    }}
+                  >
+                    {LOGIN_LANGUAGES.map((l) => (
+                      <button
+                        key={l.code}
+                        type="button"
+                        onClick={() => {
+                          setLang(l.code);
+                          setLangOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between gap-4 px-4 py-2 text-xs text-left whitespace-nowrap hover:bg-gray-50 transition-colors"
+                        style={{
+                          color: lang === l.code ? C.navy : "#5a5a72",
+                          fontWeight: lang === l.code ? 600 : 400,
+                          background:
+                            lang === l.code ? "rgba(36,60,143,0.06)" : undefined,
+                        }}
+                      >
+                        <span className="flex items-center gap-2.5 whitespace-nowrap">
+                          <span className="w-5 text-center flex-shrink-0">
+                            {l.flag}
+                          </span>
+                          <span>{l.label}</span>
+                        </span>
+                        {lang === l.code && (
+                          <Check
+                            size={13}
+                            className="flex-shrink-0"
+                            style={{ color: C.navy }}
+                          />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div

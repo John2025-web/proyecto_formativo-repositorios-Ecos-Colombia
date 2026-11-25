@@ -24,10 +24,6 @@ namespace ApiPrueba.DBcontext;
 
             modelBuilder.Entity<Usuario>().Property(u => u.Correo).HasColumnName("Correo").HasMaxLength(150).IsRequired();
 
-            modelBuilder.Entity<Usuario>().Property(u => u.PaisOrigen).HasColumnName("PaisOrigen").HasMaxLength(100);
-
-            modelBuilder.Entity<Usuario>().Property(u => u.IdiomaPreferido).HasColumnName("IdiomaPreferido").HasMaxLength(50);
-
             modelBuilder.Entity<Usuario>().Property(u => u.TipoUsuario).HasColumnName("TipoUsuario").HasMaxLength(50);
 
             modelBuilder.Entity<Usuario>().Property(u => u.PasswordHash).HasColumnName("Contraseña").HasMaxLength(100).IsRequired();

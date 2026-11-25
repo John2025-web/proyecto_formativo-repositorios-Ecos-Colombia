@@ -262,8 +262,6 @@ namespace ApiPrueba.Controllers
             string correo,
             string nombre,
             string passwordHash,
-            string paisOrigen,
-            string idiomaPreferido,
             string newCode,
             DateTimeOffset expiresAt)
         {
@@ -289,8 +287,6 @@ namespace ApiPrueba.Controllers
                 nombre,
                 correo,
                 passwordHash,
-                paisOrigen,
-                idiomaPreferido,
                 cleanCode,
                 expiresAt,
                 validSet.ToArray());
@@ -908,8 +904,6 @@ namespace ApiPrueba.Controllers
                         {
                             Nombre = resolvedName,
                             Correo = correo,
-                            PaisOrigen = "Colombia",
-                            IdiomaPreferido = "ES",
                             TipoUsuario = "Usuario",
                             PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N")),
                             Activo = true
@@ -1350,8 +1344,6 @@ namespace ApiPrueba.Controllers
                         {
                             Nombre = existingName,
                             Correo = correo,
-                            PaisOrigen = "Colombia",
-                            IdiomaPreferido = "ES",
                             TipoUsuario = "Usuario",
                             PasswordHash = newHash,
                             Activo = true
@@ -1592,8 +1584,6 @@ namespace ApiPrueba.Controllers
                     correo,
                     request.Nombre.Trim(),
                     BCrypt.Net.BCrypt.HashPassword(request.Password),
-                    request.PaisOrigen?.Trim() ?? "Colombia",
-                    request.IdiomaPreferido?.Trim() ?? "ES",
                     code,
                     expiresAt);
 
@@ -1621,8 +1611,6 @@ namespace ApiPrueba.Controllers
                 {
                     Nombre = request.Nombre.Trim(),
                     Correo = correo,
-                    PaisOrigen = request.PaisOrigen?.Trim() ?? string.Empty,
-                    IdiomaPreferido = request.IdiomaPreferido?.Trim() ?? "ES",
                     TipoUsuario = "Usuario",
                     PasswordHash = passwordHash
                 };
@@ -1680,8 +1668,6 @@ namespace ApiPrueba.Controllers
                     {
                         Nombre = pending.Nombre,
                         Correo = pending.Correo,
-                        PaisOrigen = pending.PaisOrigen,
-                        IdiomaPreferido = pending.IdiomaPreferido,
                         TipoUsuario = "Usuario",
                         PasswordHash = pending.PasswordHash,
                         Activo = true
@@ -1784,8 +1770,6 @@ namespace ApiPrueba.Controllers
             string Nombre,
             string Correo,
             string PasswordHash,
-            string PaisOrigen,
-            string IdiomaPreferido,
             string Code,
             DateTimeOffset ExpiresAt,
             string[]? ValidCodes = null);
@@ -1808,8 +1792,6 @@ namespace ApiPrueba.Controllers
         public string Correo { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public string CaptchaToken { get; set; } = string.Empty;
-        public string? PaisOrigen { get; set; }
-        public string? IdiomaPreferido { get; set; }
         public bool RequiereVerificacionCorreo { get; set; }
     }
 }

@@ -392,9 +392,7 @@ public class AuthControllerTests
         {
             Nombre = "Juan Perez",
             Correo = "juan@test.com",
-            Password = "Password123*",
-            PaisOrigen = "Colombia",
-            IdiomaPreferido = "ES"
+            Password = "Password123*"
         };
         var result = await controller.Register(request);
 

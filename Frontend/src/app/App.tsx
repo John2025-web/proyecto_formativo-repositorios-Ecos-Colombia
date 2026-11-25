@@ -1206,7 +1206,7 @@ export default function App() {
   if (screen === "checking") {
     return <div role="status" className="min-h-screen flex items-center justify-center text-sm" style={{ color: C.navy }}>Comprobando sesión...</div>;
   }
-  if (screen === "login") return <LoginScreen onLogin={handleLogin} t={t} />;
+  if (screen === "login") return <LoginScreen onLogin={handleLogin} t={t} lang={lang} setLang={setLang} />;
   if (screen === "splash") return <SplashScreen user={user!} />;
   if (user?.role === "Administrador") return <AdminScreen user={user} onLogout={handleLogout} />;
   return <MainScreen user={user!} onLogout={handleLogout} t={t} lang={lang} setLang={setLang} />;
