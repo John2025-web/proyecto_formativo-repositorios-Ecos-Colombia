@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Mail, Lock, Eye, EyeOff, MapPin, ChevronRight,
   X, Navigation, Calendar, Utensils, Landmark, BookOpen,
-  Star, Menu, Globe, LogOut, User, Check, ShieldCheck, UserRound, UserPlus, ArrowLeft, Users, MessageSquare, FilePenLine, Ban, Trash2, RefreshCw, ChevronDown, ChevronUp,
+  Star, Menu, Globe, LogOut, User, Check, ShieldCheck, UserRound, UserPlus, ArrowLeft, Users, MessageSquare, FilePenLine, Ban, Trash2, RefreshCw, ChevronDown, ChevronUp, Bell,
 } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import LoginScreen from "@/app/components/auth/LoginScreen";
@@ -52,6 +52,9 @@ const TR: Record<string, Record<string, string>> = {
     restaurantDescSuffix: "Ideal para disfrutar de la gastronomía local en un ambiente auténtico.",
     roleUser: "Usuario",
     roleAdmin: "Administrador",
+    notificationsTitle: "Notificaciones",
+    notificationsBadge: "Próxima versión",
+    notificationsNotice: "El sistema de notificaciones se implementará en una próxima versión.",
   },
   EN: {
     navDestinos: "Destinations", navExperiencias: "Experiences", navCultura: "Culture", navBlog: "Blog", navContacto: "Contact",
@@ -84,6 +87,9 @@ const TR: Record<string, Record<string, string>> = {
     restaurantDescSuffix: "Ideal for enjoying local gastronomy in an authentic atmosphere.",
     roleUser: "User",
     roleAdmin: "Administrator",
+    notificationsTitle: "Notifications",
+    notificationsBadge: "Upcoming version",
+    notificationsNotice: "The notifications system will be implemented in an upcoming version.",
   },
   PT: {
     navDestinos: "Destinos", navExperiencias: "Experiências", navCultura: "Cultura", navBlog: "Blog", navContacto: "Contato",
@@ -116,6 +122,9 @@ const TR: Record<string, Record<string, string>> = {
     restaurantDescSuffix: "Ideal para desfrutar da gastronomia local em um ambiente autêntico.",
     roleUser: "Usuário",
     roleAdmin: "Administrador",
+    notificationsTitle: "Notificações",
+    notificationsBadge: "Próxima versão",
+    notificationsNotice: "O sistema de notificações será implementado em uma próxima versão.",
   },
   FR: {
     navDestinos: "Destinations", navExperiencias: "Expériences", navCultura: "Culture", navBlog: "Blog", navContacto: "Contact",
@@ -148,6 +157,9 @@ const TR: Record<string, Record<string, string>> = {
     restaurantDescSuffix: "Idéal pour savourer la gastronomie locale dans une ambiance authentique.",
     roleUser: "Utilisateur",
     roleAdmin: "Administrateur",
+    notificationsTitle: "Notifications",
+    notificationsBadge: "Prochaine version",
+    notificationsNotice: "Le système de notifications sera implémenté dans une prochaine version.",
   },
   DE: {
     navDestinos: "Reiseziele", navExperiencias: "Erlebnisse", navCultura: "Kultur", navBlog: "Blog", navContacto: "Kontakt",
@@ -180,6 +192,9 @@ const TR: Record<string, Record<string, string>> = {
     restaurantDescSuffix: "Ideal, um die lokale Gastronomie in authentischer Atmosphäre zu genießen.",
     roleUser: "Benutzer",
     roleAdmin: "Administrator",
+    notificationsTitle: "Benachrichtigungen",
+    notificationsBadge: "Nächste Version",
+    notificationsNotice: "Das Benachrichtigungssystem wird in einer kommenden Version implementiert.",
   },
   ZH: {
     navDestinos: "目的地", navExperiencias: "特色体验", navCultura: "文化", navBlog: "旅行博客", navContacto: "联系我们",
@@ -212,6 +227,9 @@ const TR: Record<string, Record<string, string>> = {
     restaurantDescSuffix: "在纯正的当地氛围中品尝地道哥伦比亚美食。",
     roleUser: "普通用户",
     roleAdmin: "系统管理员",
+    notificationsTitle: "通知中心",
+    notificationsBadge: "即将推出",
+    notificationsNotice: "通知功能将在后续版本中正式上线。",
   },
   JA: {
     navDestinos: "目的地", navExperiencias: "体験", navCultura: "文化", navBlog: "ブログ", navContacto: "お問い合わせ",
@@ -244,6 +262,9 @@ const TR: Record<string, Record<string, string>> = {
     restaurantDescSuffix: "本場の雰囲気の中で伝統的なローカル美食をお楽しみいただけます。",
     roleUser: "ユーザー",
     roleAdmin: "管理者",
+    notificationsTitle: "通知",
+    notificationsBadge: "次期バージョン",
+    notificationsNotice: "通知機能は今後のバージョンで実装される予定です。",
   },
   KO: {
     navDestinos: "여행지", navExperiencias: "특별한 경험", navCultura: "문화", navBlog: "블로그", navContacto: "문의하기",
@@ -276,6 +297,9 @@ const TR: Record<string, Record<string, string>> = {
     restaurantDescSuffix: "진정한 현지 분위기 속에서 콜롬비아 전통 미식을 즐기기에 완벽한 곳입니다.",
     roleUser: "일반 사용자",
     roleAdmin: "관리자",
+    notificationsTitle: "알림",
+    notificationsBadge: "차기 버전 예정",
+    notificationsNotice: "알림 시스템은 다음 버전에서 구현될 예정입니다.",
   },
 };
 
@@ -1352,6 +1376,7 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
   const [activeTab, setActiveTab] = useState<TabKey>("historia");
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [activeNav, setActiveNav] = useState<string | null>(null);
   const [langOpen, setLangOpen] = useState(false);
   const [selectedNavItem, setSelectedNavItem] = useState<string | null>(null);
@@ -1368,7 +1393,7 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node)) { setActiveNav(null); setLangOpen(false); setUserMenuOpen(false); }
+      if (navRef.current && !navRef.current.contains(e.target as Node)) { setActiveNav(null); setLangOpen(false); setUserMenuOpen(false); setNotificationsOpen(false); }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -1396,7 +1421,7 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
               const section = navSectionKeys[i];
               const isActive = activeNav === section;
               return (
-                <button key={key} onClick={() => { setActiveNav(isActive ? null : section); setLangOpen(false); setUserMenuOpen(false); }}
+                <button key={key} onClick={() => { setActiveNav(isActive ? null : section); setLangOpen(false); setUserMenuOpen(false); setNotificationsOpen(false); }}
                   className="px-4 py-2 rounded-lg text-sm transition-all duration-150 flex items-center gap-1"
                   style={{ color: isActive ? C.navy : "#5a5a72", background: isActive ? "rgba(36,60,143,0.08)" : "transparent", fontWeight: isActive ? 600 : 500 }}>
                   {t(key)}
@@ -1406,11 +1431,11 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
             })}
           </div>
 
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3.5">
             <SupportQuickAccess defaultEmail={user.email} defaultName={user.name} roleLabel={roleDisplay} label={t("supportHelp")} textColor="#5a5a72" lang={lang} />
             {/* Language */}
             <div className="relative">
-              <button onClick={() => { setLangOpen(!langOpen); setActiveNav(null); setUserMenuOpen(false); }}
+              <button onClick={() => { setLangOpen(!langOpen); setActiveNav(null); setUserMenuOpen(false); setNotificationsOpen(false); }}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all hover:bg-gray-50"
                 style={{ color: C.navy, border: "1.5px solid rgba(36,60,143,0.15)", fontWeight: 600 }}>
                 <Globe size={14} /> {lang}
@@ -1435,9 +1460,67 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
                 </div>
               )}
             </div>
+            {/* Notifications Bell */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setNotificationsOpen(!notificationsOpen);
+                  setUserMenuOpen(false);
+                  setLangOpen(false);
+                  setActiveNav(null);
+                }}
+                aria-label={t("notificationsTitle")}
+                title={t("notificationsTitle")}
+                className="relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 hover:bg-gray-50"
+                style={{
+                  color: C.navy,
+                  border: "1.5px solid rgba(36,60,143,0.15)",
+                  background: notificationsOpen ? "rgba(36,60,143,0.06)" : C.white,
+                }}
+              >
+                <Bell size={17} />
+                <span
+                  className="absolute top-2 right-2.5 w-2 h-2 rounded-full"
+                  style={{ background: C.red }}
+                />
+              </button>
+              {notificationsOpen && (
+                <div
+                  className="absolute right-0 top-full mt-2 w-72 rounded-2xl p-4"
+                  style={{
+                    background: C.white,
+                    boxShadow: "0 10px 36px rgba(36,60,143,0.18)",
+                    border: "1px solid rgba(36,60,143,0.10)",
+                    zIndex: 60,
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <Bell size={15} style={{ color: C.navy }} />
+                      <span className="text-sm font-bold" style={{ color: C.navy }}>
+                        {t("notificationsTitle")}
+                      </span>
+                    </div>
+                    <span
+                      className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold"
+                      style={{
+                        background: "rgba(244,211,94,0.28)",
+                        color: C.navy,
+                      }}
+                    >
+                      {t("notificationsBadge")}
+                    </span>
+                  </div>
+                  <p className="text-xs leading-relaxed" style={{ color: "#5a5a72", fontWeight: 400 }}>
+                    {t("notificationsNotice")}
+                  </p>
+                </div>
+              )}
+            </div>
             {/* User */}
             <div className="relative">
-              <button onClick={() => { setUserMenuOpen(!userMenuOpen); setLangOpen(false); setActiveNav(null); }}
+              <button onClick={() => { setUserMenuOpen(!userMenuOpen); setLangOpen(false); setActiveNav(null); setNotificationsOpen(false); }}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-200 hover:bg-gray-50"
                 style={{ border: "1.5px solid rgba(36,60,143,0.15)" }}>
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: C.navy }}>{initials}</div>
