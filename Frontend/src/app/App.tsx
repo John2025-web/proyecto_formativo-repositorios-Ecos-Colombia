@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Mail, Lock, Eye, EyeOff, MapPin, ChevronRight,
   X, Navigation, Calendar, Utensils, Landmark, BookOpen,
-  Star, Menu, Globe, LogOut, User, Check, ShieldCheck, UserRound, UserPlus, ArrowLeft, Users, MessageSquare, FilePenLine, Ban, Trash2, RefreshCw, ChevronDown, ChevronUp, Bell, Clock,
+  Star, Menu, Globe, LogOut, User, Check, ShieldCheck, UserRound, UserPlus, ArrowLeft, Users, MessageSquare, FilePenLine, Ban, Trash2, RefreshCw, ChevronDown, ChevronUp, Bell,
 } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import LoginScreen from "@/app/components/auth/LoginScreen";
@@ -17,7 +17,7 @@ import {
 } from "@/app/i18nDestinations";
 import type { NavMapType } from "@/app/i18nEuropean";
 import colombiaLogo from "@/imports/image-removebg-preview.png";
-import { logout, getSession, getAdminUsers, getAdminReviews, getAdministrators, createAdministrator, setUserStatus, censorReview, deleteReview, configureOneHourDeviceSession, getActiveTrustedDeviceRecord, type AdminUser, type AdminReview, type AdminAccount } from "@/services/api";
+import { logout, getSession, getAdminUsers, getAdminReviews, getAdministrators, createAdministrator, setUserStatus, censorReview, deleteReview, type AdminUser, type AdminReview, type AdminAccount } from "@/services/api";
 
 // ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
 const TR: Record<string, Record<string, string>> = {
@@ -1449,31 +1449,8 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
   const [activeContactAction, setActiveContactAction] = useState<"email" | "whatsapp" | "faq">("email");
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [emailCopied, setEmailCopied] = useState(false);
-  const [oneHourActive, setOneHourActive] = useState<boolean>(() =>
-    Boolean(getActiveTrustedDeviceRecord(user.email, user.role))
-  );
-  const [oneHourBusy, setOneHourBusy] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
   const contactTr = CONTACT_SECTION_TR[lang] ?? CONTACT_SECTION_TR.EN;
-
-  const handleToggleOneHourSession = async () => {
-    if (oneHourBusy) return;
-    const nextState = !oneHourActive;
-    setOneHourBusy(true);
-    try {
-      await configureOneHourDeviceSession({
-        correo: user.email,
-        nombre: user.name,
-        rol: user.role,
-        activar: nextState,
-      });
-      setOneHourActive(nextState);
-    } catch {
-      // Mantener estado actual si ocurre un error de red
-    } finally {
-      setOneHourBusy(false);
-    }
-  };
 
   const openModal = (dest: typeof destinations[0]) => { setModalDest(dest); setActiveTab("historia"); document.body.style.overflow = "hidden"; };
   const closeModal = () => { setModalDest(null); document.body.style.overflow = ""; };
@@ -1637,7 +1614,7 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
                 <span className="text-sm font-medium" style={{ color: C.navy }}>{user.name.split(" ")[0]}</span>
               </button>
               {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 rounded-xl overflow-hidden py-1" style={{ background: C.white, boxShadow: "0 8px 32px rgba(36,60,143,0.16)", border: "1px solid rgba(36,60,143,0.08)", zIndex: 60 }}>
+                <div className="absolute right-0 top-full mt-2 w-52 rounded-xl overflow-hidden py-1" style={{ background: C.white, boxShadow: "0 8px 32px rgba(36,60,143,0.16)", border: "1px solid rgba(36,60,143,0.08)", zIndex: 60 }}>
                   <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(36,60,143,0.08)" }}>
                     <p className="text-sm font-semibold" style={{ color: C.navy }}>{user.name}</p>
                     <p className="text-xs truncate" style={{ color: "#9b9baf" }}>{user.email}</p>
@@ -1646,27 +1623,6 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
                     </span>
                   </div>
                   <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" style={{ color: "#5a5a72" }}><User size={14} /> {t("miPerfil")}</button>
-                  <button
-                    type="button"
-                    disabled={oneHourBusy}
-                    onClick={handleToggleOneHourSession}
-                    className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left text-xs hover:bg-gray-50 transition-colors"
-                    style={{ color: oneHourActive ? C.navy : "#5a5a72", fontWeight: oneHourActive ? 600 : 500 }}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Clock size={14} style={{ color: oneHourActive ? "#10b981" : C.navy, flexShrink: 0 }} />
-                      <span>Mantener sesión 1 hora (sin nuevo código)</span>
-                    </span>
-                    <span
-                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold flex-shrink-0"
-                      style={{
-                        background: oneHourActive ? "rgba(16,185,129,0.14)" : "rgba(36,60,143,0.08)",
-                        color: oneHourActive ? "#047857" : C.navy,
-                      }}
-                    >
-                      {oneHourActive ? "1h Activo" : "Activar"}
-                    </span>
-                  </button>
                   <div className="px-4 py-2 hover:bg-gray-50 transition-colors">
                     <SupportQuickAccess defaultEmail={user.email} defaultName={user.name} roleLabel={roleDisplay} label={t("supportHelp")} textColor="#5a5a72" lang={lang} />
                   </div>
