@@ -844,12 +844,12 @@ export const CONTACT_SECTION_TR: Record<string, ContactPanelTranslation> = {
     faqTitle: "Preguntas frecuentes sobre Ecos Colombia",
     faqs: [
       {
-        q: "¿Cómo explorar los 25 destinos y ver cómo llegar?",
-        a: "Selecciona cualquier tarjeta de destino o usa la lista flotante de 32 lugares para ver su historia, cultura, eventos, sitios turísticos, restaurantes y abrir la ruta directa en Google Maps.",
+        q: "¿Cómo se usa la página de Ecos Colombia?",
+        a: "Navega por el menú superior o las tarjetas de destinos en la página principal, haz clic en «Explorar» para ver su historia, cultura, eventos, sitios y restaurantes, o usa la lista flotante inferior derecha para ubicar lugares en Google Maps.",
       },
       {
-        q: "¿Cómo funciona el código de verificación de 6 dígitos?",
-        a: "Al iniciar sesión o recuperar tu contraseña, enviamos un código de 6 dígitos desde ecos.colombia1@gmail.com (válido por 30 minutos). Tras validar el código, confirmas el reCAPTCHA alfanumérico.",
+        q: "¿Cómo puedo comunicarme con soporte o ayuda?",
+        a: "Haz clic en el botón «Soporte o ayuda» en la barra superior (o en el menú de usuario), escribe tu correo, asunto y mensaje, o envía un correo directamente a ecos.colombia1@gmail.com.",
       },
       {
         q: "¿Cómo reservar alojamiento en un destino turístico?",
@@ -872,12 +872,12 @@ export const CONTACT_SECTION_TR: Record<string, ContactPanelTranslation> = {
     faqTitle: "Frequently Asked Questions about Ecos Colombia",
     faqs: [
       {
-        q: "How can I explore the 25 destinations and get directions?",
-        a: "Click any destination card or use the floating 32-place explorer widget to view history, culture, events, tourist sites, restaurants, and open directions directly in Google Maps.",
+        q: "How do I use the Ecos Colombia website?",
+        a: "Browse the top navigation menu or the destination cards on the main page, click 'Explore' to view history, culture, events, sites, and restaurants, or use the bottom-right floating list to open places on Google Maps.",
       },
       {
-        q: "How does the 6-digit verification code work?",
-        a: "When signing in or recovering your password, we send a 6-digit code from ecos.colombia1@gmail.com (valid for 30 minutes). Once validated, confirm the alphanumeric reCAPTCHA.",
+        q: "How can I contact support or get help?",
+        a: "Click the 'Support & Help' button in the top bar (or inside your user menu), enter your email, subject, and message, or write directly to ecos.colombia1@gmail.com.",
       },
       {
         q: "How do I book accommodation at a destination?",
@@ -900,12 +900,12 @@ export const CONTACT_SECTION_TR: Record<string, ContactPanelTranslation> = {
     faqTitle: "Perguntas frequentes sobre a Ecos Colombia",
     faqs: [
       {
-        q: "Como explorar os 25 destinos e ver como chegar?",
-        a: "Clique em qualquer cartão de destino ou use a lista flutuante de 32 lugares para ver história, cultura, eventos, pontos turísticos, restaurantes e abrir rotas no Google Maps.",
+        q: "Como usar a página da Ecos Colombia?",
+        a: "Navegue pelo menu superior ou pelos cartões de destinos na página principal, clique em «Explorar» para ver história, cultura, eventos, locais e restaurantes, ou use a lista flutuante no canto inferior direito para abrir o Google Maps.",
       },
       {
-        q: "Como funciona o código de verificação de 6 dígitos?",
-        a: "Ao entrar ou recuperar sua senha, enviamos um código de 6 dígitos de ecos.colombia1@gmail.com (válido por 30 minutos). Após validar o código, confirme o reCAPTCHA.",
+        q: "Como posso entrar em contato com o suporte?",
+        a: "Clique no botão «Suporte ou ajuda» na barra superior (ou no menu do usuário), preencha seu e-mail, assunto e mensagem, ou escreva diretamente para ecos.colombia1@gmail.com.",
       },
       {
         q: "Como reservar hospedagem em um destino?",
@@ -928,12 +928,12 @@ export const CONTACT_SECTION_TR: Record<string, ContactPanelTranslation> = {
     faqTitle: "Foire aux questions sur Ecos Colombia",
     faqs: [
       {
-        q: "Comment explorer les 25 destinations et voir l'itinéraire ?",
-        a: "Cliquez sur une carte de destination ou utilisez la liste flottante de 32 lieux pour découvrir l'histoire, la culture, les événements, les sites et ouvrir Google Maps.",
+        q: "Comment utiliser le site Ecos Colombia ?",
+        a: "Parcourez le menu supérieur ou les cartes de destinations, cliquez sur « Explorer » pour consulter l'histoire, la culture, les événements, les sites et les restaurants, ou utilisez la liste flottante en bas à droite pour ouvrir Google Maps.",
       },
       {
-        q: "Comment fonctionne le code de vérification à 6 chiffres ?",
-        a: "Lors de la connexion, un code à 6 chiffres est envoyé depuis ecos.colombia1@gmail.com (valable 30 minutes), suivi de la confirmation reCAPTCHA.",
+        q: "Comment contacter le support ou l'assistance ?",
+        a: "Cliquez sur « Support & Aide » dans la barre supérieure (ou dans le menu utilisateur), saisissez votre e-mail, l'objet et votre message, ou écrivez directement à ecos.colombia1@gmail.com.",
       },
       {
         q: "Comment réserver un hébergement ?",
@@ -956,12 +956,12 @@ export const CONTACT_SECTION_TR: Record<string, ContactPanelTranslation> = {
     faqTitle: "Häufig gestellte Fragen zu Ecos Colombia",
     faqs: [
       {
-        q: "Wie erkunde ich die 25 Reiseziele und finde die Anfahrt?",
-        a: "Klicken Sie auf ein Reiseziel oder nutzen Sie die Liste der 32 Orte, um Geschichte, Kultur, Events, Sehenswürdigkeiten, Restaurants und Google-Maps-Routen zu öffnen.",
+        q: "Wie benutze ich die Seite von Ecos Colombia?",
+        a: "Nutzen Sie das obere Menü oder die Reiseziel-Karten auf der Startseite, klicken Sie auf „Erkunden“ für Geschichte, Kultur, Events, Orte und Restaurants oder öffnen Sie über die Liste unten rechts Google Maps.",
       },
       {
-        q: "Wie funktioniert der 6-stellige Bestätigungscode?",
-        a: "Beim Anmelden senden wir einen 6-stelligen Code von ecos.colombia1@gmail.com (30 Minuten gültig), danach bestätigen Sie das reCAPTCHA.",
+        q: "Wie kann ich den Support kontaktieren?",
+        a: "Klicken Sie oben auf „Support & Hilfe“ (oder im Benutzermenü), geben Sie Ihre E-Mail, den Betreff und Ihre Nachricht ein oder schreiben Sie direkt an ecos.colombia1@gmail.com.",
       },
       {
         q: "Wie buche ich eine Unterkunft?",
@@ -984,12 +984,12 @@ export const CONTACT_SECTION_TR: Record<string, ContactPanelTranslation> = {
     faqTitle: "Ecos Colombia 常见问题解答 (FAQ)",
     faqs: [
       {
-        q: "如何探索 25 个旅游目的地并查看路线导航？",
-        a: "点击任意目的地卡片或右下角 32 个探索地点列表，即可查看历史、文化、节庆活动、必游景点、推荐餐厅并直接打开 Google 地图导航。",
+        q: "如何使用 Ecos Colombia 网站？",
+        a: "您可以通过顶部导航菜单或首页目的地卡片浏览，点击“探索详情”查看当地历史、文化、节庆、景点与餐厅，或通过右下角浮动列表在 Google 地图中定位。",
       },
       {
-        q: "6 位数字邮箱验证码如何工作？",
-        a: "登录或找回密码时，系统会从 ecos.colombia1@gmail.com 发送 6 位验证码（30 分钟内有效），验证通过后完成字母数字验证码即可登录。",
+        q: "如何联系客服或获取帮助？",
+        a: "点击顶部导航栏（或用户菜单中）的“客服与帮助”按钮，填写您的邮箱、主题和留言，或直接发送邮件至 ecos.colombia1@gmail.com。",
       },
       {
         q: "如何预订目的地住宿？",
@@ -1012,12 +1012,12 @@ export const CONTACT_SECTION_TR: Record<string, ContactPanelTranslation> = {
     faqTitle: "Ecos Colombia よくある質問 (FAQ)",
     faqs: [
       {
-        q: "25の観光地情報やGoogleマップでの行き方を見るには？",
-        a: "各目的地のカードや右下の32スポット一覧をクリックすると、歴史・文化・イベント・観光名所・レストラン情報やGoogleマップのルート案内を確認できます。",
+        q: "Ecos Colombia のサイトの使い方は？",
+        a: "上部メニューや目的地のカードから気になる都市を選び、「詳しく見る」をクリックすると歴史・文化・イベント・名所・レストランを確認できます。右下のリストからGoogleマップも開けます。",
       },
       {
-        q: "6桁のメール認証コードの仕組みは？",
-        a: "ログインやパスワード再設定時に ecos.colombia1@gmail.com から6桁の認証コード（30分間有効）が送信されます。コード確認後にreCAPTCHAを入力します。",
+        q: "サポートへの連絡方法は？",
+        a: "上部バー（またはユーザーメニュー）の「サポート・ヘルプ」をクリックしてメールアドレス・件名・メッセージを送るか、ecos.colombia1@gmail.com へ直接メールをお送りください。",
       },
       {
         q: "宿泊先の予約方法は？",
@@ -1040,12 +1040,12 @@ export const CONTACT_SECTION_TR: Record<string, ContactPanelTranslation> = {
     faqTitle: "Ecos Colombia 자주 묻는 질문 (FAQ)",
     faqs: [
       {
-        q: "25개 대표 여행지 정보와 길찾기는 어떻게 이용하나요?",
-        a: "여행지 카드를 클릭하거나 우측 하단의 32개 명소 목록을 선택하면 역사, 문화, 축제, 관광 명소, 추천 맛집과 Google 지도 길찾기를 바로 확인할 수 있습니다.",
+        q: "Ecos Colombia 웹사이트는 어떻게 이용하나요?",
+        a: "상단 메뉴나 메인 화면의 여행지 카드에서 '탐험하기'를 클릭하면 역사, 문화, 축제, 명소, 맛집 정보를 볼 수 있으며, 우측 하단 목록에서 Google 지도로 위치를 바로 열 수 있습니다.",
       },
       {
-        q: "6자리 이메일 인증 코드는 어떻게 작동하나요?",
-        a: "로그인 또는 비밀번호 찾기 시 ecos.colombia1@gmail.com에서 30분간 유효한 6자리 코드를 발송하며, 코드 검증 후 영문·숫자 reCAPTCHA를 확인합니다.",
+        q: "고객지원팀에 어떻게 문의할 수 있나요?",
+        a: "상단 바(또는 사용자 메뉴)의 '고객지원 및 도움말' 버튼을 눌러 이메일, 제목, 메시지를 보내거나 ecos.colombia1@gmail.com 으로 직접 문의해 주세요.",
       },
       {
         q: "여행지 숙소 예약은 어떻게 하나요?",
