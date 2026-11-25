@@ -129,10 +129,10 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
         <button
           type="button"
           onClick={() => setKeepOneHour((prev) => !prev)}
-          className="flex items-start gap-2.5 text-left flex-1 cursor-pointer"
+          className="flex items-center gap-2.5 text-left flex-1 cursor-pointer"
         >
           <span
-            className="mt-0.5 w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all"
+            className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all"
             style={{
               background: keepOneHour ? C.navy : C.white,
               border: `1.5px solid ${keepOneHour ? C.navy : "rgba(36,60,143,0.32)"}`,
@@ -141,23 +141,14 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
           >
             {keepOneHour && <CheckCircle2 size={13} />}
           </span>
-          <div className="flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <Clock size={13} style={{ color: C.navy }} />
-              <span
-                className="text-xs font-semibold"
-                style={{ color: C.navy }}
-              >
-                Mantener sesión iniciada por 1 hora en este dispositivo
-              </span>
-            </div>
-            <p
-              className="text-[11px] mt-1 leading-relaxed"
-              style={{ color: "#64748b", fontWeight: 400 }}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Clock size={13} style={{ color: C.navy }} />
+            <span
+              className="text-xs font-semibold"
+              style={{ color: C.navy }}
             >
-              Si sales y vuelves a ingresar durante 1 hora no se enviarán nuevos
-              códigos al correo. Pasada 1 hora se enviará un nuevo código de 6 dígitos.
-            </p>
+              Mantener la sesión iniciada en este dispositivo
+            </span>
           </div>
         </button>
 
