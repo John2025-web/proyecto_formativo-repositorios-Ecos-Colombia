@@ -18,7 +18,6 @@ import {
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import colombiaLogo from "@/imports/image-removebg-preview.png";
 import {
-  clearTrustedDeviceRecord,
   confirmRegistrationCode,
   getActiveTrustedDeviceRecord,
   googleSendVerificationCode,
@@ -107,9 +106,6 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
     currentIdentifierForTrust,
     role
   );
-  const trustedRemainingMinutes = activeTrustedRecord
-    ? Math.max(1, Math.ceil((activeTrustedRecord.trustedUntil - Date.now()) / 60000))
-    : 0;
 
   const renderKeepOneHourOption = () => (
     <div
@@ -165,31 +161,6 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
           {keepOneHour ? "Activado (1h)" : "Activar 1h"}
         </button>
       </div>
-
-      {activeTrustedRecord && (
-        <div
-          className="mt-2 pt-2 flex items-center justify-between gap-2 text-[11px]"
-          style={{ borderTop: "1px dashed rgba(36,60,143,0.16)", color: "#047857" }}
-        >
-          <span className="font-semibold flex items-center gap-1">
-            <CheckCircle2 size={12} /> Dispositivo activo sin pedir nuevo código ({trustedRemainingMinutes} min restantes)
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              clearTrustedDeviceRecord(activeTrustedRecord.correo, role);
-              setKeepOneHour(false);
-              setInfoMessage(
-                "Se desactivó el acceso rápido de 1 hora en este dispositivo. Al ingresar se enviará un nuevo código."
-              );
-            }}
-            className="text-[11px] font-semibold underline hover:opacity-80 cursor-pointer"
-            style={{ color: C.red }}
-          >
-            Pedir código ahora
-          </button>
-        </div>
-      )}
     </div>
   );
 
