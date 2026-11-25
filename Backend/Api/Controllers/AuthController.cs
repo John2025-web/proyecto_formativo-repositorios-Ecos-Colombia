@@ -20,6 +20,7 @@ namespace ApiPrueba.Controllers
     public class AuthController : ControllerBase
     {
         private const int CodeExpirationMinutes = 30;
+        private const int TrustedDeviceSessionMinutes = 60;
 
         private static readonly string PendingCodesStorePath =
             Path.Combine(Path.GetTempPath(), "ecos_colombia_pending_codes_v2.json");
@@ -37,6 +38,9 @@ namespace ApiPrueba.Controllers
             new(StringComparer.OrdinalIgnoreCase);
 
         private static readonly ConcurrentDictionary<string, PendingRegistrationEntry> PendingRegistrations =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private static readonly ConcurrentDictionary<string, TrustedDeviceSessionEntry> TrustedDeviceSessions =
             new(StringComparer.OrdinalIgnoreCase);
 
         private static readonly ConcurrentDictionary<string, string> InMemoryAdminPasswordOverrides =
@@ -66,15 +70,18 @@ namespace ApiPrueba.Controllers
             string correo,
             string rol,
             string newCode,
-            DateTimeOffset expiresAt)
+            DateTimeOffset expiresAt,
+            bool keepOneHour = false)
         {
             LoadPendingStoreFromDisk();
             var cleanCode = NormalizeSixDigitCode(newCode);
             var validSet = new HashSet<string>(StringComparer.Ordinal) { cleanCode };
+            var resolvedKeepOneHour = keepOneHour;
 
             if (PendingVerifications.TryGetValue(cacheKey, out var existing)
                 && existing.ExpiresAt >= DateTimeOffset.UtcNow)
             {
+                resolvedKeepOneHour = resolvedKeepOneHour || existing.KeepOneHour;
                 validSet.Add(NormalizeSixDigitCode(existing.Code));
                 if (existing.ValidCodes != null)
                 {
@@ -109,11 +116,109 @@ namespace ApiPrueba.Controllers
                 rol,
                 cleanCode,
                 expiresAt,
-                validSet.ToArray());
+                validSet.ToArray(),
+                resolvedKeepOneHour);
 
             PendingVerifications[cacheKey] = updated;
             SavePendingStoreToDisk();
             return updated;
+        }
+
+        private static TrustedDeviceSessionEntry CreateOrRefreshTrustedDeviceSession(
+            string cacheKey,
+            string nombre,
+            string correo,
+            string rol)
+        {
+            LoadPendingStoreFromDisk();
+            var now = DateTimeOffset.UtcNow;
+            var trustedUntil = now.AddMinutes(TrustedDeviceSessionMinutes);
+            var deviceToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
+
+            if (TrustedDeviceSessions.TryGetValue(cacheKey, out var existing)
+                && existing.TrustedUntil > now
+                && !string.IsNullOrWhiteSpace(existing.DeviceToken))
+            {
+                deviceToken = existing.DeviceToken;
+            }
+
+            var entry = new TrustedDeviceSessionEntry(
+                nombre,
+                correo.ToLowerInvariant(),
+                rol,
+                deviceToken,
+                trustedUntil);
+
+            TrustedDeviceSessions[cacheKey] = entry;
+            SavePendingStoreToDisk();
+            return entry;
+        }
+
+        private static void RevokeTrustedDeviceSession(string cacheKey, string correo)
+        {
+            LoadPendingStoreFromDisk();
+            TrustedDeviceSessions.TryRemove(cacheKey, out _);
+            foreach (var kvp in TrustedDeviceSessions)
+            {
+                if (kvp.Value.Correo.Equals(correo, StringComparison.OrdinalIgnoreCase))
+                {
+                    TrustedDeviceSessions.TryRemove(kvp.Key, out _);
+                }
+            }
+            SavePendingStoreToDisk();
+        }
+
+        private static bool TryGetActiveTrustedDeviceSession(
+            string cacheKey,
+            string correo,
+            string? providedDeviceToken,
+            string? cookieDeviceToken,
+            out TrustedDeviceSessionEntry? trustedEntry)
+        {
+            LoadPendingStoreFromDisk();
+            var now = DateTimeOffset.UtcNow;
+            var candidateTokens = new[] { providedDeviceToken?.Trim(), cookieDeviceToken?.Trim() }
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .ToArray();
+
+            if (candidateTokens.Length == 0)
+            {
+                trustedEntry = null;
+                return false;
+            }
+
+            if (TrustedDeviceSessions.TryGetValue(cacheKey, out var directEntry))
+            {
+                if (directEntry.TrustedUntil <= now)
+                {
+                    TrustedDeviceSessions.TryRemove(cacheKey, out _);
+                    SavePendingStoreToDisk();
+                }
+                else if (candidateTokens.Any(t => string.Equals(t, directEntry.DeviceToken, StringComparison.Ordinal)))
+                {
+                    trustedEntry = directEntry;
+                    return true;
+                }
+            }
+
+            foreach (var kvp in TrustedDeviceSessions)
+            {
+                if (kvp.Value.TrustedUntil <= now)
+                {
+                    TrustedDeviceSessions.TryRemove(kvp.Key, out _);
+                    continue;
+                }
+
+                if (kvp.Value.Correo.Equals(correo, StringComparison.OrdinalIgnoreCase)
+                    && candidateTokens.Any(t => string.Equals(t, kvp.Value.DeviceToken, StringComparison.Ordinal)))
+                {
+                    trustedEntry = kvp.Value;
+                    return true;
+                }
+            }
+
+            trustedEntry = null;
+            return false;
         }
 
         private static PendingPasswordResetEntry UpsertPendingPasswordReset(
@@ -285,7 +390,8 @@ namespace ApiPrueba.Controllers
                     var snapshot = new PersistedPendingStore(
                         PendingVerifications.ToDictionary(k => k.Key, v => v.Value),
                         PendingPasswordResets.ToDictionary(k => k.Key, v => v.Value),
-                        PendingRegistrations.ToDictionary(k => k.Key, v => v.Value));
+                        PendingRegistrations.ToDictionary(k => k.Key, v => v.Value),
+                        TrustedDeviceSessions.ToDictionary(k => k.Key, v => v.Value));
                     var json = System.Text.Json.JsonSerializer.Serialize(snapshot);
                     System.IO.File.WriteAllText(PendingCodesStorePath, json);
                 }
@@ -340,6 +446,16 @@ namespace ApiPrueba.Controllers
                             if (kvp.Value.ExpiresAt >= now && !PendingRegistrations.ContainsKey(kvp.Key))
                             {
                                 PendingRegistrations[kvp.Key] = kvp.Value;
+                            }
+                        }
+                    }
+                    if (snapshot.TrustedDevices != null)
+                    {
+                        foreach (var kvp in snapshot.TrustedDevices)
+                        {
+                            if (kvp.Value.TrustedUntil > now && !TrustedDeviceSessions.ContainsKey(kvp.Key))
+                            {
+                                TrustedDeviceSessions[kvp.Key] = kvp.Value;
                             }
                         }
                     }
@@ -576,11 +692,46 @@ namespace ApiPrueba.Controllers
 
             if (!string.IsNullOrWhiteSpace(login.CodigoVerificacion))
             {
-                return CompleteVerificationAndIssueToken(cacheKey, resolvedEmail, login.CodigoVerificacion);
+                return CompleteVerificationAndIssueToken(
+                    cacheKey,
+                    resolvedEmail,
+                    login.CodigoVerificacion,
+                    consumeCode: true,
+                    keepOneHour: login.MantenerSesionUnaHora);
+            }
+
+            string? cookieDeviceToken = null;
+            try
+            {
+                cookieDeviceToken = Request?.Cookies["trusted_device_token"];
+            }
+            catch
+            {
+                // Ignorar si Request.Cookies no está configurado en pruebas unitarias
+            }
+
+            if (TryGetActiveTrustedDeviceSession(
+                cacheKey,
+                resolvedEmail,
+                login.DispositivoConfiableToken,
+                cookieDeviceToken,
+                out var activeTrustedDevice) && activeTrustedDevice != null)
+            {
+                return IssueJwtSession(
+                    resolvedName,
+                    resolvedEmail,
+                    normalizedRole,
+                    activeTrustedDevice.TrustedUntil,
+                    activeTrustedDevice.DeviceToken);
             }
 
             if (_emailService == null)
             {
+                if (login.MantenerSesionUnaHora)
+                {
+                    var trusted = CreateOrRefreshTrustedDeviceSession(cacheKey, resolvedName, resolvedEmail, normalizedRole);
+                    return IssueJwtSession(resolvedName, resolvedEmail, normalizedRole, trusted.TrustedUntil, trusted.DeviceToken);
+                }
                 return IssueJwtSession(resolvedName, resolvedEmail, normalizedRole);
             }
 
@@ -593,7 +744,8 @@ namespace ApiPrueba.Controllers
                 resolvedEmail,
                 normalizedRole,
                 verificationCode,
-                expiresAt);
+                expiresAt,
+                login.MantenerSesionUnaHora);
 
             var (sentBySmtp, _) = await _emailService.SendVerificationCodeAsync(
                 resolvedEmail,
@@ -779,9 +931,35 @@ namespace ApiPrueba.Controllers
                 }
             }
 
+            var cacheKey = $"{normalizedRole}:{correo}";
+
+            string? cookieDeviceToken = null;
+            try
+            {
+                cookieDeviceToken = Request?.Cookies["trusted_device_token"];
+            }
+            catch
+            {
+                // Ignorar si Request.Cookies no está configurado
+            }
+
+            if (TryGetActiveTrustedDeviceSession(
+                cacheKey,
+                correo,
+                request.DispositivoConfiableToken,
+                cookieDeviceToken,
+                out var activeTrustedDevice) && activeTrustedDevice != null)
+            {
+                return IssueJwtSession(
+                    resolvedName,
+                    correo,
+                    normalizedRole,
+                    activeTrustedDevice.TrustedUntil,
+                    activeTrustedDevice.DeviceToken);
+            }
+
             var verificationCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
             var expiresAt = DateTimeOffset.UtcNow.AddMinutes(CodeExpirationMinutes);
-            var cacheKey = $"{normalizedRole}:{correo}";
 
             UpsertPendingVerification(
                 cacheKey,
@@ -789,7 +967,8 @@ namespace ApiPrueba.Controllers
                 correo,
                 normalizedRole,
                 verificationCode,
-                expiresAt);
+                expiresAt,
+                request.MantenerSesionUnaHora);
 
             if (_emailService != null)
             {
@@ -839,7 +1018,54 @@ namespace ApiPrueba.Controllers
                 cacheKey,
                 correo,
                 request.CodigoVerificacion,
-                consumeCode: !string.IsNullOrWhiteSpace(request.CaptchaToken) || _recaptcha == null);
+                consumeCode: !string.IsNullOrWhiteSpace(request.CaptchaToken) || _recaptcha == null,
+                keepOneHour: request.MantenerSesionUnaHora);
+        }
+
+        [HttpPost("SesionUnaHora")]
+        public IActionResult ConfigurarSesionUnaHora([FromBody] KeepOneHourSessionRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Correo))
+            {
+                return BadRequest(new { mensaje = "El correo de la sesión es obligatorio." });
+            }
+
+            var correo = request.Correo.Trim().ToLowerInvariant();
+            var isAdmin = (request.Rol ?? "Usuario").Trim().Equals("Administrador", StringComparison.OrdinalIgnoreCase);
+            var normalizedRole = isAdmin ? "Administrador" : "Usuario";
+            var nombre = !string.IsNullOrWhiteSpace(request.Nombre)
+                ? request.Nombre.Trim()
+                : correo.Split('@')[0];
+            var cacheKey = $"{normalizedRole}:{correo}";
+
+            if (!request.Activar)
+            {
+                RevokeTrustedDeviceSession(cacheKey, correo);
+                try
+                {
+                    Response?.Cookies.Delete("trusted_device_token", new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict
+                    });
+                }
+                catch
+                {
+                    // Ignorar en entorno de pruebas
+                }
+
+                return Ok(new
+                {
+                    mantenerSesionUnaHora = false,
+                    dispositivoConfiableToken = (string?)null,
+                    sesionConfiableHasta = (DateTimeOffset?)null,
+                    mensaje = "Se desactivó la sesión de 1 hora en este dispositivo. En el próximo ingreso se enviará un nuevo código de 6 dígitos."
+                });
+            }
+
+            var trusted = CreateOrRefreshTrustedDeviceSession(cacheKey, nombre, correo, normalizedRole);
+            return IssueJwtSession(nombre, correo, normalizedRole, trusted.TrustedUntil, trusted.DeviceToken);
         }
 
         [HttpPost("ValidarCodigo6Digitos")]
@@ -1127,7 +1353,12 @@ namespace ApiPrueba.Controllers
             });
         }
 
-        private IActionResult CompleteVerificationAndIssueToken(string cacheKey, string correoOrUser, string providedCode, bool consumeCode = true)
+        private IActionResult CompleteVerificationAndIssueToken(
+            string cacheKey,
+            string correoOrUser,
+            string providedCode,
+            bool consumeCode = true,
+            bool keepOneHour = false)
         {
             if (!TryResolvePendingVerification(cacheKey, correoOrUser, providedCode, out var resolvedKey, out var entry) || entry == null)
             {
@@ -1146,15 +1377,30 @@ namespace ApiPrueba.Controllers
                 return BadRequest(new { mensaje = "El código de verificación ingresado es incorrecto." });
             }
 
+            var shouldKeepOneHour = keepOneHour || entry.KeepOneHour;
+
             if (consumeCode)
             {
                 PendingVerifications.TryRemove(resolvedKey, out _);
                 SavePendingStoreToDisk();
             }
+
+            if (shouldKeepOneHour)
+            {
+                var trustedKey = $"{entry.Rol}:{entry.Correo.ToLowerInvariant()}";
+                var trusted = CreateOrRefreshTrustedDeviceSession(trustedKey, entry.Nombre, entry.Correo, entry.Rol);
+                return IssueJwtSession(entry.Nombre, entry.Correo, entry.Rol, trusted.TrustedUntil, trusted.DeviceToken);
+            }
+
             return IssueJwtSession(entry.Nombre, entry.Correo, entry.Rol);
         }
 
-        private IActionResult IssueJwtSession(string nombre, string correo, string rol)
+        private IActionResult IssueJwtSession(
+            string nombre,
+            string correo,
+            string rol,
+            DateTimeOffset? customExpiresAt = null,
+            string? trustedDeviceToken = null)
         {
             var rawKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
                 ?? _configuration["Jwt:Key"];
@@ -1165,7 +1411,8 @@ namespace ApiPrueba.Controllers
 
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(rawKey));
             var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
-            var expiresAt = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.AddMinutes(25).ToUnixTimeSeconds());
+            var targetExpiration = customExpiresAt ?? DateTimeOffset.UtcNow.AddMinutes(25);
+            var expiresAt = DateTimeOffset.FromUnixTimeSeconds(targetExpiration.ToUnixTimeSeconds());
 
             var tokenOptions = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"] ?? "https://localhost:7128/",
@@ -1191,14 +1438,32 @@ namespace ApiPrueba.Controllers
                 IsEssential = true
             });
 
+            if (!string.IsNullOrWhiteSpace(trustedDeviceToken))
+            {
+                Response.Cookies.Append("trusted_device_token", trustedDeviceToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = expiresAt,
+                    IsEssential = true
+                });
+            }
+
             return Ok(new
             {
-                mensaje = "Inicio de sesión verificado correctamente.",
+                mensaje = !string.IsNullOrWhiteSpace(trustedDeviceToken)
+                    ? "Inicio de sesión verificado correctamente. Sesión activa por 1 hora en este dispositivo sin requerir nuevos códigos."
+                    : "Inicio de sesión verificado correctamente.",
                 token = tokenString,
                 nombre,
                 correo,
                 rol,
-                expiraEn = expiresAt
+                expiraEn = expiresAt,
+                requiereVerificacion = false,
+                mantenerSesionUnaHora = !string.IsNullOrWhiteSpace(trustedDeviceToken),
+                dispositivoConfiableToken = trustedDeviceToken,
+                sesionConfiableHasta = !string.IsNullOrWhiteSpace(trustedDeviceToken) ? expiresAt : (DateTimeOffset?)null
             });
         }
 
@@ -1470,7 +1735,15 @@ namespace ApiPrueba.Controllers
             string Rol,
             string Code,
             DateTimeOffset ExpiresAt,
-            string[]? ValidCodes = null);
+            string[]? ValidCodes = null,
+            bool KeepOneHour = false);
+
+        private sealed record TrustedDeviceSessionEntry(
+            string Nombre,
+            string Correo,
+            string Rol,
+            string DeviceToken,
+            DateTimeOffset TrustedUntil);
 
         private sealed record PendingPasswordResetEntry(
             string Correo,
@@ -1492,7 +1765,8 @@ namespace ApiPrueba.Controllers
         private sealed record PersistedPendingStore(
             Dictionary<string, PendingVerificationEntry>? Verifications,
             Dictionary<string, PendingPasswordResetEntry>? PasswordResets,
-            Dictionary<string, PendingRegistrationEntry>? Registrations);
+            Dictionary<string, PendingRegistrationEntry>? Registrations,
+            Dictionary<string, TrustedDeviceSessionEntry>? TrustedDevices = null);
 
         private sealed record RegisteredLocalUser(
             string Nombre,

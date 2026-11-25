@@ -7,6 +7,8 @@ namespace ApiPrueba.Models
         public string Rol { get; set; } = string.Empty;
         public string CaptchaToken { get; set; } = string.Empty;
         public string? CodigoVerificacion { get; set; }
+        public bool MantenerSesionUnaHora { get; set; }
+        public string? DispositivoConfiableToken { get; set; }
     }
 
     public class ValidateCredentialsRequest
@@ -22,6 +24,8 @@ namespace ApiPrueba.Models
         public string Rol { get; set; } = string.Empty;
         public string CodigoVerificacion { get; set; } = string.Empty;
         public string? CaptchaToken { get; set; }
+        public bool MantenerSesionUnaHora { get; set; }
+        public string? DispositivoConfiableToken { get; set; }
     }
 
     public class ForgotPasswordRequest
@@ -45,6 +49,16 @@ namespace ApiPrueba.Models
         public string? Nombre { get; set; }
         public string Rol { get; set; } = "Usuario";
         public string CaptchaToken { get; set; } = string.Empty;
+        public bool MantenerSesionUnaHora { get; set; }
+        public string? DispositivoConfiableToken { get; set; }
+    }
+
+    public class KeepOneHourSessionRequest
+    {
+        public string Correo { get; set; } = string.Empty;
+        public string? Nombre { get; set; }
+        public string Rol { get; set; } = "Usuario";
+        public bool Activar { get; set; } = true;
     }
 
     public class VerifyRegisterCodeRequest

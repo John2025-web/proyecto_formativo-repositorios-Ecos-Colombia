@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   ChevronRight,
+  Clock,
   Eye,
   EyeOff,
   KeyRound,
@@ -17,7 +18,9 @@ import {
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import colombiaLogo from "@/imports/image-removebg-preview.png";
 import {
+  clearTrustedDeviceRecord,
   confirmRegistrationCode,
+  getActiveTrustedDeviceRecord,
   googleSendVerificationCode,
   isValidRealEmail,
   login,
@@ -88,6 +91,117 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
   const [googleEmail, setGoogleEmail] = useState("");
   const [googleName, setGoogleName] = useState("");
 
+  // Opción de mantener la sesión iniciada por 1 hora en el dispositivo sin enviar nuevos códigos
+  const [keepOneHour, setKeepOneHour] = useState<boolean>(() =>
+    Boolean(getActiveTrustedDeviceRecord("", "Usuario"))
+  );
+
+  const currentIdentifierForTrust =
+    viewMode === "google-auth"
+      ? googleEmail.trim()
+      : viewMode === "verify-login"
+      ? pendingEmail || usuario.trim()
+      : usuario.trim();
+
+  const activeTrustedRecord = getActiveTrustedDeviceRecord(
+    currentIdentifierForTrust,
+    role
+  );
+  const trustedRemainingMinutes = activeTrustedRecord
+    ? Math.max(1, Math.ceil((activeTrustedRecord.trustedUntil - Date.now()) / 60000))
+    : 0;
+
+  const renderKeepOneHourOption = () => (
+    <div
+      className="rounded-xl p-3 transition-all duration-200"
+      style={{
+        background: keepOneHour || activeTrustedRecord
+          ? "rgba(36,60,143,0.06)"
+          : "#f8f9fc",
+        border: `1.5px solid ${
+          keepOneHour || activeTrustedRecord
+            ? "rgba(36,60,143,0.28)"
+            : "rgba(36,60,143,0.12)"
+        }`,
+      }}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => setKeepOneHour((prev) => !prev)}
+          className="flex items-start gap-2.5 text-left flex-1 cursor-pointer"
+        >
+          <span
+            className="mt-0.5 w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all"
+            style={{
+              background: keepOneHour ? C.navy : C.white,
+              border: `1.5px solid ${keepOneHour ? C.navy : "rgba(36,60,143,0.32)"}`,
+              color: C.white,
+            }}
+          >
+            {keepOneHour && <CheckCircle2 size={13} />}
+          </span>
+          <div className="flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Clock size={13} style={{ color: C.navy }} />
+              <span
+                className="text-xs font-semibold"
+                style={{ color: C.navy }}
+              >
+                Mantener sesión iniciada por 1 hora en este dispositivo
+              </span>
+            </div>
+            <p
+              className="text-[11px] mt-1 leading-relaxed"
+              style={{ color: "#64748b", fontWeight: 400 }}
+            >
+              Si sales y vuelves a ingresar durante 1 hora no se enviarán nuevos
+              códigos al correo. Pasada 1 hora se enviará un nuevo código de 6 dígitos.
+            </p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setKeepOneHour((prev) => !prev)}
+          aria-pressed={keepOneHour}
+          className="px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer"
+          style={{
+            background: keepOneHour ? C.navy : "rgba(36,60,143,0.10)",
+            color: keepOneHour ? C.white : C.navy,
+          }}
+        >
+          {keepOneHour ? "Activado (1h)" : "Activar 1h"}
+        </button>
+      </div>
+
+      {activeTrustedRecord && (
+        <div
+          className="mt-2 pt-2 flex items-center justify-between gap-2 text-[11px]"
+          style={{ borderTop: "1px dashed rgba(36,60,143,0.16)", color: "#047857" }}
+        >
+          <span className="font-semibold flex items-center gap-1">
+            <CheckCircle2 size={12} /> Dispositivo activo sin pedir nuevo código ({trustedRemainingMinutes} min restantes)
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              clearTrustedDeviceRecord(activeTrustedRecord.correo, role);
+              setKeepOneHour(false);
+              setInfoMessage(
+                "Se desactivó el acceso rápido de 1 hora en este dispositivo. Al ingresar se enviará un nuevo código."
+              );
+            }}
+            className="text-[11px] font-semibold underline hover:opacity-80 cursor-pointer"
+            style={{ color: C.red }}
+          >
+            Pedir código ahora
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   const resetCaptchaAndMessages = () => {
     setError("");
     setInfoMessage("");
@@ -118,7 +232,7 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
 
     setLoading(true);
     try {
-      const response = await login(trimmedUser, password, role);
+      const response = await login(trimmedUser, password, role, "", keepOneHour);
 
       if (response.requiereVerificacion) {
         setCredentialsVerified(true);
@@ -198,7 +312,14 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
 
     setLoading(true);
     try {
-      const verified = await verifyLoginCode(pendingEmail || usuario.trim(), role, cleaned, captchaToken);
+      const verified = await verifyLoginCode(
+        pendingEmail || usuario.trim(),
+        role,
+        cleaned,
+        captchaToken,
+        keepOneHour,
+        usuario.trim()
+      );
       onLogin({
         name: verified.nombre || pendingName || pendingEmail.split("@")[0],
         email: verified.correo || pendingEmail,
@@ -420,7 +541,20 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
         nombre: googleName.trim() || cleanEmail.split("@")[0],
         rol: role,
         captchaToken,
+        mantenerSesionUnaHora: keepOneHour,
       });
+      if (response.requiereVerificacion === false && response.token) {
+        onLogin({
+          name: response.nombre || googleName.trim() || cleanEmail.split("@")[0],
+          email: response.correo || cleanEmail,
+          token: response.token,
+          role: response.rol || role,
+          expiresAt: response.expiraEn
+            ? Date.parse(response.expiraEn)
+            : Date.now() + 60 * 60 * 1000,
+        });
+        return;
+      }
       setPendingEmail(response.correo || cleanEmail);
       setPendingName(response.nombre || googleName.trim() || cleanEmail.split("@")[0]);
       setVerificationCode("");
@@ -756,6 +890,8 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                       </button>
                     </div>
                   </div>
+
+                  {renderKeepOneHourOption()}
 
                   <button
                     type="submit"
@@ -1130,6 +1266,8 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                     onChange={setCaptchaToken}
                   />
 
+                  {renderKeepOneHourOption()}
+
                   <button
                     type="submit"
                     disabled={loading || !captchaToken}
@@ -1400,6 +1538,8 @@ export default function LoginScreen({ onLogin, t }: LoginScreenProps) {
                       onChange={setCaptchaToken}
                     />
                   )}
+
+                  {renderKeepOneHourOption()}
 
                   <button
                     type="submit"

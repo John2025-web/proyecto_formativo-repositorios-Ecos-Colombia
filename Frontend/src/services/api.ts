@@ -14,7 +14,126 @@ export type LoginApiResponse = {
     requiereVerificacion?: boolean;
     enviadoPorSmtp?: boolean;
     expiraCodigoEn?: string;
+    mantenerSesionUnaHora?: boolean;
+    dispositivoConfiableToken?: string | null;
+    sesionConfiableHasta?: string | null;
 };
+
+export type TrustedDeviceRecord = {
+    token: string;
+    correo: string;
+    usuario?: string;
+    rol: UserRole;
+    trustedUntil: number;
+};
+
+const TRUSTED_DEVICE_STORAGE_KEY = "ecos_trusted_device_sessions_v1";
+
+function readTrustedDevicesStore(): Record<string, TrustedDeviceRecord> {
+    if (typeof window === "undefined") return {};
+    try {
+        const raw = window.localStorage.getItem(TRUSTED_DEVICE_STORAGE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw) as Record<string, TrustedDeviceRecord>;
+        return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+        return {};
+    }
+}
+
+function writeTrustedDevicesStore(store: Record<string, TrustedDeviceRecord>) {
+    if (typeof window === "undefined") return;
+    try {
+        window.localStorage.setItem(TRUSTED_DEVICE_STORAGE_KEY, JSON.stringify(store));
+    } catch {
+        // Ignorar errores de almacenamiento local
+    }
+}
+
+export function getActiveTrustedDeviceRecord(identifier: string, rol: UserRole): TrustedDeviceRecord | null {
+    const clean = identifier.trim().toLowerCase();
+    const store = readTrustedDevicesStore();
+    const now = Date.now();
+    let changed = false;
+
+    for (const [key, entry] of Object.entries(store)) {
+        if (!entry || !entry.trustedUntil || entry.trustedUntil <= now) {
+            delete store[key];
+            changed = true;
+        }
+    }
+    if (changed) {
+        writeTrustedDevicesStore(store);
+    }
+
+    if (clean) {
+        const directKey = `${rol}:${clean}`;
+        if (store[directKey] && store[directKey].trustedUntil > now) {
+            return store[directKey];
+        }
+        for (const entry of Object.values(store)) {
+            if (
+                entry.rol === rol &&
+                entry.trustedUntil > now &&
+                (entry.correo.toLowerCase() === clean ||
+                    (entry.usuario && entry.usuario.toLowerCase() === clean) ||
+                    entry.correo.split("@")[0].toLowerCase() === clean)
+            ) {
+                return entry;
+            }
+        }
+    } else {
+        for (const entry of Object.values(store)) {
+            if (entry.rol === rol && entry.trustedUntil > now) {
+                return entry;
+            }
+        }
+    }
+
+    return null;
+}
+
+export function saveTrustedDeviceRecord(
+    correo: string,
+    rol: UserRole,
+    token: string,
+    trustedUntilIsoOrMs: string | number,
+    usuario?: string
+) {
+    const cleanEmail = correo.trim().toLowerCase();
+    if (!cleanEmail || !token) return;
+    const trustedUntil =
+        typeof trustedUntilIsoOrMs === "number"
+            ? trustedUntilIsoOrMs
+            : Date.parse(trustedUntilIsoOrMs);
+    const resolvedUntil = Number.isFinite(trustedUntil) ? trustedUntil : Date.now() + 60 * 60 * 1000;
+    const store = readTrustedDevicesStore();
+    store[`${rol}:${cleanEmail}`] = {
+        token,
+        correo: cleanEmail,
+        usuario: usuario?.trim() || cleanEmail,
+        rol,
+        trustedUntil: resolvedUntil,
+    };
+    writeTrustedDevicesStore(store);
+}
+
+export function clearTrustedDeviceRecord(identifier: string, rol?: UserRole) {
+    const clean = identifier.trim().toLowerCase();
+    const store = readTrustedDevicesStore();
+    for (const [key, entry] of Object.entries(store)) {
+        const matchesRole = !rol || entry.rol === rol;
+        const matchesId =
+            !clean ||
+            entry.correo.toLowerCase() === clean ||
+            (entry.usuario && entry.usuario.toLowerCase() === clean) ||
+            key.toLowerCase().endsWith(`:${clean}`);
+        if (matchesRole && matchesId) {
+            delete store[key];
+        }
+    }
+    writeTrustedDevicesStore(store);
+}
 
 export type ValidateCredentialsResponse = {
     credencialesValidas: boolean;
@@ -166,7 +285,15 @@ export async function validateCredentials(usuario: string, password: string, rol
     return response.json();
 }
 
-export async function login(usuario: string, password: string, rol: UserRole, captchaToken = ""): Promise<LoginApiResponse> {
+export async function login(
+    usuario: string,
+    password: string,
+    rol: UserRole,
+    captchaToken = "",
+    mantenerSesionUnaHora = false
+): Promise<LoginApiResponse> {
+    const trimmedUser = usuario.trim();
+    const activeTrusted = getActiveTrustedDeviceRecord(trimmedUser, rol);
     const response = await fetch(`${API_URL}/api/Auth/Login`, {
         method: "POST",
         credentials: "include",
@@ -174,10 +301,12 @@ export async function login(usuario: string, password: string, rol: UserRole, ca
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            Usuario: usuario.trim(),
+            Usuario: trimmedUser,
             contraseña: password,
             Rol: rol,
-            CaptchaToken: captchaToken
+            CaptchaToken: captchaToken,
+            MantenerSesionUnaHora: mantenerSesionUnaHora,
+            DispositivoConfiableToken: activeTrusted?.token || undefined
         })
     });
 
@@ -191,10 +320,28 @@ export async function login(usuario: string, password: string, rol: UserRole, ca
         throw new Error(error?.mensaje || `Error del servidor: ${response.status}`);
     }
 
-    return response.json();
+    const data: LoginApiResponse = await response.json();
+    if (data.dispositivoConfiableToken && (data.sesionConfiableHasta || data.expiraEn)) {
+        saveTrustedDeviceRecord(
+            data.correo || trimmedUser,
+            data.rol || rol,
+            data.dispositivoConfiableToken,
+            data.sesionConfiableHasta || data.expiraEn!,
+            trimmedUser
+        );
+    }
+    return data;
 }
 
-export async function googleSendVerificationCode(data: { correo: string; nombre?: string; rol: UserRole; captchaToken: string }): Promise<LoginApiResponse> {
+export async function googleSendVerificationCode(data: {
+    correo: string;
+    nombre?: string;
+    rol: UserRole;
+    captchaToken: string;
+    mantenerSesionUnaHora?: boolean;
+}): Promise<LoginApiResponse> {
+    const cleanEmail = data.correo.trim().toLowerCase();
+    const activeTrusted = getActiveTrustedDeviceRecord(cleanEmail, data.rol);
     const response = await fetch(`${API_URL}/api/Auth/GoogleEnviarCodigo`, {
         method: "POST",
         credentials: "include",
@@ -202,10 +349,12 @@ export async function googleSendVerificationCode(data: { correo: string; nombre?
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            Correo: data.correo.trim().toLowerCase(),
+            Correo: cleanEmail,
             Nombre: data.nombre?.trim(),
             Rol: data.rol,
-            CaptchaToken: data.captchaToken
+            CaptchaToken: data.captchaToken,
+            MantenerSesionUnaHora: Boolean(data.mantenerSesionUnaHora),
+            DispositivoConfiableToken: activeTrusted?.token || undefined
         })
     });
 
@@ -214,7 +363,17 @@ export async function googleSendVerificationCode(data: { correo: string; nombre?
         throw new Error(error?.mensaje || `Error al iniciar sesión con Google: ${response.status}`);
     }
 
-    return response.json();
+    const resData: LoginApiResponse = await response.json();
+    if (resData.dispositivoConfiableToken && (resData.sesionConfiableHasta || resData.expiraEn)) {
+        saveTrustedDeviceRecord(
+            resData.correo || cleanEmail,
+            resData.rol || data.rol,
+            resData.dispositivoConfiableToken,
+            resData.sesionConfiableHasta || resData.expiraEn!,
+            cleanEmail
+        );
+    }
+    return resData;
 }
 
 export async function resendVerificationCode(correo: string, rol: UserRole): Promise<LoginApiResponse> {
@@ -268,7 +427,14 @@ export async function validateSixDigitCode(correo: string, rol: UserRole, codigo
     }>;
 }
 
-export async function verifyLoginCode(correo: string, rol: UserRole, codigoVerificacion: string, captchaToken = "") {
+export async function verifyLoginCode(
+    correo: string,
+    rol: UserRole,
+    codigoVerificacion: string,
+    captchaToken = "",
+    mantenerSesionUnaHora = false,
+    usuarioAlias?: string
+) {
     const cleanCode = codigoVerificacion.replace(/\D/g, "");
     const response = await fetch(`${API_URL}/api/Auth/VerificarCodigo`, {
         method: "POST",
@@ -280,7 +446,8 @@ export async function verifyLoginCode(correo: string, rol: UserRole, codigoVerif
             Correo: correo.trim(),
             Rol: rol,
             CodigoVerificacion: cleanCode,
-            CaptchaToken: captchaToken
+            CaptchaToken: captchaToken,
+            MantenerSesionUnaHora: mantenerSesionUnaHora
         })
     });
 
@@ -290,13 +457,72 @@ export async function verifyLoginCode(correo: string, rol: UserRole, codigoVerif
     }
 
     const data: LoginApiResponse = await response.json();
+    const resolvedEmail = data.correo || correo;
+    const resolvedRole = data.rol || rol;
+
+    if (data.dispositivoConfiableToken && (data.sesionConfiableHasta || data.expiraEn)) {
+        saveTrustedDeviceRecord(
+            resolvedEmail,
+            resolvedRole,
+            data.dispositivoConfiableToken,
+            data.sesionConfiableHasta || data.expiraEn!,
+            usuarioAlias || correo
+        );
+    } else if (!mantenerSesionUnaHora) {
+        clearTrustedDeviceRecord(resolvedEmail, resolvedRole);
+    }
+
     return {
         token: data.token || "",
         nombre: data.nombre || correo.split("@")[0],
-        correo: data.correo || correo,
-        rol: data.rol || rol,
-        expiresAt: data.expiraEn ? Date.parse(data.expiraEn) : Date.now() + 25 * 60 * 1000
+        correo: resolvedEmail,
+        rol: resolvedRole,
+        expiresAt: data.expiraEn
+            ? Date.parse(data.expiraEn)
+            : Date.now() + (mantenerSesionUnaHora ? 60 : 25) * 60 * 1000,
+        mantenerSesionUnaHora: Boolean(data.mantenerSesionUnaHora || mantenerSesionUnaHora)
     };
+}
+
+export async function configureOneHourDeviceSession(data: {
+    correo: string;
+    nombre?: string;
+    rol: UserRole;
+    activar: boolean;
+}) {
+    const response = await fetch(`${API_URL}/api/Auth/SesionUnaHora`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            Correo: data.correo.trim(),
+            Nombre: data.nombre?.trim(),
+            Rol: data.rol,
+            Activar: data.activar
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.mensaje || `No se pudo configurar la sesión de 1 hora: ${response.status}`);
+    }
+
+    const resData: LoginApiResponse = await response.json();
+    if (data.activar && resData.dispositivoConfiableToken && (resData.sesionConfiableHasta || resData.expiraEn)) {
+        saveTrustedDeviceRecord(
+            resData.correo || data.correo,
+            resData.rol || data.rol,
+            resData.dispositivoConfiableToken,
+            resData.sesionConfiableHasta || resData.expiraEn!,
+            data.correo
+        );
+    } else if (!data.activar) {
+        clearTrustedDeviceRecord(data.correo, data.rol);
+    }
+
+    return resData;
 }
 
 export async function requestPasswordRecovery(correo: string, rol: UserRole, captchaToken: string) {

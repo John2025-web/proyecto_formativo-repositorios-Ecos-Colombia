@@ -168,6 +168,57 @@ public class AuthControllerTests
     }
 
     [Fact]
+    public async Task Login_WithMantenerSesionUnaHora_SkipsSendingNewCodeForOneHour()
+    {
+        var (userDb, adminDb) = CreateInMemoryDatabases();
+        using var httpClient = new HttpClient();
+        var recaptcha = new RecaptchaVerifier(httpClient, _config, NullLogger<RecaptchaVerifier>.Instance);
+        var emailService = new EmailVerificationService(_config, NullLogger<EmailVerificationService>.Instance);
+        var controller = CreateController(userDb, adminDb, recaptcha, emailService);
+
+        var initialLogin = await controller.Login(new Login
+        {
+            Usuario = "turista@ecoscolombia.com",
+            contraseña = "turista123",
+            Rol = "Usuario",
+            MantenerSesionUnaHora = true
+        });
+        var initialOk = Assert.IsType<OkObjectResult>(initialLogin);
+        Assert.Equal(200, initialOk.StatusCode);
+
+        var code = AuthController.GetPendingVerificationCodeForTesting("Usuario", "turista@ecoscolombia.com");
+        Assert.False(string.IsNullOrWhiteSpace(code));
+
+        var verifyResult = await controller.VerificarCodigo(new VerifyLoginCodeRequest
+        {
+            Correo = "turista@ecoscolombia.com",
+            Rol = "Usuario",
+            CodigoVerificacion = code!,
+            CaptchaToken = "ALPHANUMERIC_CONFIRMED:H1r0K9",
+            MantenerSesionUnaHora = true
+        });
+        var verifyOk = Assert.IsType<OkObjectResult>(verifyResult);
+        var verifyJson = System.Text.Json.JsonSerializer.Serialize(verifyOk.Value);
+        using var verifyDoc = System.Text.Json.JsonDocument.Parse(verifyJson);
+        Assert.True(verifyDoc.RootElement.GetProperty("mantenerSesionUnaHora").GetBoolean());
+        var deviceToken = verifyDoc.RootElement.GetProperty("dispositivoConfiableToken").GetString();
+        Assert.False(string.IsNullOrWhiteSpace(deviceToken));
+
+        var reloginResult = await controller.Login(new Login
+        {
+            Usuario = "turista@ecoscolombia.com",
+            contraseña = "turista123",
+            Rol = "Usuario",
+            DispositivoConfiableToken = deviceToken
+        });
+        var reloginOk = Assert.IsType<OkObjectResult>(reloginResult);
+        var reloginJson = System.Text.Json.JsonSerializer.Serialize(reloginOk.Value);
+        using var reloginDoc = System.Text.Json.JsonDocument.Parse(reloginJson);
+        Assert.False(reloginDoc.RootElement.GetProperty("requiereVerificacion").GetBoolean());
+        Assert.False(string.IsNullOrWhiteSpace(reloginDoc.RootElement.GetProperty("token").GetString()));
+    }
+
+    [Fact]
     public async Task Login_WorksWithRealConfiguredCredentials_AlejoGradoSena()
     {
         var (userDb, adminDb) = CreateInMemoryDatabases();
