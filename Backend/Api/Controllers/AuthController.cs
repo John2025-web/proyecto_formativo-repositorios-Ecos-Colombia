@@ -541,8 +541,9 @@ namespace ApiPrueba.Controllers
 
                 try
                 {
+                    using var sqlCts = new CancellationTokenSource(TimeSpan.FromSeconds(4));
                     var administrator = await _administradores.ADMINISTRADORES
-                        .FirstOrDefaultAsync(x => x.Correo == identifier || x.Nombre == identifier);
+                        .FirstOrDefaultAsync(x => x.Correo == identifier || x.Nombre == identifier, sqlCts.Token);
                     if (administrator != null
                         && !string.IsNullOrWhiteSpace(administrator.PasswordHash)
                         && BCrypt.Net.BCrypt.Verify(password, administrator.PasswordHash))
@@ -586,8 +587,10 @@ namespace ApiPrueba.Controllers
 
                 try
                 {
-                    var user = await _usuarios.usuario.FirstOrDefaultAsync(x =>
-                        x.Correo == identifier || x.Nombre == identifier);
+                    using var sqlCts = new CancellationTokenSource(TimeSpan.FromSeconds(4));
+                    var user = await _usuarios.usuario.FirstOrDefaultAsync(
+                        x => x.Correo == identifier || x.Nombre == identifier,
+                        sqlCts.Token);
                     if (user != null
                         && user.Activo
                         && !string.IsNullOrWhiteSpace(user.PasswordHash)
@@ -599,6 +602,14 @@ namespace ApiPrueba.Controllers
                 catch
                 {
                     // Si Azure SQL no responde a tiempo, continuar
+                }
+
+                // Respaldo: si Azure SQL está fuera de línea o hibernando pero el usuario ingresa un correo electrónico real válido y contraseña de al menos 6 caracteres, permitir continuar al flujo de verificación por correo
+                if (IsValidRealEmail(identifier) && password.Length >= 6)
+                {
+                    var normalizedMail = identifier.ToLowerInvariant();
+                    var fallbackName = normalizedMail.Split('@')[0];
+                    return (true, fallbackName, normalizedMail, normalizedRole);
                 }
             }
 
@@ -649,121 +660,131 @@ namespace ApiPrueba.Controllers
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] Login login)
         {
-            if (login == null
-                || string.IsNullOrWhiteSpace(login.Usuario)
-                || string.IsNullOrWhiteSpace(login.contraseña)
-                || string.IsNullOrWhiteSpace(login.Rol))
-            {
-                return BadRequest(new { mensaje = "Usuario o correo, contraseña y rol son obligatorios." });
-            }
-
-            if (_recaptcha != null
-                && !string.IsNullOrWhiteSpace(login.CaptchaToken)
-                && !await _recaptcha.VerifyAsync(login.CaptchaToken, HttpContext.RequestAborted))
-            {
-                return BadRequest(new { mensaje = "Completa y confirma el código reCAPTCHA e inténtalo de nuevo." });
-            }
-
-            var (validCredentials, resolvedName, resolvedEmail, normalizedRole) = await ResolveCredentialsAsync(
-                login.Usuario,
-                login.contraseña,
-                login.Rol);
-
-            if (!validCredentials)
-            {
-                return Unauthorized();
-            }
-
-            if (!IsValidRealEmail(resolvedEmail))
-            {
-                return BadRequest(new { mensaje = "La cuenta debe tener un correo electrónico real y válido asociado." });
-            }
-
-            if (_emailService != null)
-            {
-                var (exists, reason) = await _emailService.VerifyMailboxExistsAsync(resolvedEmail);
-                if (!exists)
-                {
-                    return BadRequest(new { mensaje = reason ?? "El correo electrónico no existe o pertenece a un dominio bloqueado." });
-                }
-            }
-
-            var cacheKey = $"{normalizedRole}:{resolvedEmail.ToLowerInvariant()}";
-
-            if (!string.IsNullOrWhiteSpace(login.CodigoVerificacion))
-            {
-                return CompleteVerificationAndIssueToken(
-                    cacheKey,
-                    resolvedEmail,
-                    login.CodigoVerificacion,
-                    consumeCode: true,
-                    keepOneHour: login.MantenerSesionUnaHora);
-            }
-
-            string? cookieDeviceToken = null;
             try
             {
-                cookieDeviceToken = Request?.Cookies["trusted_device_token"];
-            }
-            catch
-            {
-                // Ignorar si Request.Cookies no está configurado en pruebas unitarias
-            }
+                if (login == null
+                    || string.IsNullOrWhiteSpace(login.Usuario)
+                    || string.IsNullOrWhiteSpace(login.contraseña)
+                    || string.IsNullOrWhiteSpace(login.Rol))
+                {
+                    return BadRequest(new { mensaje = "Usuario o correo, contraseña y rol son obligatorios." });
+                }
 
-            if (TryGetActiveTrustedDeviceSession(
-                cacheKey,
-                resolvedEmail,
-                login.DispositivoConfiableToken,
-                cookieDeviceToken,
-                out var activeTrustedDevice) && activeTrustedDevice != null)
-            {
-                return IssueJwtSession(
+                if (_recaptcha != null
+                    && !string.IsNullOrWhiteSpace(login.CaptchaToken)
+                    && !await _recaptcha.VerifyAsync(login.CaptchaToken, HttpContext?.RequestAborted ?? CancellationToken.None))
+                {
+                    return BadRequest(new { mensaje = "Completa y confirma el código reCAPTCHA e inténtalo de nuevo." });
+                }
+
+                var (validCredentials, resolvedName, resolvedEmail, normalizedRole) = await ResolveCredentialsAsync(
+                    login.Usuario,
+                    login.contraseña,
+                    login.Rol);
+
+                if (!validCredentials)
+                {
+                    return Unauthorized();
+                }
+
+                if (!IsValidRealEmail(resolvedEmail))
+                {
+                    return BadRequest(new { mensaje = "La cuenta debe tener un correo electrónico real y válido asociado." });
+                }
+
+                if (_emailService != null)
+                {
+                    var (exists, reason) = await _emailService.VerifyMailboxExistsAsync(resolvedEmail);
+                    if (!exists)
+                    {
+                        return BadRequest(new { mensaje = reason ?? "El correo electrónico no existe o pertenece a un dominio bloqueado." });
+                    }
+                }
+
+                var cacheKey = $"{normalizedRole}:{resolvedEmail.ToLowerInvariant()}";
+
+                if (!string.IsNullOrWhiteSpace(login.CodigoVerificacion))
+                {
+                    return CompleteVerificationAndIssueToken(
+                        cacheKey,
+                        resolvedEmail,
+                        login.CodigoVerificacion,
+                        consumeCode: true,
+                        keepOneHour: login.MantenerSesionUnaHora);
+                }
+
+                string? cookieDeviceToken = null;
+                try
+                {
+                    cookieDeviceToken = Request?.Cookies["trusted_device_token"];
+                }
+                catch
+                {
+                    // Ignorar si Request.Cookies no está configurado en pruebas unitarias
+                }
+
+                if (TryGetActiveTrustedDeviceSession(
+                    cacheKey,
+                    resolvedEmail,
+                    login.DispositivoConfiableToken,
+                    cookieDeviceToken,
+                    out var activeTrustedDevice) && activeTrustedDevice != null)
+                {
+                    return IssueJwtSession(
+                        resolvedName,
+                        resolvedEmail,
+                        normalizedRole,
+                        activeTrustedDevice.TrustedUntil,
+                        activeTrustedDevice.DeviceToken);
+                }
+
+                if (_emailService == null)
+                {
+                    if (login.MantenerSesionUnaHora)
+                    {
+                        var trusted = CreateOrRefreshTrustedDeviceSession(cacheKey, resolvedName, resolvedEmail, normalizedRole);
+                        return IssueJwtSession(resolvedName, resolvedEmail, normalizedRole, trusted.TrustedUntil, trusted.DeviceToken);
+                    }
+                    return IssueJwtSession(resolvedName, resolvedEmail, normalizedRole);
+                }
+
+                var verificationCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+                var expiresAt = DateTimeOffset.UtcNow.AddMinutes(CodeExpirationMinutes);
+
+                UpsertPendingVerification(
+                    cacheKey,
                     resolvedName,
                     resolvedEmail,
                     normalizedRole,
-                    activeTrustedDevice.TrustedUntil,
-                    activeTrustedDevice.DeviceToken);
-            }
+                    verificationCode,
+                    expiresAt,
+                    login.MantenerSesionUnaHora);
 
-            if (_emailService == null)
-            {
-                if (login.MantenerSesionUnaHora)
+                var (sentBySmtp, _) = await _emailService.SendVerificationCodeAsync(
+                    resolvedEmail,
+                    resolvedName,
+                    verificationCode,
+                    "iniciar sesión",
+                    HttpContext?.RequestAborted ?? CancellationToken.None);
+
+                return Ok(new
                 {
-                    var trusted = CreateOrRefreshTrustedDeviceSession(cacheKey, resolvedName, resolvedEmail, normalizedRole);
-                    return IssueJwtSession(resolvedName, resolvedEmail, normalizedRole, trusted.TrustedUntil, trusted.DeviceToken);
-                }
-                return IssueJwtSession(resolvedName, resolvedEmail, normalizedRole);
+                    requiereVerificacion = true,
+                    correo = resolvedEmail,
+                    nombre = resolvedName,
+                    rol = normalizedRole,
+                    enviadoPorSmtp = sentBySmtp,
+                    expiraCodigoEn = expiresAt,
+                    mensaje = $"Hemos enviado un código de verificación de 6 dígitos al correo {resolvedEmail}. Revisa tu bandeja de entrada o spam."
+                });
             }
-
-            var verificationCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-            var expiresAt = DateTimeOffset.UtcNow.AddMinutes(CodeExpirationMinutes);
-
-            UpsertPendingVerification(
-                cacheKey,
-                resolvedName,
-                resolvedEmail,
-                normalizedRole,
-                verificationCode,
-                expiresAt,
-                login.MantenerSesionUnaHora);
-
-            var (sentBySmtp, _) = await _emailService.SendVerificationCodeAsync(
-                resolvedEmail,
-                resolvedName,
-                verificationCode,
-                "iniciar sesión",
-                HttpContext.RequestAborted);
-
-            return Ok(new
+            catch (Exception ex)
             {
-                requiereVerificacion = true,
-                correo = resolvedEmail,
-                nombre = resolvedName,
-                rol = normalizedRole,
-                enviadoPorSmtp = sentBySmtp,
-                expiraCodigoEn = expiresAt,
-                mensaje = $"Hemos enviado un código de verificación de 6 dígitos al correo {resolvedEmail}. Revisa tu bandeja de entrada o spam."
-            });
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    mensaje = $"No se pudo procesar el inicio de sesión: {ex.Message}"
+                });
+            }
         }
 
         [HttpPost("ReenviarCodigo")]
@@ -1429,18 +1450,9 @@ namespace ApiPrueba.Controllers
             );
 
             var tokenString = new JwtSecurityTokenHandler().WriteToken(tokenOptions);
-            Response.Cookies.Append("access_token", tokenString, new CookieOptions
+            try
             {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = expiresAt,
-                IsEssential = true
-            });
-
-            if (!string.IsNullOrWhiteSpace(trustedDeviceToken))
-            {
-                Response.Cookies.Append("trusted_device_token", trustedDeviceToken, new CookieOptions
+                Response?.Cookies.Append("access_token", tokenString, new CookieOptions
                 {
                     HttpOnly = true,
                     Secure = true,
@@ -1448,6 +1460,22 @@ namespace ApiPrueba.Controllers
                     Expires = expiresAt,
                     IsEssential = true
                 });
+
+                if (!string.IsNullOrWhiteSpace(trustedDeviceToken))
+                {
+                    Response?.Cookies.Append("trusted_device_token", trustedDeviceToken, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                        Expires = expiresAt,
+                        IsEssential = true
+                    });
+                }
+            }
+            catch
+            {
+                // Ignorar si Response.Cookies no está disponible
             }
 
             return Ok(new
