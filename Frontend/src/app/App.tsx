@@ -55,6 +55,13 @@ const TR: Record<string, Record<string, string>> = {
     notificationsTitle: "Notificaciones",
     notificationsBadge: "Próxima versión",
     notificationsNotice: "El sistema de notificaciones se implementará en una próxima versión.",
+    ratePlaceTitle: "Calificar y reseñar:",
+    selectStarsLabel: "Selecciona tu calificación (estrellas)",
+    reviewTextLabel: "Escribe una breve reseña",
+    reviewPlaceholder: "Comparte tu experiencia o comentario sobre este lugar...",
+    submitReviewBtn: "Guardar calificación y reseña",
+    savedReviewsTitle: "Reseñas registradas",
+    clickToRateTooltip: "Haz clic para calificar y dejar una reseña",
   },
   EN: {
     navDestinos: "Destinations", navExperiencias: "Experiences", navCultura: "Culture", navBlog: "Blog", navContacto: "Contact",
@@ -90,6 +97,13 @@ const TR: Record<string, Record<string, string>> = {
     notificationsTitle: "Notifications",
     notificationsBadge: "Upcoming version",
     notificationsNotice: "The notifications system will be implemented in an upcoming version.",
+    ratePlaceTitle: "Rate & Review:",
+    selectStarsLabel: "Select your star rating",
+    reviewTextLabel: "Write a short review",
+    reviewPlaceholder: "Share your experience or comment about this place...",
+    submitReviewBtn: "Save rating & review",
+    savedReviewsTitle: "Submitted reviews",
+    clickToRateTooltip: "Click to rate and leave a review",
   },
   PT: {
     navDestinos: "Destinos", navExperiencias: "Experiências", navCultura: "Cultura", navBlog: "Blog", navContacto: "Contato",
@@ -125,6 +139,13 @@ const TR: Record<string, Record<string, string>> = {
     notificationsTitle: "Notificações",
     notificationsBadge: "Próxima versão",
     notificationsNotice: "O sistema de notificações será implementado em uma próxima versão.",
+    ratePlaceTitle: "Avaliar e comentar:",
+    selectStarsLabel: "Selecione sua classificação (estrelas)",
+    reviewTextLabel: "Escreva uma breve avaliação",
+    reviewPlaceholder: "Compartilhe sua experiência sobre este lugar...",
+    submitReviewBtn: "Salvar avaliação e comentário",
+    savedReviewsTitle: "Avaliações enviadas",
+    clickToRateTooltip: "Clique para avaliar e deixar um comentário",
   },
   FR: {
     navDestinos: "Destinations", navExperiencias: "Expériences", navCultura: "Culture", navBlog: "Blog", navContacto: "Contact",
@@ -160,6 +181,13 @@ const TR: Record<string, Record<string, string>> = {
     notificationsTitle: "Notifications",
     notificationsBadge: "Prochaine version",
     notificationsNotice: "Le système de notifications sera implémenté dans une prochaine version.",
+    ratePlaceTitle: "Noter et commenter :",
+    selectStarsLabel: "Sélectionnez votre note (étoiles)",
+    reviewTextLabel: "Écrivez un court avis",
+    reviewPlaceholder: "Partagez votre expérience sur ce lieu...",
+    submitReviewBtn: "Enregistrer la note et l'avis",
+    savedReviewsTitle: "Avis enregistrés",
+    clickToRateTooltip: "Cliquez pour noter et laisser un avis",
   },
   DE: {
     navDestinos: "Reiseziele", navExperiencias: "Erlebnisse", navCultura: "Kultur", navBlog: "Blog", navContacto: "Kontakt",
@@ -195,6 +223,13 @@ const TR: Record<string, Record<string, string>> = {
     notificationsTitle: "Benachrichtigungen",
     notificationsBadge: "Nächste Version",
     notificationsNotice: "Das Benachrichtigungssystem wird in einer kommenden Version implementiert.",
+    ratePlaceTitle: "Bewerten & Rezensieren:",
+    selectStarsLabel: "Wählen Sie Ihre Bewertung (Sterne)",
+    reviewTextLabel: "Kurze Bewertung schreiben",
+    reviewPlaceholder: "Teilen Sie Ihre Erfahrung zu diesem Ort...",
+    submitReviewBtn: "Bewertung speichern",
+    savedReviewsTitle: "Gespeicherte Bewertungen",
+    clickToRateTooltip: "Klicken, um zu bewerten und eine Rezension zu schreiben",
   },
   ZH: {
     navDestinos: "目的地", navExperiencias: "特色体验", navCultura: "文化", navBlog: "旅行博客", navContacto: "联系我们",
@@ -230,6 +265,13 @@ const TR: Record<string, Record<string, string>> = {
     notificationsTitle: "通知中心",
     notificationsBadge: "即将推出",
     notificationsNotice: "通知功能将在后续版本中正式上线。",
+    ratePlaceTitle: "评分与评价：",
+    selectStarsLabel: "选择星级评分",
+    reviewTextLabel: "撰写简短评价",
+    reviewPlaceholder: "分享您对该目的地的体验或评论...",
+    submitReviewBtn: "保存评分与评价",
+    savedReviewsTitle: "已提交的评价",
+    clickToRateTooltip: "点击进行星级评分并留下评价",
   },
   JA: {
     navDestinos: "目的地", navExperiencias: "体験", navCultura: "文化", navBlog: "ブログ", navContacto: "お問い合わせ",
@@ -265,6 +307,13 @@ const TR: Record<string, Record<string, string>> = {
     notificationsTitle: "通知",
     notificationsBadge: "次期バージョン",
     notificationsNotice: "通知機能は今後のバージョンで実装される予定です。",
+    ratePlaceTitle: "評価とレビュー：",
+    selectStarsLabel: "星の数を選択してください",
+    reviewTextLabel: "短いレビューを書く",
+    reviewPlaceholder: "この場所についての感想やコメントを入力...",
+    submitReviewBtn: "評価とレビューを保存",
+    savedReviewsTitle: "投稿されたレビュー",
+    clickToRateTooltip: "クリックして評価とレビューを投稿",
   },
   KO: {
     navDestinos: "여행지", navExperiencias: "특별한 경험", navCultura: "문화", navBlog: "블로그", navContacto: "문의하기",
@@ -300,6 +349,13 @@ const TR: Record<string, Record<string, string>> = {
     notificationsTitle: "알림",
     notificationsBadge: "차기 버전 예정",
     notificationsNotice: "알림 시스템은 다음 버전에서 구현될 예정입니다.",
+    ratePlaceTitle: "별점 및 리뷰 작성:",
+    selectStarsLabel: "별점을 선택하세요",
+    reviewTextLabel: "간단한 리뷰 작성",
+    reviewPlaceholder: "이 여행지에 대한 경험이나 코멘트를 남겨주세요...",
+    submitReviewBtn: "별점 및 리뷰 저장",
+    savedReviewsTitle: "등록된 리뷰",
+    clickToRateTooltip: "클릭하여 별점과 리뷰 남기기",
   },
 };
 
@@ -1065,12 +1121,13 @@ const destinations = [
   },
 ];
 
-function localizeDestination(dest: typeof destinations[0], lang: string): typeof destinations[0] {
-  if (lang === "ES") return dest;
+function localizeDestination(dest: typeof destinations[0], lang: string, customRating = 0): typeof destinations[0] {
+  if (lang === "ES") return { ...dest, rating: customRating };
   const loc = getLocalizedDestinationContent(dest.id, lang);
-  if (!loc) return dest;
+  if (!loc) return { ...dest, rating: customRating };
   return {
     ...dest,
+    rating: customRating,
     name: getLocalizedPlaceName(dest.name, lang),
     region: loc.region,
     tagline: loc.tagline,
@@ -1371,8 +1428,17 @@ function ContentManager() {
   return <div><div className="bg-white rounded-2xl p-6 mb-5" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}><p className="text-xs font-semibold uppercase tracking-wider" style={{ color: C.red }}>Editor local</p><h2 className="text-xl font-bold mt-1" style={{ color: C.navy }}>Contenido visible para usuarios</h2><p className="text-sm mt-2" style={{ color: "#8b94ab" }}>Selecciona un módulo y prepara la información. Por ahora los cambios solo viven en esta vista.</p></div><div className="grid md:grid-cols-3 gap-4 mb-6">{modules.map((item) => <button key={item.key} onClick={() => { setSelected(item.key); setSaved(false); }} className="text-left bg-white rounded-2xl p-5" style={{ boxShadow: selected === item.key ? `0 0 0 2px ${C.red}` : "0 4px 18px rgba(36,60,143,0.06)" }}><div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ color: C.navy, background: "rgba(36,60,143,0.08)" }}>{item.icon}</div><h3 className="font-bold" style={{ color: C.navy }}>{item.title}</h3><p className="text-sm mt-2 leading-relaxed" style={{ color: "#8b94ab" }}>{item.detail}</p><span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold" style={{ color: C.red }}><FilePenLine size={15} /> Editar módulo</span></button>)}</div><div className="bg-white rounded-2xl p-6" style={{ boxShadow: "0 4px 18px rgba(36,60,143,0.06)" }}><div className="flex items-center justify-between mb-5"><div><h3 className="text-lg font-bold" style={{ color: C.navy }}>{selectedModule.title}</h3><p className="text-sm" style={{ color: "#8b94ab" }}>Borrador de contenido</p></div>{saved && <span className="text-xs font-semibold" style={{ color: "#1b806d" }}>Guardado localmente</span>}</div><label className="block text-xs font-semibold mb-2" style={{ color: C.navy }}>Título</label><input value={title} onChange={(event) => { setTitle(event.target.value); setSaved(false); }} className="w-full px-4 py-3 rounded-xl outline-none text-sm mb-4" style={{ border: "1px solid rgba(36,60,143,0.18)" }} /><label className="block text-xs font-semibold mb-2" style={{ color: C.navy }}>Descripción</label><textarea value={description} onChange={(event) => { setDescription(event.target.value); setSaved(false); }} rows={5} className="w-full px-4 py-3 rounded-xl outline-none text-sm resize-y" style={{ border: "1px solid rgba(36,60,143,0.18)" }} /><button onClick={() => setSaved(true)} className="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-semibold" style={{ background: C.red }}><Check size={16} /> Guardar borrador</button></div></div>;
 }
 
+type PlaceReviewItem = {
+  id: string;
+  author: string;
+  stars: number;
+  comment: string;
+};
+
 function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLogout: () => void; t: (k: string) => string; lang: string; setLang: (l: string) => void }) {
   const [modalDest, setModalDest] = useState<typeof destinations[0] | null>(null);
+  const [ratingTargetDest, setRatingTargetDest] = useState<typeof destinations[0] | null>(null);
+  const [placeReviews, setPlaceReviews] = useState<Record<number, PlaceReviewItem[]>>({});
   const [activeTab, setActiveTab] = useState<TabKey>("historia");
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -1391,6 +1457,26 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
   const openMaps = (q: string) => window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, "_blank", "noopener,noreferrer");
   const initials = user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
+  const getPlaceAverageRating = (destId: number): number => {
+    const list = placeReviews[destId];
+    if (!list || list.length === 0) return 0;
+    const sum = list.reduce((acc, item) => acc + item.stars, 0);
+    return Number((sum / list.length).toFixed(1));
+  };
+
+  const handleAddPlaceReview = (destId: number, stars: number, comment: string) => {
+    const newEntry: PlaceReviewItem = {
+      id: `${Date.now()}`,
+      author: user.name,
+      stars,
+      comment: comment.trim(),
+    };
+    setPlaceReviews((prev) => ({
+      ...prev,
+      [destId]: [newEntry, ...(prev[destId] ?? [])],
+    }));
+  };
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(e.target as Node)) { setActiveNav(null); setLangOpen(false); setUserMenuOpen(false); setNotificationsOpen(false); }
@@ -1402,8 +1488,9 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
   const navKeys = ["navDestinos", "navExperiencias", "navCultura", "navBlog", "navContacto"];
   const navSectionKeys = ["Destinos", "Experiencias", "Cultura", "Blog", "Contacto"];
   const navItemsMap = getLocalizedNavItemsMap(lang, NAV_ITEMS_MAP);
-  const localizedDestinations = destinations.map((d) => localizeDestination(d, lang));
-  const activeModalDest = modalDest ? localizeDestination(destinations.find((d) => d.id === modalDest.id) ?? modalDest, lang) : null;
+  const localizedDestinations = destinations.map((d) => localizeDestination(d, lang, getPlaceAverageRating(d.id)));
+  const activeModalDest = modalDest ? localizeDestination(destinations.find((d) => d.id === modalDest.id) ?? modalDest, lang, getPlaceAverageRating(modalDest.id)) : null;
+  const activeRatingDest = ratingTargetDest ? localizeDestination(destinations.find((d) => d.id === ratingTargetDest.id) ?? ratingTargetDest, lang, getPlaceAverageRating(ratingTargetDest.id)) : null;
   const roleDisplay = user.role === "Administrador" ? t("roleAdmin") : t("roleUser");
 
   return (
@@ -1788,7 +1875,14 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 25 }}>
           {localizedDestinations.map((dest) => (
-            <DestCard key={dest.id} dest={dest} onClick={() => openModal(dest)} cardBtn={t("cardBtn")} />
+            <DestCard
+              key={dest.id}
+              dest={dest}
+              onClick={() => openModal(dest)}
+              onRateClick={() => setRatingTargetDest(dest)}
+              cardBtn={t("cardBtn")}
+              rateTooltip={t("clickToRateTooltip")}
+            />
           ))}
         </div>
       </section>
@@ -1797,20 +1891,64 @@ function MainScreen({ user, onLogout, t, lang, setLang }: { user: UserType; onLo
       <FloatingMap onOpenDestination={openModal} onOpenMaps={openMaps} t={t} destinationsList={localizedDestinations} lang={lang} />
 
       {/* ── MODAL ── */}
-      {activeModalDest && <DestModal dest={activeModalDest} activeTab={activeTab} setActiveTab={setActiveTab} onClose={closeModal} onOpenMaps={openMaps} t={t} />}
+      {activeModalDest && (
+        <DestModal
+          dest={activeModalDest}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onClose={closeModal}
+          onOpenMaps={openMaps}
+          onRateClick={() => setRatingTargetDest(activeModalDest)}
+          t={t}
+        />
+      )}
+
+      {/* ── RATING & REVIEW MINI-MODAL ── */}
+      {activeRatingDest && (
+        <RatingReviewModal
+          dest={activeRatingDest}
+          reviews={placeReviews[activeRatingDest.id] ?? []}
+          onClose={() => setRatingTargetDest(null)}
+          onSubmit={(stars, comment) => handleAddPlaceReview(activeRatingDest.id, stars, comment)}
+          t={t}
+        />
+      )}
     </div>
   );
 }
 
 // ─── DESTINATION CARD ─────────────────────────────────────────────────────────
-function DestCard({ dest, onClick, cardBtn }: { dest: typeof destinations[0]; onClick: () => void; cardBtn: string }) {
+function DestCard({
+  dest,
+  onClick,
+  onRateClick,
+  cardBtn,
+  rateTooltip,
+}: {
+  dest: typeof destinations[0];
+  onClick: () => void;
+  onRateClick: () => void;
+  cardBtn: string;
+  rateTooltip: string;
+}) {
   return (
     <div className="group bg-white cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-2" style={{ borderRadius: 18, boxShadow: "0 4px 20px rgba(36,60,143,0.08)" }} onClick={onClick}>
       <div className="relative overflow-hidden" style={{ height: 240 }}>
         <img src={dest.image} alt={dest.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: "rgba(255,255,255,0.92)", color: C.navy }}>{dest.region}</div>
-        <div className="absolute top-4 right-4 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: C.yellow, color: C.navy }}><Star size={11} fill={C.navy} /> {dest.rating}</div>
+        <button
+          type="button"
+          title={rateTooltip}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRateClick();
+          }}
+          className="absolute top-4 right-4 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          style={{ background: C.yellow, color: C.navy, boxShadow: "0 2px 10px rgba(0,0,0,0.18)" }}
+        >
+          <Star size={11} fill={C.navy} /> {dest.rating.toFixed(1)}
+        </button>
       </div>
       <div className="p-6">
         <h3 className="text-xl font-bold mb-1" style={{ color: C.navy, fontWeight: 700 }}>{dest.name}</h3>
@@ -1822,6 +1960,159 @@ function DestCard({ dest, onClick, cardBtn }: { dest: typeof destinations[0]; on
             {cardBtn} <ChevronRight size={13} />
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── RATING & REVIEW MINI-MODAL ───────────────────────────────────────────────
+function RatingReviewModal({
+  dest,
+  reviews,
+  onClose,
+  onSubmit,
+  t,
+}: {
+  dest: typeof destinations[0];
+  reviews: PlaceReviewItem[];
+  onClose: () => void;
+  onSubmit: (stars: number, comment: string) => void;
+  t: (k: string) => string;
+}) {
+  const [stars, setStars] = useState<number>(5);
+  const [hoverStars, setHoverStars] = useState<number | null>(null);
+  const [comment, setComment] = useState("");
+
+  const activeStarValue = hoverStars ?? stars;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(stars, comment);
+    setComment("");
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+      style={{ background: "rgba(10,18,50,0.58)", backdropFilter: "blur(3px)" }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="w-full max-w-md bg-white rounded-2xl p-6 relative"
+        style={{
+          boxShadow: "0 24px 64px rgba(10,18,50,0.32)",
+          fontFamily: "'Poppins', sans-serif",
+        }}
+      >
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: C.red }}>
+              {dest.region}
+            </p>
+            <h3 className="text-lg font-bold" style={{ color: C.navy }}>
+              {t("ratePlaceTitle")} {dest.name}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            style={{ color: "#64748b" }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold mb-2" style={{ color: C.navy }}>
+              {t("selectStarsLabel")}
+            </label>
+            <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: "#f8fafc", border: "1px solid rgba(36,60,143,0.12)" }}>
+              <div className="flex items-center gap-1.5">
+                {[1, 2, 3, 4, 5].map((num) => {
+                  const filled = num <= activeStarValue;
+                  return (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setStars(num)}
+                      onMouseEnter={() => setHoverStars(num)}
+                      onMouseLeave={() => setHoverStars(null)}
+                      className="p-1 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                    >
+                      <Star
+                        size={22}
+                        style={{ color: filled ? "#eab308" : "#cbd5e1" }}
+                        fill={filled ? C.yellow : "transparent"}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="px-2.5 py-1 rounded-full text-xs font-bold" style={{ background: C.yellow, color: C.navy }}>
+                {activeStarValue.toFixed(1)} / 5.0
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: C.navy }}>
+              {t("reviewTextLabel")}
+            </label>
+            <textarea
+              required
+              rows={3}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder={t("reviewPlaceholder")}
+              className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none resize-none"
+              style={{
+                border: "1.5px solid rgba(36,60,143,0.18)",
+                background: "#fafafa",
+                color: "#1e293b",
+              }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+            style={{ background: C.red }}
+          >
+            <Star size={14} fill="white" /> {t("submitReviewBtn")}
+          </button>
+        </form>
+
+        {reviews.length > 0 && (
+          <div className="mt-5 pt-4 border-t" style={{ borderColor: "rgba(36,60,143,0.10)" }}>
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-xs font-bold" style={{ color: C.navy }}>
+                {t("savedReviewsTitle")} ({reviews.length})
+              </span>
+              <span className="text-xs font-semibold flex items-center gap-1" style={{ color: C.navy }}>
+                <Star size={12} fill={C.yellow} style={{ color: "#eab308" }} /> {dest.rating.toFixed(1)}
+              </span>
+            </div>
+            <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+              {reviews.map((rev) => (
+                <div
+                  key={rev.id}
+                  className="p-3 rounded-xl text-xs"
+                  style={{ background: "#f8fafc", border: "1px solid rgba(36,60,143,0.08)" }}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold" style={{ color: C.navy }}>{rev.author}</span>
+                    <span className="font-bold" style={{ color: "#eab308" }}>{"★".repeat(rev.stars)} ({rev.stars.toFixed(1)})</span>
+                  </div>
+                  <p style={{ color: "#475569", fontWeight: 300 }}>{rev.comment}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1877,9 +2168,9 @@ function FloatingMap({ onOpenDestination, onOpenMaps, t, destinationsList, lang 
 }
 
 // ─── DESTINATION MODAL ────────────────────────────────────────────────────────
-function DestModal({ dest, activeTab, setActiveTab, onClose, onOpenMaps, t }: {
+function DestModal({ dest, activeTab, setActiveTab, onClose, onOpenMaps, onRateClick, t }: {
   dest: typeof destinations[0]; activeTab: TabKey; setActiveTab: (t: TabKey) => void;
-  onClose: () => void; onOpenMaps: (q: string) => void; t: (k: string) => string;
+  onClose: () => void; onOpenMaps: (q: string) => void; onRateClick: () => void; t: (k: string) => string;
 }) {
   const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
     { key: "historia", label: t("tabHistoria"), icon: <BookOpen size={14} /> },
@@ -1902,7 +2193,15 @@ function DestModal({ dest, activeTab, setActiveTab, onClose, onOpenMaps, t }: {
             <h2 className="text-4xl font-bold text-white" style={{ fontWeight: 700 }}>{dest.name}</h2>
             <p className="text-white/80 text-sm mt-1" style={{ fontWeight: 300 }}>{dest.tagline}</p>
           </div>
-          <div className="absolute bottom-6 right-8 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold" style={{ background: C.yellow, color: C.navy }}><Star size={12} fill={C.navy} /> {dest.rating} / 5.0</div>
+          <button
+            type="button"
+            title={t("clickToRateTooltip")}
+            onClick={onRateClick}
+            className="absolute bottom-6 right-8 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+            style={{ background: C.yellow, color: C.navy }}
+          >
+            <Star size={12} fill={C.navy} /> {dest.rating.toFixed(1)} / 5.0
+          </button>
         </div>
 
         <div className="flex overflow-x-auto border-b flex-shrink-0 px-6" style={{ borderColor: "rgba(36,60,143,0.1)" }}>
